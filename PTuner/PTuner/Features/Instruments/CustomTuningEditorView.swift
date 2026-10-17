@@ -27,6 +27,7 @@ struct CustomTuningEditorView: View {
                 ScrollView {
                     VStack(spacing: 14) {
                         basicSection
+                        pianoSection
                         stringsSection
                     }
                     .padding(.horizontal, 18)
@@ -158,6 +159,44 @@ struct CustomTuningEditorView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(AppTheme.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(AppTheme.cardBorder, lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - 八度对照
+
+    private var highlightedMIDINotes: Set<Int> {
+        Set(draft.strings.map(\.midiNote))
+    }
+
+    private var pianoSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionTitle("八度数字对照")
+
+            VStack(alignment: .leading, spacing: 10) {
+                fieldDescription("音名后的数字是八度。例如 E2 位于 C2–B2 这一组，中央 C 为 C4。")
+
+                PianoKeyboard88View(highlightedNotes: highlightedMIDINotes)
+                    .frame(height: 112)
+
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(AppTheme.accent)
+                        .frame(width: 9, height: 9)
+
+                    Text("当前调弦中的音")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppTheme.tertiaryText)
+                }
+            }
+            .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(AppTheme.surface)

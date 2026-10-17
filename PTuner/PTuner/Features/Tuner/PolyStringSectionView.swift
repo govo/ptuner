@@ -13,6 +13,8 @@ struct MultiStringTuningStrip: View {
     let resolved: [PolyStringVerificationStore.ResolvedSlot]
     let centsPrecision: CentsPrecision
     var liveCents: LiveCents?
+    /// 点击某根弦时播放它的目标音高。
+    let onPlayTone: (Double) -> Void
 
     /// 超过这个弦数才改用网格换行，普通吉他、贝斯等保持一排。
     private let singleRowMaxStrings = 8
@@ -39,7 +41,8 @@ struct MultiStringTuningStrip: View {
             MultiStringColumn(slot: item.slot,
                               isRetained: item.isRetained,
                               centsPrecision: centsPrecision,
-                              liveCents: liveCents)
+                              liveCents: liveCents,
+                              onPlayTone: onPlayTone)
         }
     }
 }
@@ -51,6 +54,7 @@ private struct MultiStringColumn: View {
     let isRetained: Bool
     let centsPrecision: CentsPrecision
     let liveCents: MultiStringTuningStrip.LiveCents?
+    let onPlayTone: (Double) -> Void
 
     /// 单音通道覆盖值优先；否则用多音通道的读数。
     private var displayCents: Double? {
@@ -81,57 +85,63 @@ private struct MultiStringColumn: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
-            Text("+50")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundStyle(AppTheme.tertiaryText)
+        Button {
+            onPlayTone(slot.targetFrequency)
+        } label: {
+            VStack(spacing: 4) {
+                Text("+50")
+                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.tertiaryText)
 
-            VerticalCentsIndicator(cents: displayCents,
-                                   status: status,
-                                   height: 84)
+                VerticalCentsIndicator(cents: displayCents,
+                                       status: status,
+                                       height: 84)
 
-            Text("-50")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundStyle(AppTheme.tertiaryText)
+                Text("-50")
+                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.tertiaryText)
 
-            Text(slot.targetNoteName)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(isDetected ? AppTheme.accent : AppTheme.secondaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .padding(.top, 2)
+                Text(slot.targetNoteName)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(isDetected ? AppTheme.accent : AppTheme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .padding(.top, 2)
 
-            Text(centsLabel)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundStyle(isDetected ? statusColor : AppTheme.tertiaryText)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                Text(centsLabel)
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundStyle(isDetected ? statusColor : AppTheme.tertiaryText)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
 
-            ZStack {
-                Circle()
-                    .fill(isDetected ? statusColor.opacity(0.14) : AppTheme.controlBackground)
+                ZStack {
+                    Circle()
+                        .fill(isDetected ? statusColor.opacity(0.14) : AppTheme.controlBackground)
 
-                Circle()
-                    .stroke(isDetected ? statusColor.opacity(0.7) : AppTheme.cardBorder,
-                            lineWidth: 1)
+                    Circle()
+                        .stroke(isDetected ? statusColor.opacity(0.7) : AppTheme.cardBorder,
+                                lineWidth: 1)
 
-                if isDetected {
-                    Image(systemName: status.symbolName)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(statusColor)
-                } else {
-                    Text("\(slot.stringNumber)")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(AppTheme.tertiaryText)
+                    if isDetected {
+                        Image(systemName: status.symbolName)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(statusColor)
+                    } else {
+                        Text("\(slot.stringNumber)")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(AppTheme.tertiaryText)
+                    }
                 }
+                .frame(width: 30, height: 30)
             }
-            .frame(width: 30, height: 30)
+            .frame(maxWidth: .infinity)
+            .opacity(isLive ? 1 : (isRetained ? 0.82 : 1))
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity)
-        .opacity(isLive ? 1 : (isRetained ? 0.82 : 1))
-        .accessibilityElement(children: .ignore)
+        .buttonStyle(.plain)
         .accessibilityLabel(accessibilityText)
+        .accessibilityHint("播放该弦参考音")
     }
 
     private var accessibilityText: String {

@@ -13,6 +13,7 @@ struct TunerHomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("ptuner.multiTuningEnabled") private var multiEnabled = false
     @StateObject private var verificationStore = PolyStringVerificationStore()
+    @StateObject private var tonePlayer = TonePlayer()
     @State private var hasAutoStarted = false
 
     // MARK: - 派生数据
@@ -360,38 +361,51 @@ struct TunerHomeView: View {
                 let isActive = reading?.matchedStringIndex == index
                 let status = isActive ? (reading?.status ?? .idle) : .idle
 
-                VStack(spacing: 5) {
-                    Text(string.displayName)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(isActive ? AppTheme.accent : AppTheme.secondaryText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                Button {
+                    playReferenceTone(frequency: string.frequency(referenceA4: settings.referencePitch))
+                } label: {
+                    VStack(spacing: 5) {
+                        Text(string.displayName)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(isActive ? AppTheme.accent : AppTheme.secondaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
 
-                    ZStack {
-                        Circle()
-                            .fill(isActive ? status.color.opacity(0.14) : AppTheme.controlBackground)
+                        ZStack {
+                            Circle()
+                                .fill(isActive ? status.color.opacity(0.14) : AppTheme.controlBackground)
 
-                        Circle()
-                            .stroke(isActive ? status.color.opacity(0.7) : AppTheme.cardBorder,
-                                    lineWidth: 1)
+                            Circle()
+                                .stroke(isActive ? status.color.opacity(0.7) : AppTheme.cardBorder,
+                                        lineWidth: 1)
 
-                        if isActive {
-                            Image(systemName: status.symbolName)
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(status.color)
-                        } else {
-                            Text("\(preset.stringNumber(at: index))")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(AppTheme.tertiaryText)
+                            if isActive {
+                                Image(systemName: status.symbolName)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(status.color)
+                            } else {
+                                Text("\(preset.stringNumber(at: index))")
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(AppTheme.tertiaryText)
+                            }
                         }
+                        .frame(width: 30, height: 30)
                     }
-                    .frame(width: 30, height: 30)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
+                .accessibilityLabel("播放 \(string.displayName) 参考音")
                 .animation(.easeOut(duration: 0.15), value: isActive)
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// 点击弦位时播放该弦的目标音高（已计入音分偏移与 A4 参考音高）。
+    private func playReferenceTone(frequency: Double) {
+        tonePlayer.play(frequency: frequency)
     }
 
     private func statusPill(status: TuningStatus, activeText: String?) -> some View {
@@ -419,7 +433,8 @@ struct TunerHomeView: View {
         if preset != nil {
             MultiStringTuningStrip(resolved: resolvedSlots,
                                    centsPrecision: settings.centsPrecision,
-                                   liveCents: liveStringCents)
+                                   liveCents: liveStringCents,
+                                   onPlayTone: playReferenceTone)
         } else {
             freeTuningPolyPanel
         }

@@ -114,8 +114,11 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
         #if os(iOS) || os(visionOS)
         let session = AVAudioSession.sharedInstance()
         do {
+            // playAndRecord 让调音时也能播放参考音；defaultToSpeaker 保证走扬声器而不是听筒。
             // measurement 关掉系统降噪/自动增益，避免把音高和电平改掉。
-            try session.setCategory(.record, mode: .measurement, options: [])
+            try session.setCategory(.playAndRecord,
+                                    mode: .measurement,
+                                    options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true)
         } catch {
             throw MicrophoneCaptureError.engineStartFailed(error)
@@ -149,12 +152,19 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
         let poly = try makeConverter(from: inputFormat, to: Self.polyphonicSampleRate)
         applyConverters(crepe: crepe, poly: poly)
 
-        // macOS / iOS 27 起 installTap 改为可抛错的新入口。它通过
+        // iOS / macOS 27 起 installTap 改为可抛错的新入口。它通过
         // NS_REFINED_FOR_SWIFT 导入后，Swift 形式是 __installTap(..., error: (), block:)。
+        // 较低系统版本仍使用旧的 installTap。
         do {
-            try input.__installTap(onBus: 0, bufferSize: 2048, format: inputFormat, error: (), block: { [weak self] buffer, _ in
-                self?.handleTap(buffer)
-            })
+            if #available(iOS 27.0, macOS 27.0, visionOS 27.0, *) {
+                try input.__installTap(onBus: 0, bufferSize: 2048, format: inputFormat, error: (), block: { [weak self] buffer, _ in
+                    self?.handleTap(buffer)
+                })
+            } else {
+                input.installTap(onBus: 0, bufferSize: 2048, format: inputFormat) { [weak self] buffer, _ in
+                    self?.handleTap(buffer)
+                }
+            }
         } catch {
             clearConverters()
             throw MicrophoneCaptureError.engineStartFailed(error)
@@ -190,8 +200,12 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
         guard let deviceID else { return }
 
         do {
-            try input.withAUAudioUnit { audioUnit in
-                try audioUnit.setDeviceID(deviceID)
+            if #available(macOS 27.0, *) {
+                try input.withAUAudioUnit { audioUnit in
+                    try audioUnit.setDeviceID(deviceID)
+                }
+            } else {
+                try input.auAudioUnit.setDeviceID(deviceID)
             }
         } catch {
             // 跟随系统默认时，绑定失败就交给 AVAudioEngine 自行选择；
@@ -415,12 +429,22 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
         })
 
         #if os(iOS) || os(visionOS)
-        // iOS 27 起用 didBecomeInactive 取代已废弃的 interruption 通知。
-        observers.append(center.addObserver(forName: AVAudioSession.didBecomeInactiveNotification,
-                                            object: nil,
-                                            queue: nil) { [weak self] _ in
-            self?.onError?(MicrophoneCaptureError.engineInterrupted)
-        })
+        if #available(iOS 27.0, visionOS 27.0, *) {
+            // iOS 27 起用 didBecomeInactive 取代已废弃的 interruption 通知。
+            observers.append(center.addObserver(forName: AVAudioSession.didBecomeInactiveNotification,
+                                                object: nil,
+                                                queue: nil) { [weak self] _ in
+                self?.onError?(MicrophoneCaptureError.engineInterrupted)
+            })
+        } else {
+            observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification,
+                                                object: nil,
+                                                queue: nil) { [weak self] notification in
+                guard let raw = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                      AVAudioSession.InterruptionType(rawValue: raw) == .began else { return }
+                self?.onError?(MicrophoneCaptureError.engineInterrupted)
+            })
+        }
         #endif
     }
 
