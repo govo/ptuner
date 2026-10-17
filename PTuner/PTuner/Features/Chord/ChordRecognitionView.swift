@@ -5,6 +5,7 @@ import SwiftUI
 struct ChordRecognitionView: View {
     @EnvironmentObject private var tuner: TunerController
     @EnvironmentObject private var live: TunerRealtimeState
+    @EnvironmentObject private var settings: TunerSettings
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @ObservedObject private var proAccess = ProAccessController.shared
@@ -24,16 +25,6 @@ struct ChordRecognitionView: View {
         ChordRecognizer.recognize(pitchClasses: live.polyReadouts.map(\.midiPitch))
     }
 
-    private var inputNoteText: String {
-        guard tuner.isRunning else { return L10n.tr("未开始监听") }
-        let pitches = live.polyReadouts
-        guard !pitches.isEmpty else { return L10n.tr("等待声音…") }
-
-        let names = pitches.prefix(4).map { NoteNames.name(midi: $0.midiPitch) }
-        let summary = names.joined(separator: " · ")
-        return pitches.count > 4 ? L10n.tr("%@ 等 %d 个音", summary, pitches.count) : summary
-    }
-
     var body: some View {
         ZStack {
             AppBackground()
@@ -41,10 +32,6 @@ struct ChordRecognitionView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header
-                    TunerInputStatusBar(deviceName: tuner.activeInputDeviceName,
-                                        level: live.level,
-                                        isRunning: tuner.isRunning,
-                                        noteText: inputNoteText)
                     statusBanners
 
                     if proUnlocked {
@@ -86,9 +73,30 @@ struct ChordRecognitionView: View {
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
-            Spacer()
+            Spacer(minLength: 8)
+
+            #if os(macOS)
+            TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
+                                   level: live.level,
+                                   isRunning: tuner.isRunning,
+                                   selectedDeviceUID: settings.preferredInputDeviceUID,
+                                   onSelectDevice: selectInputDevice)
+            #else
+            TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
+                                   level: live.level,
+                                   isRunning: tuner.isRunning)
+            #endif
         }
     }
+
+    #if os(macOS)
+    /// 在右上角直接切换输入设备，与调音页、设置页共用同一条持久化链路。
+    private func selectInputDevice(_ uid: String?) {
+        guard uid != settings.preferredInputDeviceUID else { return }
+        settings.preferredInputDeviceUID = uid
+        settings.apply(to: tuner)
+    }
+    #endif
 
     @ViewBuilder
     private var contentLayout: some View {
@@ -242,24 +250,9 @@ struct ChordRecognitionView: View {
     }
 
     private var chordControlCard: some View {
-        VStack(spacing: 14) {
-            AudioLevelWaveform(level: live.level, isActive: tuner.isRunning)
-
-            Text(detectingText)
-                .font(.system(size: 12))
-                .foregroundStyle(AppTheme.secondaryText)
-
-            startStopButton
-        }
-        .frame(maxWidth: .infinity)
-        .tunerCard(padding: 16)
-    }
-
-    private var detectingText: String {
-        guard tuner.isRunning else { return L10n.tr("未开始检测") }
-        if tuner.isPreparingPoly { return L10n.tr("正在准备多音模型…") }
-        let count = live.polyReadouts.count
-        return count == 0 ? L10n.tr("等待演奏…") : L10n.tr("%d 个音同时检测中…", count)
+        startStopButton
+            .frame(maxWidth: .infinity)
+            .tunerCard(padding: 16)
     }
 
     @ViewBuilder
