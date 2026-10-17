@@ -9,6 +9,7 @@ struct SettingsView: View {
     @EnvironmentObject private var settings: TunerSettings
     @EnvironmentObject private var tuner: TunerController
     @ObservedObject private var proAccess = ProAccessController.shared
+    @ObservedObject private var languageSettings = AppLanguageSettings.shared
     #if os(macOS)
     @ObservedObject private var inputMonitor = AudioInputDeviceMonitor.shared
     #endif
@@ -31,10 +32,10 @@ struct SettingsView: View {
 
         var title: String {
             switch self {
-            case .referencePitch: return "参考音高"
-            case .precision: return "音准显示精度"
-            case .indicatorStyle: return "指示器显示方式"
-            case .stability: return "稳定度"
+            case .referencePitch: return L10n.tr("参考音高")
+            case .precision: return L10n.tr("音准显示精度")
+            case .indicatorStyle: return L10n.tr("指示器显示方式")
+            case .stability: return L10n.tr("稳定度")
             }
         }
     }
@@ -47,9 +48,11 @@ struct SettingsView: View {
                 VStack(spacing: 16) {
                     header
                     basicSection
+                    languageSection
                     audioSection
                     proSection
                     otherSection
+                    RecommendedAppsSection()
                     #if DEBUG
                     debugProSection
                     #endif
@@ -61,7 +64,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("设置")
+        .navigationTitle(L10n.tr("设置"))
         .onChange(of: settings.stability) { _, _ in
             settings.apply(to: tuner)
         }
@@ -74,13 +77,13 @@ struct SettingsView: View {
             AboutView()
         }
         .alert(
-            "提示",
+            L10n.tr("提示"),
             isPresented: Binding(
                 get: { alertMessage != nil },
                 set: { if !$0 { alertMessage = nil } }
             )
         ) {
-            Button("好", role: .cancel) {}
+            Button(L10n.tr("好"), role: .cancel) {}
         } message: {
             Text(alertMessage ?? "")
         }
@@ -110,7 +113,7 @@ struct SettingsView: View {
 
             Divider()
 
-            Button("自定义…") {
+            Button(L10n.tr("自定义…")) {
                 openCustomPitchSheet()
             }
 
@@ -139,7 +142,7 @@ struct SettingsView: View {
             EmptyView()
         }
 
-        Button("取消", role: .cancel) {}
+        Button(L10n.tr("取消"), role: .cancel) {}
     }
 
     private func openCustomPitchSheet() {
@@ -190,31 +193,60 @@ struct SettingsView: View {
     // MARK: - 基础设置
 
     private var basicSection: some View {
-        SettingsSectionCard(title: "基础设置") {
+        SettingsSectionCard(title: L10n.tr("基础设置")) {
             optionRow(icon: "tuningfork",
                       iconTint: AppTheme.accent,
-                      title: "参考音高",
+                      title: L10n.tr("参考音高"),
                       value: "A4 = \(referencePitchText) Hz",
                       option: .referencePitch)
 
             optionRow(icon: "number",
                       iconTint: AppTheme.accent,
-                      title: "音准显示精度",
+                      title: L10n.tr("音准显示精度"),
                       value: settings.centsPrecision.title,
                       option: .precision)
 
             optionRow(icon: "gauge.with.dots.needle.33percent",
                       iconTint: AppTheme.success,
-                      title: "指示器显示方式",
+                      title: L10n.tr("指示器显示方式"),
                       value: settings.indicatorStyle.title,
                       option: .indicatorStyle)
 
             optionRow(icon: "waveform.path",
                       iconTint: AppTheme.warning,
-                      title: "稳定度",
+                      title: L10n.tr("稳定度"),
                       value: settings.stability.title,
                       option: .stability,
                       showsDivider: false)
+        }
+    }
+
+    // MARK: - 语言
+
+    private var languageSection: some View {
+        SettingsSectionCard(title: L10n.tr("语言")) {
+            Menu {
+                ForEach(AppLanguageSettings.options) { option in
+                    Button {
+                        languageSettings.select(option)
+                    } label: {
+                        if languageSettings.selectedCode == option.code {
+                            Label(option.displayTitle, systemImage: "checkmark")
+                        } else {
+                            Text(option.displayTitle)
+                        }
+                    }
+                }
+            } label: {
+                SettingsRow(icon: "globe",
+                            iconTint: AppTheme.accent,
+                            title: L10n.tr("语言"),
+                            value: languageSettings.selectedTitle,
+                            showsChevron: true,
+                            showsDivider: false)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -241,14 +273,14 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var audioSection: some View {
-        SettingsSectionCard(title: "音频输入") {
+        SettingsSectionCard(title: L10n.tr("音频输入")) {
             #if os(macOS)
             NavigationLink {
                 AudioInputDeviceView()
             } label: {
                 SettingsRow(icon: "mic.fill",
                             iconTint: AppTheme.success,
-                            title: "输入设备",
+                            title: L10n.tr("输入设备"),
                             value: audioInputValue,
                             showsDivider: false)
             }
@@ -256,7 +288,7 @@ struct SettingsView: View {
             #else
             SettingsRow(icon: "mic.fill",
                         iconTint: AppTheme.success,
-                        title: "音频输入来源",
+                        title: L10n.tr("音频输入来源"),
                         value: audioInputValue,
                         showsChevron: false,
                         showsDivider: false)
@@ -270,15 +302,15 @@ struct SettingsView: View {
             if let device = inputMonitor.devices.first(where: { $0.id == uid }) {
                 return device.name
             }
-            return "设备不可用"
+            return L10n.tr("设备不可用")
         }
         if let uid = inputMonitor.defaultDeviceUID,
            let device = inputMonitor.devices.first(where: { $0.id == uid }) {
-            return "系统默认 · \(device.name)"
+            return L10n.tr("系统默认 · %@", device.name)
         }
-        return "系统默认"
+        return L10n.tr("系统默认")
         #else
-        return AudioInputDevices.currentInputName() ?? "系统麦克风"
+        return AudioInputDevices.currentInputName() ?? L10n.tr("系统麦克风")
         #endif
     }
 
@@ -291,7 +323,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: proAccess.isPro(paywallManager) ? "checkmark.seal.fill" : "crown.fill",
                             iconTint: proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning,
-                            title: proAccess.isPro(paywallManager) ? "Pro 已激活" : "免费版",
+                            title: proAccess.isPro(paywallManager) ? L10n.tr("Pro 已激活") : L10n.tr("免费版"),
                             value: proDetail)
             }
             .settingsTappable()
@@ -301,7 +333,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "arrow.clockwise",
                             iconTint: AppTheme.secondaryText,
-                            title: isRestoring ? "正在恢复…" : "恢复购买",
+                            title: isRestoring ? L10n.tr("正在恢复…") : L10n.tr("恢复购买"),
                             showsChevron: false,
                             showsDivider: false)
             }
@@ -313,21 +345,23 @@ struct SettingsView: View {
     private var proDetail: String {
         #if DEBUG
         if proAccess.skipsEntitlementCheck {
-            return "Debug 已跳过校验"
+            return L10n.tr("Debug 已跳过校验")
         }
         #endif
 
         guard paywallManager.hasActiveEntitlement else {
-            return "未升级"
+            return L10n.tr("未升级")
         }
 
         switch paywallManager.entitlementStatus {
         case .lifetime:
-            return "永久权益"
+            return L10n.tr("永久权益")
         case .subscription(let expirationDate):
-            return "至 \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
+            let style = Date.FormatStyle(date: .abbreviated, time: .omitted)
+                .locale(Locale(identifier: L10n.effectiveCode))
+            return L10n.tr("至 %@", expirationDate.formatted(style))
         case .none:
-            return "已激活"
+            return L10n.tr("已激活")
         }
     }
 
@@ -340,18 +374,18 @@ struct SettingsView: View {
             await paywallManager.restorePurchases()
             isRestoring = false
             alertMessage = paywallManager.hasActiveEntitlement
-                ? "已恢复购买。"
-                : "没有找到可恢复的购买记录。"
+                ? L10n.tr("已恢复购买。")
+                : L10n.tr("没有找到可恢复的购买记录。")
         }
     }
 
     // MARK: - 其他
 
     private var otherSection: some View {
-        SettingsSectionCard(title: "其他") {
+        SettingsSectionCard(title: L10n.tr("其他")) {
             SettingsRow(icon: "info.circle.fill",
                         iconTint: AppTheme.secondaryText,
-                        title: "App 版本",
+                        title: L10n.tr("App 版本"),
                         value: versionText,
                         showsChevron: false)
 
@@ -360,7 +394,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "music.note.list",
                             iconTint: AppTheme.accent,
-                            title: "关于我们")
+                            title: L10n.tr("关于我们"))
             }
             .settingsTappable()
 
@@ -369,7 +403,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "hand.raised.fill",
                             iconTint: AppTheme.success,
-                            title: "隐私政策")
+                            title: L10n.tr("隐私政策"))
             }
             .settingsTappable()
 
@@ -378,7 +412,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "doc.text.fill",
                             iconTint: AppTheme.warning,
-                            title: "使用条款")
+                            title: L10n.tr("使用条款"))
             }
             .settingsTappable()
 
@@ -387,7 +421,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "star.fill",
                             iconTint: AppTheme.warning,
-                            title: "给 PTuner 评分",
+                            title: L10n.tr("给 %@ 评分", "PTuner"),
                             showsChevron: false,
                             showsDivider: false)
             }
@@ -399,7 +433,7 @@ struct SettingsView: View {
 
     #if DEBUG
     private var debugProSection: some View {
-        SettingsSectionCard(title: "开发者") {
+        SettingsSectionCard(title: L10n.tr("开发者")) {
             HStack(spacing: 13) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -412,18 +446,18 @@ struct SettingsView: View {
                 .frame(width: 30, height: 30)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("跳过 Pro 权益校验")
+                    Text(L10n.tr("跳过 Pro 权益校验"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(AppTheme.primaryText)
 
-                    Text("仅 Debug 构建可用，方便直接测试 Pro 功能。")
+                    Text(L10n.tr("仅 Debug 构建可用，方便直接测试 Pro 功能。"))
                         .font(.system(size: 11))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
 
                 Spacer()
 
-                Toggle("跳过 Pro 权益校验", isOn: $proAccess.skipsEntitlementCheck)
+                Toggle(L10n.tr("跳过 Pro 权益校验"), isOn: $proAccess.skipsEntitlementCheck)
                     .labelsHidden()
                     .tint(AppTheme.accent)
                     .contentShape(Rectangle())

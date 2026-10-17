@@ -32,7 +32,7 @@ struct InstrumentSelectionView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("乐器")
+        .navigationTitle(L10n.tr("乐器"))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -44,7 +44,7 @@ struct InstrumentSelectionView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("新建自定义调弦")
+                .accessibilityLabel(L10n.tr("新建自定义调弦"))
             }
         }
         .sheet(item: $editorContext) { context in
@@ -52,24 +52,24 @@ struct InstrumentSelectionView: View {
                 .environmentObject(library)
         }
         .confirmationDialog(
-            "删除自定义调弦",
+            L10n.tr("删除自定义调弦"),
             isPresented: Binding(
                 get: { pendingDelete != nil },
                 set: { if !$0 { pendingDelete = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("删除", role: .destructive) {
+            Button(L10n.tr("删除"), role: .destructive) {
                 if let preset = pendingDelete {
                     library.deleteCustom(id: preset.id)
                 }
                 pendingDelete = nil
             }
-            Button("取消", role: .cancel) {
+            Button(L10n.tr("取消"), role: .cancel) {
                 pendingDelete = nil
             }
         } message: {
-            Text("「\(pendingDelete?.name ?? "")」将被永久删除，无法恢复。")
+            Text(L10n.tr("「%@」将被永久删除，无法恢复。", pendingDelete?.name ?? ""))
         }
     }
 
@@ -99,10 +99,10 @@ struct InstrumentSelectionView: View {
 
         if results.isEmpty {
             EmptyStateView(icon: "magnifyingglass",
-                           title: "没有找到匹配的调弦",
-                           message: "试试搜索乐器名称、调弦名称或音名。")
+                           title: L10n.tr("没有找到匹配的调弦"),
+                           message: L10n.tr("试试搜索乐器名称、调弦名称或音名。"))
         } else {
-            section(title: "搜索结果", presets: results)
+            section(title: L10n.tr("搜索结果"), presets: results)
         }
     }
 
@@ -119,10 +119,10 @@ struct InstrumentSelectionView: View {
     private var favoritesSection: some View {
         if library.favoritePresets.isEmpty {
             EmptyStateView(icon: "star",
-                           title: "还没有收藏的调弦",
-                           message: "点击调弦右侧的星标即可收藏，常用调弦会优先显示。")
+                           title: L10n.tr("还没有收藏的调弦"),
+                           message: L10n.tr("点击调弦右侧的星标即可收藏，常用调弦会优先显示。"))
         } else {
-            section(title: "收藏的乐器", presets: library.favoritePresets)
+            section(title: L10n.tr("收藏的乐器"), presets: library.favoritePresets)
         }
     }
 
@@ -140,8 +140,8 @@ struct InstrumentSelectionView: View {
             section(title: kind.displayName, presets: presets)
         } else if category != .all {
             EmptyStateView(icon: "guitars",
-                           title: "暂无\(kind.displayName)调弦",
-                           message: "可以新建一个自定义调弦。")
+                           title: L10n.tr("暂无%@调弦", kind.displayName),
+                           message: L10n.tr("可以新建一个自定义调弦。"))
         }
     }
 
@@ -151,10 +151,10 @@ struct InstrumentSelectionView: View {
 
         if customs.isEmpty {
             EmptyStateView(icon: "slider.horizontal.3",
-                           title: "还没有自定义调弦",
-                           message: "创建一个全新的调弦配置，或从内置调弦复制后修改。")
+                           title: L10n.tr("还没有自定义调弦"),
+                           message: L10n.tr("创建一个全新的调弦配置，或从内置调弦复制后修改。"))
         } else {
-            section(title: "自定义调弦", presets: customs)
+            section(title: L10n.tr("自定义调弦"), presets: customs)
         }
 
         Button {
@@ -163,7 +163,7 @@ struct InstrumentSelectionView: View {
             HStack(spacing: 7) {
                 Image(systemName: "plus")
                     .font(.system(size: 13, weight: .bold))
-                Text("新建自定义调弦")
+                Text(L10n.tr("新建自定义调弦"))
                     .font(.system(size: 14, weight: .semibold))
             }
             .foregroundStyle(AppTheme.accent)

@@ -216,7 +216,7 @@ struct TunerHomeView: View {
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(AppTheme.accent)
 
-            Text("调音器")
+            Text(L10n.tr("调音器"))
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
@@ -235,7 +235,7 @@ struct TunerHomeView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("设置")
+            .accessibilityLabel(L10n.tr("设置"))
         }
     }
 
@@ -267,19 +267,19 @@ struct TunerHomeView: View {
 
     /// 当前真正输入的音：单音显示音名与频率，多音显示正在检测的组成音。
     private var inputNoteText: String {
-        guard tuner.isRunning else { return "未开始监听" }
+        guard tuner.isRunning else { return L10n.tr("未开始监听") }
 
         if !multiEnabled {
-            guard let reading else { return "等待声音…" }
+            guard let reading else { return L10n.tr("等待声音…") }
             return "\(reading.noteName) · \(frequencyText(reading.frequency))"
         }
 
         let pitches = tuner.polyReadouts
-        guard !pitches.isEmpty else { return "等待声音…" }
+        guard !pitches.isEmpty else { return L10n.tr("等待声音…") }
 
         let names = pitches.prefix(4).map { NoteNames.name(midi: $0.midiPitch) }
         let summary = names.joined(separator: " · ")
-        return pitches.count > 4 ? "\(summary) 等 \(pitches.count) 个音" : summary
+        return pitches.count > 4 ? L10n.tr("%@ 等 %d 个音", summary, pitches.count) : summary
     }
 
     @ViewBuilder
@@ -287,17 +287,17 @@ struct TunerHomeView: View {
         if tuner.permissionDenied {
             TunerStatusBanner(
                 icon: "mic.slash.fill",
-                title: "没有麦克风权限",
-                message: "请在系统设置中允许 PTuner 使用麦克风，然后返回重试。",
-                actionTitle: "去设置",
+                title: L10n.tr("没有麦克风权限"),
+                message: L10n.tr("请在系统设置中允许 PTuner 使用麦克风，然后返回重试。"),
+                actionTitle: L10n.tr("去设置"),
                 action: { PlatformActions.openMicrophoneSettings() }
             )
         } else if let error = tuner.errorText {
             TunerStatusBanner(
                 icon: "exclamationmark.triangle.fill",
-                title: "音频输入不可用",
+                title: L10n.tr("音频输入不可用"),
                 message: error,
-                actionTitle: "重试",
+                actionTitle: L10n.tr("重试"),
                 action: { tuner.start() }
             )
         }
@@ -335,7 +335,7 @@ struct TunerHomeView: View {
             if let preset {
                 stringChips(preset: preset)
             } else {
-                Text("半音阶调音 · 显示距离最近的标准音")
+                Text(L10n.tr("半音阶调音 · 显示距离最近的标准音"))
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.tertiaryText)
             }
@@ -396,7 +396,7 @@ struct TunerHomeView: View {
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
-                .accessibilityLabel("播放 \(string.displayName) 参考音")
+                .accessibilityLabel(L10n.tr("播放 %@ 参考音", string.displayName))
                 .animation(.easeOut(duration: 0.15), value: isActive)
             }
         }
@@ -444,14 +444,14 @@ struct TunerHomeView: View {
     private var freeTuningPolyPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("实时检测音")
+                Text(L10n.tr("实时检测音"))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
 
                 Spacer()
 
                 if !tuner.polyReadouts.isEmpty {
-                    Text("\(tuner.polyReadouts.count) 个音")
+                    Text(L10n.tr("%d 个音", tuner.polyReadouts.count))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(AppTheme.accent)
                 }
@@ -462,7 +462,9 @@ struct TunerHomeView: View {
                     AudioLevelWaveform(level: tuner.level, isActive: tuner.isRunning)
                         .frame(height: 40)
 
-                    Text(tuner.isRunning ? "拨动琴弦后，这里会显示检测到的音" : "点击开始后即可同时检测多个音")
+                    Text(tuner.isRunning
+                         ? L10n.tr("拨动琴弦后，这里会显示检测到的音")
+                         : L10n.tr("点击开始后即可同时检测多个音"))
                         .font(.system(size: 13))
                         .foregroundStyle(AppTheme.secondaryText)
                         .frame(maxWidth: .infinity)
@@ -482,7 +484,7 @@ struct TunerHomeView: View {
                 }
             }
 
-            Text("选择乐器后，可按该乐器的全部目标弦逐根校验")
+            Text(L10n.tr("选择乐器后，可按该乐器的全部目标弦逐根校验"))
                 .font(.system(size: 11))
                 .foregroundStyle(AppTheme.tertiaryText)
         }
@@ -557,12 +559,12 @@ struct TunerHomeView: View {
             .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(library.isFreeTuning ? "半音阶调音" : (preset?.title ?? "吉他 · 标准调弦"))
+                Text(library.isFreeTuning ? L10n.tr("半音阶调音") : (preset?.title ?? L10n.tr("吉他 · 标准调弦")))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(1)
 
-                Text(library.isFreeTuning ? "不用乐器，自动识别任意音高" : (preset?.notesSummary ?? ""))
+                Text(library.isFreeTuning ? L10n.tr("不用乐器，自动识别任意音高") : (preset?.notesSummary ?? ""))
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(AppTheme.secondaryText)
                     .lineLimit(1)
@@ -599,7 +601,7 @@ struct TunerHomeView: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 5) {
-                        Text("多音调音")
+                        Text(L10n.tr("多音调音"))
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(AppTheme.primaryText)
 
@@ -611,8 +613,8 @@ struct TunerHomeView: View {
                     }
 
                     Text(library.isFreeTuning
-                         ? "同时识别多个音高，适合任意乐器"
-                         : "同时检测多根弦，一次完成整琴校验")
+                         ? L10n.tr("同时识别多个音高，适合任意乐器")
+                         : L10n.tr("同时检测多根弦，一次完成整琴校验"))
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
@@ -624,8 +626,8 @@ struct TunerHomeView: View {
 
             HStack {
                 Text(library.isFreeTuning
-                     ? "一次最多检测 \(settings.maxPolyphony) 个音"
-                     : "按乐器弦数自动检测 \(effectiveMaxPolyphony) 个音")
+                     ? L10n.tr("一次最多检测 %d 个音", settings.maxPolyphony)
+                     : L10n.tr("按乐器弦数自动检测 %d 个音", effectiveMaxPolyphony))
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.secondaryText)
 
@@ -676,27 +678,27 @@ struct TunerHomeView: View {
     }
 
     private var detectingText: String {
-        guard tuner.isRunning else { return "未开始监听" }
+        guard tuner.isRunning else { return L10n.tr("未开始监听") }
 
         if multiEnabled {
-            if tuner.isPreparingPoly { return "正在准备多音模型…" }
+            if tuner.isPreparingPoly { return L10n.tr("正在准备多音模型…") }
             let count = tuner.polyReadouts.count
-            return count == 0 ? "等待演奏…" : "\(count) 个音同时检测中…"
+            return count == 0 ? L10n.tr("等待演奏…") : L10n.tr("%d 个音同时检测中…", count)
         }
 
-        return reading == nil ? "等待演奏…" : "单音调音中"
+        return reading == nil ? L10n.tr("等待演奏…") : L10n.tr("单音调音中")
     }
 
     private func startStopButton(compact: Bool) -> some View {
         Group {
             if tuner.isStarting {
-                PrimaryTunerButton(title: "正在启动…", systemImage: "hourglass", role: .secondary) {}
+                PrimaryTunerButton(title: L10n.tr("正在启动…"), systemImage: "hourglass", role: .secondary) {}
             } else if tuner.isRunning {
-                PrimaryTunerButton(title: "停止监听", systemImage: "stop.fill", role: .secondary) {
+                PrimaryTunerButton(title: L10n.tr("停止监听"), systemImage: "stop.fill", role: .secondary) {
                     tuner.stop()
                 }
             } else {
-                PrimaryTunerButton(title: compact ? "开始调音" : "开始检测", systemImage: "mic.fill") {
+                PrimaryTunerButton(title: compact ? L10n.tr("开始调音") : L10n.tr("开始检测"), systemImage: "mic.fill") {
                     tuner.start()
                 }
             }
@@ -722,7 +724,7 @@ struct TunerHomeView: View {
         Task {
             await paywallManager.presentPaywall(
                 featureID: "multi_pitch",
-                marketingMessage: "升级 Pro，解锁多音同时调音。"
+                marketingMessage: L10n.tr("升级 Pro，解锁多音同时调音。")
             )
         }
     }

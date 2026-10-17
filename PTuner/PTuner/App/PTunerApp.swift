@@ -86,26 +86,26 @@ extension AppReviewPromptConfiguration {
     static var ptuner: AppReviewPromptConfiguration {
         AppReviewPromptConfiguration(
             title: { context in
-                context.source == .automatic ? "喜欢 PTuner 吗？" : "支持 PTuner"
+                context.source == .automatic ? L10n.tr("喜欢 PTuner 吗？") : L10n.tr("支持 PTuner")
             },
             message: { _ in
-                "如果 PTuner 对你的练习和演出有帮助，欢迎留下一个评分。"
+                L10n.tr("如果 PTuner 对你的练习和演出有帮助，欢迎留下一个评分。")
             },
             detailText: { context in
-                context.detailText ?? "已完成 \(context.completedMilestoneCount) 次调音"
+                context.detailText ?? L10n.tr("已完成 %d 次调音", context.completedMilestoneCount)
             },
             badges: { _ in
                 [
-                    AppReviewPromptBadge(iconSystemName: "lock.shield", title: "端侧处理"),
-                    AppReviewPromptBadge(iconSystemName: "star.bubble", title: "感谢支持")
+                    AppReviewPromptBadge(iconSystemName: "lock.shield", title: L10n.tr("端侧处理")),
+                    AppReviewPromptBadge(iconSystemName: "star.bubble", title: L10n.tr("感谢支持"))
                 ]
             },
-            primaryButtonTitle: "去评分",
-            secondaryButtonTitle: "写评论",
-            secondaryLoadingTitle: "正在打开 App Store…",
-            laterButtonTitle: "以后再说",
-            lookupFailureMessage: "暂时无法打开 App Store 评分页。",
-            openFailureMessage: "无法在本设备上打开 App Store。"
+            primaryButtonTitle: L10n.tr("去评分"),
+            secondaryButtonTitle: L10n.tr("写评论"),
+            secondaryLoadingTitle: L10n.tr("正在打开 App Store…"),
+            laterButtonTitle: L10n.tr("以后再说"),
+            lookupFailureMessage: L10n.tr("暂时无法打开 App Store 评分页。"),
+            openFailureMessage: L10n.tr("无法在本设备上打开 App Store。")
         )
     }
 }

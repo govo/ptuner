@@ -31,15 +31,15 @@ struct ProInfoView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("Pro 信息")
+        .navigationTitle(L10n.tr("Pro 信息"))
         .alert(
-            "提示",
+            L10n.tr("提示"),
             isPresented: Binding(
                 get: { alertMessage != nil },
                 set: { if !$0 { alertMessage = nil } }
             )
         ) {
-            Button("好", role: .cancel) {}
+            Button(L10n.tr("好"), role: .cancel) {}
         } message: {
             Text(alertMessage ?? "")
         }
@@ -62,7 +62,7 @@ struct ProInfoView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
-                        Text("专业版")
+                        Text(L10n.tr("专业版"))
                             .font(.system(size: 22, weight: .bold))
                             .foregroundStyle(Color.white)
 
@@ -75,7 +75,7 @@ struct ProInfoView: View {
                             .clipShape(Capsule())
                     }
 
-                    Text(isPro ? "Pro 权益已激活" : "解锁更多高级功能，提升调音体验")
+                    Text(isPro ? L10n.tr("Pro 权益已激活") : L10n.tr("解锁更多高级功能，提升调音体验"))
                         .font(.system(size: 12))
                         .foregroundStyle(Color.white.opacity(0.85))
                 }
@@ -100,15 +100,15 @@ struct ProInfoView: View {
 
     private var featureCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Pro 功能")
+            Text(L10n.tr("Pro 功能"))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(AppTheme.primaryText)
 
-            featureRow("多音调音（最多 12 个音）")
-            featureRow("实时和弦识别")
-            featureRow("任意弦数的自定义调弦")
-            featureRow("更高精度的音准显示")
-            featureRow("更多专业功能")
+            featureRow(L10n.tr("多音调音（最多 12 个音）"))
+            featureRow(L10n.tr("实时和弦识别"))
+            featureRow(L10n.tr("任意弦数的自定义调弦"))
+            featureRow(L10n.tr("更高精度的音准显示"))
+            featureRow(L10n.tr("更多专业功能"))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .tunerCard(padding: 18)
@@ -143,7 +143,7 @@ struct ProInfoView: View {
                         .foregroundStyle(AppTheme.success)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Pro 已激活")
+                        Text(L10n.tr("Pro 已激活"))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(AppTheme.primaryText)
 
@@ -159,7 +159,7 @@ struct ProInfoView: View {
                     Divider().overlay(AppTheme.divider)
 
                     HStack {
-                        Text("有效期")
+                        Text(L10n.tr("有效期"))
                             .font(.system(size: 13))
                             .foregroundStyle(AppTheme.secondaryText)
                         Spacer()
@@ -169,7 +169,7 @@ struct ProInfoView: View {
                     }
                 }
 
-                PrimaryTunerButton(title: "管理订阅",
+                PrimaryTunerButton(title: L10n.tr("管理订阅"),
                                    systemImage: "arrow.up.right",
                                    role: .secondary) {
                     openURL(AppConfig.manageSubscriptionsURL)
@@ -179,16 +179,16 @@ struct ProInfoView: View {
             .tunerCard(padding: 18)
         } else {
             VStack(spacing: 12) {
-                PrimaryTunerButton(title: "升级 Pro", systemImage: "crown.fill") {
+                PrimaryTunerButton(title: L10n.tr("升级 Pro"), systemImage: "crown.fill") {
                     Task {
                         await paywallManager.presentPaywall(
                             featureID: "pro_info",
-                            marketingMessage: "解锁多音调音、和弦识别与自定义调弦。"
+                            marketingMessage: L10n.tr("解锁多音调音、和弦识别与自定义调弦。")
                         )
                     }
                 }
 
-                Text("升级后可随时通过 App Store 管理或取消订阅。")
+                Text(L10n.tr("升级后可随时通过 App Store 管理或取消订阅。"))
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.tertiaryText)
             }
@@ -201,7 +201,7 @@ struct ProInfoView: View {
         Button {
             restorePurchases()
         } label: {
-            Text(isRestoring ? "正在恢复购买…" : "恢复购买")
+            Text(isRestoring ? L10n.tr("正在恢复购买…") : L10n.tr("恢复购买"))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(AppTheme.accent)
                 .frame(maxWidth: .infinity)
@@ -217,22 +217,22 @@ struct ProInfoView: View {
     private var entitlementTypeText: String {
         #if DEBUG
         if proAccess.skipsEntitlementCheck && !paywallManager.hasActiveEntitlement {
-            return "Debug 模式已跳过权益校验"
+            return L10n.tr("Debug 模式已跳过权益校验")
         }
         #endif
 
-        guard paywallManager.hasActiveEntitlement else { return "未检测到有效权益" }
+        guard paywallManager.hasActiveEntitlement else { return L10n.tr("未检测到有效权益") }
 
         switch paywallManager.entitlementStatus {
         case .lifetime:
-            return "永久权益"
+            return L10n.tr("永久权益")
         case .subscription:
             if let willRenew = paywallManager.entitlementDetails?.willRenew {
-                return willRenew ? "自动续订订阅" : "订阅（已关闭自动续订）"
+                return willRenew ? L10n.tr("自动续订订阅") : L10n.tr("订阅（已关闭自动续订）")
             }
-            return "订阅权益"
+            return L10n.tr("订阅权益")
         case .none:
-            return "Pro 权益已激活"
+            return L10n.tr("Pro 权益已激活")
         }
     }
 
@@ -240,7 +240,9 @@ struct ProInfoView: View {
         guard case .subscription(let date) = paywallManager.entitlementStatus else {
             return nil
         }
-        return date.formatted(date: .abbreviated, time: .omitted)
+        let style = Date.FormatStyle(date: .abbreviated, time: .omitted)
+            .locale(Locale(identifier: L10n.effectiveCode))
+        return date.formatted(style)
     }
 
     private func restorePurchases() {
@@ -252,8 +254,8 @@ struct ProInfoView: View {
             await paywallManager.restorePurchases()
             isRestoring = false
             alertMessage = paywallManager.hasActiveEntitlement
-                ? "已恢复购买。"
-                : "没有找到可恢复的购买记录。"
+                ? L10n.tr("已恢复购买。")
+                : L10n.tr("没有找到可恢复的购买记录。")
         }
     }
 }

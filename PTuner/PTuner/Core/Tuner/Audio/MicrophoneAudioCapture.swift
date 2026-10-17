@@ -28,19 +28,19 @@ nonisolated enum MicrophoneCaptureError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "没有麦克风权限"
+            return L10n.tr("没有麦克风权限")
         case .noInput:
-            return "没有检测到可用的麦克风输入"
+            return L10n.tr("没有检测到可用的麦克风输入")
         case .formatUnavailable:
-            return "麦克风输入格式不可用"
+            return L10n.tr("麦克风输入格式不可用")
         case .converterUnavailable:
-            return "无法创建音频重采样器"
+            return L10n.tr("无法创建音频重采样器")
         case .deviceUnavailable(let name):
-            return "音频输入设备不可用: \(name)"
+            return L10n.tr("音频输入设备不可用: %@", name)
         case .engineStartFailed(let error):
-            return "音频引擎启动失败: \(error.localizedDescription)"
+            return L10n.tr("音频引擎启动失败: %@", error.localizedDescription)
         case .engineInterrupted:
-            return "音频采集被系统中断"
+            return L10n.tr("音频采集被系统中断")
         }
     }
 }

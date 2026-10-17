@@ -113,8 +113,8 @@ struct NeedleGaugeView: View {
     }
 
     private var accessibilityText: String {
-        guard let cents else { return "等待声音" }
-        return "音准偏差 \(Int(cents.rounded())) 音分，\(status.directionText)"
+        guard let cents else { return L10n.tr("等待声音") }
+        return L10n.tr("音准偏差 %d 音分，%@", Int(cents.rounded()), status.directionText)
     }
 }
 
@@ -253,8 +253,8 @@ struct VerticalCentsIndicator: View {
     }
 
     private var accessibilityText: String {
-        guard let cents else { return "待检测" }
-        if status == .inTune { return "音准准确" }
-        return "\(status.directionText) \(Int(abs(cents).rounded())) 音分"
+        guard let cents else { return L10n.tr("待检测") }
+        if status == .inTune { return L10n.tr("音准准确") }
+        return L10n.tr("%@ %d 音分", status.directionText, Int(abs(cents).rounded()))
     }
 }

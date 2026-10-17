@@ -23,7 +23,7 @@ struct ReferencePitchSheet: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("A4 参考频率")
+                        Text(L10n.tr("A4 参考频率"))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(AppTheme.secondaryText)
 
@@ -53,7 +53,9 @@ struct ReferencePitchSheet: View {
                         }
                     }
 
-                    Text("允许范围 \(Int(TunerSettings.minimumReferencePitch))–\(Int(TunerSettings.maximumReferencePitch)) Hz。参考音高会影响所有调音模式。")
+                    Text(L10n.tr("允许范围 %d–%d Hz。参考音高会影响所有调音模式。",
+                                 Int(TunerSettings.minimumReferencePitch),
+                                 Int(TunerSettings.maximumReferencePitch)))
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.tertiaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -66,11 +68,11 @@ struct ReferencePitchSheet: View {
 
                     Spacer()
 
-                    PrimaryTunerButton(title: "应用", systemImage: "checkmark") {
+                    PrimaryTunerButton(title: L10n.tr("应用"), systemImage: "checkmark") {
                         apply()
                     }
 
-                    PrimaryTunerButton(title: "恢复 440 Hz", systemImage: "arrow.counterclockwise", role: .secondary) {
+                    PrimaryTunerButton(title: L10n.tr("恢复 440 Hz"), systemImage: "arrow.counterclockwise", role: .secondary) {
                         onSave(440)
                         dismiss()
                     }
@@ -79,10 +81,10 @@ struct ReferencePitchSheet: View {
                 .frame(maxWidth: 460)
                 .frame(maxWidth: .infinity)
             }
-            .navigationTitle("自定义参考音高")
+            .navigationTitle(L10n.tr("自定义参考音高"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
+                    Button(L10n.tr("取消")) { dismiss() }
                         .contentShape(Rectangle())
                 }
             }
@@ -97,11 +99,11 @@ struct ReferencePitchSheet: View {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let value = Double(normalized) else {
-            errorText = "请输入有效的数字。"
+            errorText = L10n.tr("请输入有效的数字。")
             return
         }
         guard (TunerSettings.minimumReferencePitch...TunerSettings.maximumReferencePitch).contains(value) else {
-            errorText = "参考音高需要在 400–480 Hz 之间。"
+            errorText = L10n.tr("参考音高需要在 400–480 Hz 之间。")
             return
         }
 

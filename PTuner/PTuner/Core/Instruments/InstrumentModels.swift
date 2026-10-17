@@ -12,16 +12,16 @@ nonisolated enum InstrumentKind: String, Codable, CaseIterable, Identifiable, Se
 
     var displayName: String {
         switch self {
-        case .guitar: return "吉他"
-        case .bass: return "贝斯"
-        case .ukulele: return "尤克里里"
-        case .other: return "其他乐器"
+        case .guitar: return L10n.tr("吉他")
+        case .bass: return L10n.tr("贝斯")
+        case .ukulele: return L10n.tr("尤克里里")
+        case .other: return L10n.tr("其他乐器")
         }
     }
 
     var shortDisplayName: String {
         switch self {
-        case .other: return "其他"
+        case .other: return L10n.tr("其他")
         default: return displayName
         }
     }
@@ -222,8 +222,13 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
         self.createdAt = createdAt
     }
 
+    /// 内置调弦的名称随界面语言切换；自定义调弦保留用户输入的名称。
+    var displayName: String {
+        isBuiltIn ? L10n.tr(name) : name
+    }
+
     var title: String {
-        "\(kind.displayName) · \(name)"
+        "\(kind.displayName) · \(displayName)"
     }
 
     /// 例如 "E A D G B E"，用于列表副标题。
@@ -243,10 +248,10 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
     }
 
     /// 复制一份新的自定义配置。
-    func duplicated(nameSuffix: String = " 副本") -> TuningPreset {
+    func duplicated(nameSuffix: String? = nil) -> TuningPreset {
         var copy = self
         copy.id = UUID().uuidString
-        copy.name = name + nameSuffix
+        copy.name = displayName + " " + (nameSuffix ?? L10n.tr("副本"))
         copy.isBuiltIn = false
         copy.createdAt = Date()
         copy.strings = strings.map { TuningString(pitchClass: $0.pitchClass,

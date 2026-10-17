@@ -9,7 +9,7 @@ nonisolated enum CentsPrecision: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .integer: return "整数 Cents"
+        case .integer: return L10n.tr("整数 Cents")
         case .tenth: return "0.1 Cents"
         }
     }
@@ -31,8 +31,8 @@ nonisolated enum IndicatorStyle: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .needle: return "指针式"
-        case .bar: return "横向音准条"
+        case .needle: return L10n.tr("指针式")
+        case .bar: return L10n.tr("横向音准条")
         }
     }
 }
@@ -46,9 +46,9 @@ nonisolated enum DisplayStability: String, CaseIterable, Identifiable, Sendable 
 
     var title: String {
         switch self {
-        case .fast: return "快速"
-        case .balanced: return "平衡"
-        case .stable: return "稳定"
+        case .fast: return L10n.tr("快速")
+        case .balanced: return L10n.tr("平衡")
+        case .stable: return L10n.tr("稳定")
         }
     }
 

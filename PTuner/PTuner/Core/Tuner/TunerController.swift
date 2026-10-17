@@ -26,7 +26,7 @@ public final class TunerController: ObservableObject {
 
     @Published public private(set) var isRunning = false
     @Published public private(set) var isStarting = false
-    @Published public private(set) var statusText = "点击开始，允许麦克风后即可实时调音"
+    @Published public private(set) var statusText = L10n.tr("点击开始，允许麦克风后即可实时调音")
     @Published public private(set) var permissionDenied = false
     @Published public private(set) var errorText: String?
 
@@ -124,9 +124,9 @@ public final class TunerController: ObservableObject {
     }
 
     public var liveStatusText: String {
-        guard let cents = liveCents else { return "等待声音" }
-        if abs(cents) <= 5 { return "准" }
-        return cents < 0 ? "偏低" : "偏高"
+        guard let cents = liveCents else { return L10n.tr("等待声音") }
+        if abs(cents) <= 5 { return L10n.tr("准") }
+        return cents < 0 ? L10n.tr("偏低") : L10n.tr("偏高")
     }
 
     /// 当前模式下应展示的音符：多音模式用 Basic Pitch 的结果，单音模式用 CREPE。
@@ -170,7 +170,7 @@ public final class TunerController: ObservableObject {
         errorText = nil
         permissionDenied = false
         isStarting = true
-        statusText = "请求麦克风权限…"
+        statusText = L10n.tr("请求麦克风权限…")
 
         startTask?.cancel()
         startTask = Task { [weak self] in
@@ -181,18 +181,18 @@ public final class TunerController: ObservableObject {
             guard granted else {
                 self.isStarting = false
                 self.permissionDenied = true
-                self.statusText = "没有麦克风权限"
+                self.statusText = L10n.tr("没有麦克风权限")
                 return
             }
 
-            self.statusText = "加载音高模型…"
+            self.statusText = L10n.tr("加载音高模型…")
 
             do {
                 let prepared = try await self.prepareEngine()
                 guard !Task.isCancelled else { return }
 
                 self.attachCallbacks(to: prepared)
-                self.statusText = "启动麦克风…"
+                self.statusText = L10n.tr("启动麦克风…")
                 self.resetRealtimeState()
                 prepared.preferredInputDeviceUID = self.preferredInputDeviceUID
 
@@ -202,7 +202,7 @@ public final class TunerController: ObservableObject {
                 self.isStarting = false
                 self.suppressInterruptRestartsUntil = Date().addingTimeInterval(2.0)
                 self.refreshActiveInputDeviceName()
-                self.statusText = "正在监听…"
+                self.statusText = L10n.tr("正在监听…")
 
                 if self.polyphonicEnabled {
                     self.enablePolyphonic(on: prepared)
@@ -212,7 +212,7 @@ public final class TunerController: ObservableObject {
                 self.isRunning = false
                 self.isPreparingPoly = false
                 self.errorText = error.localizedDescription
-                self.statusText = "启动失败: \(error.localizedDescription)"
+                self.statusText = L10n.tr("启动失败: %@", error.localizedDescription)
             }
         }
     }
@@ -235,9 +235,13 @@ public final class TunerController: ObservableObject {
         polyReadouts = []
 
         if polyphonicEnabled {
-            statusText = polyNotes.isEmpty ? "已停止 · 多音识别已关闭" : "已停止 · 多音识别共 \(polyNotes.count) 个音"
+            statusText = polyNotes.isEmpty
+                ? L10n.tr("已停止 · 多音识别已关闭")
+                : L10n.tr("已停止 · 多音识别共 %d 个音", polyNotes.count)
         } else {
-            statusText = notes.isEmpty ? "已停止" : "已停止 · 本次识别 \(notes.count) 个音"
+            statusText = notes.isEmpty
+                ? L10n.tr("已停止")
+                : L10n.tr("已停止 · 本次识别 %d 个音", notes.count)
         }
     }
 
@@ -273,7 +277,7 @@ public final class TunerController: ObservableObject {
         refreshActiveInputDeviceName()
 
         if isRunning || isStarting {
-            restartForInputChange(message: "正在切换音频输入设备…")
+            restartForInputChange(message: L10n.tr("正在切换音频输入设备…"))
         }
     }
 
@@ -317,8 +321,8 @@ public final class TunerController: ObservableObject {
             guard !isStillAvailable, isRunning || isStarting else { return }
 
             stop()
-            errorText = "之前选择的输入设备已断开，请在设置中重新选择输入设备。"
-            statusText = "输入设备已断开"
+            errorText = L10n.tr("之前选择的输入设备已断开，请在设置中重新选择输入设备。")
+            statusText = L10n.tr("输入设备已断开")
             return
         }
 
@@ -330,7 +334,7 @@ public final class TunerController: ObservableObject {
         guard inputChangeTask == nil else { return }
 
         if defaultChanged, isRunning || isStarting {
-            restartForInputChange(message: "系统输入设备已切换，正在重新连接…")
+            restartForInputChange(message: L10n.tr("系统输入设备已切换，正在重新连接…"))
         }
         #endif
     }
@@ -390,14 +394,14 @@ public final class TunerController: ObservableObject {
         guard enabled else {
             isPreparingPoly = false
             engine?.setPolyphonicEnabled(false, maxNotes: maxPolyphony) { _ in }
-            if isRunning { statusText = "正在监听…" }
+            if isRunning { statusText = L10n.tr("正在监听…") }
             return
         }
 
         if let engine, isRunning {
             enablePolyphonic(on: engine)
         } else {
-            statusText = "多音识别已选好，点开始调音后生效"
+            statusText = L10n.tr("多音识别已选好，点开始调音后生效")
         }
     }
 
@@ -412,13 +416,13 @@ public final class TunerController: ObservableObject {
         engine?.setPolyphonyLimit(clamped)
 
         if isRunning, polyphonicEnabled, !isPreparingPoly {
-            statusText = "正在监听 · 多音模式（最多 \(clamped) 个音）"
+            statusText = L10n.tr("正在监听 · 多音模式（最多 %d 个音）", clamped)
         }
     }
 
     private func enablePolyphonic(on engine: TunerEngine) {
         isPreparingPoly = true
-        statusText = "准备多音模型…"
+        statusText = L10n.tr("准备多音模型…")
 
         engine.setPolyphonicEnabled(true, maxNotes: maxPolyphony) { [weak self] result in
             Task { @MainActor [weak self] in
@@ -429,15 +433,15 @@ public final class TunerController: ObservableObject {
                 switch result {
                 case .success:
                     if self.isRunning {
-                        self.statusText = "正在监听 · 多音模式（最多 \(self.maxPolyphony) 个音）"
+                        self.statusText = L10n.tr("正在监听 · 多音模式（最多 %d 个音）", self.maxPolyphony)
                     }
                 case .failure(let error):
                     self.polyphonicEnabled = false
                     self.polyphonyDemands = []
                     self.polyNotes = []
                     self.polyReadouts = []
-                    self.errorText = "多音模型加载失败: \(error.localizedDescription)"
-                    self.statusText = "多音识别不可用，已回到单音模式"
+                    self.errorText = L10n.tr("多音模型加载失败: %@", error.localizedDescription)
+                    self.statusText = L10n.tr("多音识别不可用，已回到单音模式")
                 }
             }
         }
@@ -480,17 +484,17 @@ public final class TunerController: ObservableObject {
                     }
                     guard self.automaticRestartTimestamps.count < 3 else {
                         self.stop()
-                        self.errorText = "音频输入反复中断，请重新选择输入设备或重启应用。"
-                        self.statusText = "音频输入不稳定"
+                        self.errorText = L10n.tr("音频输入反复中断，请重新选择输入设备或重启应用。")
+                        self.statusText = L10n.tr("音频输入不稳定")
                         return
                     }
                     self.automaticRestartTimestamps.append(now)
-                    self.restartForInputChange(message: "音频输入已变化，正在重新连接…")
+                    self.restartForInputChange(message: L10n.tr("音频输入已变化，正在重新连接…"))
                     return
                 }
 
                 self.errorText = error.localizedDescription
-                self.statusText = "音频采集中断: \(error.localizedDescription)"
+                self.statusText = L10n.tr("音频采集中断: %@", error.localizedDescription)
                 if self.isRunning {
                     self.stop()
                 }
@@ -504,7 +508,7 @@ public final class TunerController: ObservableObject {
         engine.onPolyError = { [weak self] error in
             Task { @MainActor [weak self] in
                 guard let self, self.isRunning, self.polyphonicEnabled else { return }
-                self.errorText = "多音识别: \(error.localizedDescription)"
+                self.errorText = L10n.tr("多音识别: %@", error.localizedDescription)
             }
         }
     }
@@ -563,7 +567,7 @@ public final class TunerController: ObservableObject {
         let count = notes.count + (liveNote == nil ? 0 : 1)
         if isRunning, !polyphonicEnabled, count != lastReportedNoteCount {
             lastReportedNoteCount = count
-            statusText = "正在监听 · 已识别 \(count) 个音"
+            statusText = L10n.tr("正在监听 · 已识别 %d 个音", count)
         }
     }
 
@@ -602,7 +606,9 @@ public final class TunerController: ObservableObject {
         }
 
         let active = min(update.activeNoteCount, maxPolyphony)
-        let base = "正在监听 · 多音 \(active)/\(maxPolyphony)"
-        statusText = update.notes.isEmpty ? base : "\(base) · 已识别 \(update.notes.count) 个音"
+        let base = L10n.tr("正在监听 · 多音 %d/%d", active, maxPolyphony)
+        statusText = update.notes.isEmpty
+            ? base
+            : L10n.tr("%@ · 已识别 %d 个音", base, update.notes.count)
     }
 }

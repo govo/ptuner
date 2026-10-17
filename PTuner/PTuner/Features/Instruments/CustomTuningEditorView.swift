@@ -37,17 +37,17 @@ struct CustomTuningEditorView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .navigationTitle(isNew ? "自定义调弦" : "编辑调弦")
+            .navigationTitle(isNew ? L10n.tr("自定义调弦") : L10n.tr("编辑调弦"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button(L10n.tr("取消")) {
                         dismiss()
                     }
                     .contentShape(Rectangle())
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
+                    Button(L10n.tr("保存")) {
                         save()
                     }
                     .fontWeight(.semibold)
@@ -55,28 +55,28 @@ struct CustomTuningEditorView: View {
                 }
             }
             .alert(
-                "提示",
+                L10n.tr("提示"),
                 isPresented: Binding(
                     get: { errorMessage != nil },
                     set: { if !$0 { errorMessage = nil } }
                 )
             ) {
-                Button("好", role: .cancel) {}
+                Button(L10n.tr("好"), role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")
             }
             .alert(
-                savedMessage ?? "已保存",
+                savedMessage ?? L10n.tr("已保存"),
                 isPresented: Binding(
                     get: { savedMessage != nil },
                     set: { if !$0 { savedMessage = nil } }
                 )
             ) {
-                Button("完成") {
+                Button(L10n.tr("完成")) {
                     dismiss()
                 }
             } message: {
-                Text("调弦「\(draft.name)」已经可用于调音。")
+                Text(L10n.tr("调弦「%@」已经可用于调音。", draft.name))
             }
         }
         .presentationDetents([.large])
@@ -86,17 +86,17 @@ struct CustomTuningEditorView: View {
 
     private var basicSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("基本信息")
+            sectionTitle(L10n.tr("基本信息"))
 
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 12) {
-                        Text("名称")
+                        Text(L10n.tr("名称"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(AppTheme.primaryText)
                             .frame(width: 64, alignment: .leading)
 
-                        TextField("调弦名称", text: $draft.name)
+                        TextField(L10n.tr("调弦名称"), text: $draft.name)
                             .textFieldStyle(.plain)
                             .font(.system(size: 14))
                             .foregroundStyle(AppTheme.primaryText)
@@ -106,7 +106,7 @@ struct CustomTuningEditorView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                     }
 
-                    fieldDescription("用于在乐器列表和调音页显示。")
+                    fieldDescription(L10n.tr("用于在乐器列表和调音页显示。"))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -115,7 +115,7 @@ struct CustomTuningEditorView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 12) {
-                        Text("乐器类型")
+                        Text(L10n.tr("乐器类型"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(AppTheme.primaryText)
                             .frame(width: 64, alignment: .leading)
@@ -133,7 +133,7 @@ struct CustomTuningEditorView: View {
                         }
                     }
 
-                    fieldDescription("决定在乐器列表中的分类和图标。")
+                    fieldDescription(L10n.tr("决定在乐器列表中的分类和图标。"))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -142,7 +142,7 @@ struct CustomTuningEditorView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 12) {
-                        Text("弦数")
+                        Text(L10n.tr("弦数"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(AppTheme.primaryText)
                             .frame(width: 64, alignment: .leading)
@@ -154,7 +154,7 @@ struct CustomTuningEditorView: View {
                         }
                     }
 
-                    fieldDescription("这个调弦包含的弦数，最多 12 根。")
+                    fieldDescription(L10n.tr("这个调弦包含的弦数，最多 12 根。"))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -178,10 +178,10 @@ struct CustomTuningEditorView: View {
 
     private var pianoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("八度数字对照")
+            sectionTitle(L10n.tr("八度数字对照"))
 
             VStack(alignment: .leading, spacing: 10) {
-                fieldDescription("音名后的数字是八度。例如 E2 位于 C2–B2 这一组，中央 C 为 C4。")
+                fieldDescription(L10n.tr("音名后的数字是八度。例如 E2 位于 C2–B2 这一组，中央 C 为 C4。"))
 
                 PianoKeyboard88View(highlightedNotes: highlightedMIDINotes)
                     .frame(height: 112)
@@ -191,7 +191,7 @@ struct CustomTuningEditorView: View {
                         .fill(AppTheme.accent)
                         .frame(width: 9, height: 9)
 
-                    Text("当前调弦中的音")
+                    Text(L10n.tr("当前调弦中的音"))
                         .font(.system(size: 11))
                         .foregroundStyle(AppTheme.tertiaryText)
                 }
@@ -212,12 +212,12 @@ struct CustomTuningEditorView: View {
 
     private var stringsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("弦的音高设置")
+            sectionTitle(L10n.tr("弦的音高设置"))
 
             VStack(alignment: .leading, spacing: 2) {
-                fieldDescription("每行依次为音名、八度、音分偏移。")
-                fieldDescription("音名与八度决定目标音高；音分偏移用于微调，正数偏高、负数偏低。")
-                fieldDescription("右侧菜单可以上移、下移或删除这根弦。")
+                fieldDescription(L10n.tr("每行依次为音名、八度、音分偏移。"))
+                fieldDescription(L10n.tr("音名与八度决定目标音高；音分偏移用于微调，正数偏高、负数偏低。"))
+                fieldDescription(L10n.tr("右侧菜单可以上移、下移或删除这根弦。"))
             }
             .padding(.horizontal, 4)
 
@@ -238,7 +238,7 @@ struct CustomTuningEditorView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "plus")
                             .font(.system(size: 12, weight: .bold))
-                        Text("添加弦")
+                        Text(L10n.tr("添加弦"))
                             .font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundStyle(draft.strings.count >= 12 ? AppTheme.tertiaryText : AppTheme.accent)
@@ -302,14 +302,14 @@ struct CustomTuningEditorView: View {
                 Button {
                     moveString(from: index, to: index - 1)
                 } label: {
-                    Label("上移", systemImage: "arrow.up")
+                    Label(L10n.tr("上移"), systemImage: "arrow.up")
                 }
                 .disabled(index == 0)
 
                 Button {
                     moveString(from: index, to: index + 1)
                 } label: {
-                    Label("下移", systemImage: "arrow.down")
+                    Label(L10n.tr("下移"), systemImage: "arrow.down")
                 }
                 .disabled(index >= draft.strings.count - 1)
 
@@ -318,7 +318,7 @@ struct CustomTuningEditorView: View {
                 Button(role: .destructive) {
                     removeString(at: index)
                 } label: {
-                    Label("删除这根弦", systemImage: "trash")
+                    Label(L10n.tr("删除这根弦"), systemImage: "trash")
                 }
                 .disabled(draft.strings.count <= 1)
             } label: {
@@ -401,7 +401,7 @@ struct CustomTuningEditorView: View {
     }
 
     private func centsLabel(_ value: Double) -> String {
-        String(format: "%+.0f cents", value)
+        L10n.tr("%+.0f cents", value)
     }
 
     // MARK: - 编辑操作
@@ -457,17 +457,17 @@ struct CustomTuningEditorView: View {
     private func save() {
         let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            errorMessage = "请输入调弦名称。"
+            errorMessage = L10n.tr("请输入调弦名称。")
             return
         }
         guard !draft.strings.isEmpty else {
-            errorMessage = "请至少保留一根弦。"
+            errorMessage = L10n.tr("请至少保留一根弦。")
             return
         }
 
         draft.name = trimmed
         library.saveCustom(draft)
         AppDiagnostics.breadcrumb(.tuner, "custom_tuning_saved")
-        savedMessage = "已保存"
+        savedMessage = L10n.tr("已保存")
     }
 }

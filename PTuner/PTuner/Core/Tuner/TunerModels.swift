@@ -99,8 +99,8 @@ nonisolated public struct TunerPolyReadout: Identifiable, Equatable, Sendable {
     }
 
     public var statusText: String {
-        if abs(cents) <= 5 { return "准" }
-        return cents < 0 ? "偏低" : "偏高"
+        if abs(cents) <= 5 { return L10n.tr("准") }
+        return cents < 0 ? L10n.tr("偏低") : L10n.tr("偏高")
     }
 }
 

@@ -4,6 +4,7 @@ import SwiftUI
 /// App 主容器：负责共享状态注入与一级导航。
 struct ContentView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
+    @ObservedObject private var appLanguage = AppLanguageSettings.shared
 
     @StateObject private var tuner = TunerController()
     @StateObject private var library = InstrumentLibrary()
@@ -18,6 +19,7 @@ struct ContentView: View {
             iosLayout
             #endif
         }
+        .id(appLanguage.refreshID)
         .tint(AppTheme.accent)
         .environmentObject(tuner)
         .environmentObject(library)

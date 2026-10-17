@@ -12,9 +12,9 @@ struct LandingView: View {
             pages: [
                 .standard(
                     id: "tuning",
-                    title: "专业级音准反馈",
-                    subtitle: "实时显示音名、频率与 cents 偏差，像专业调音单块一样快速锁定音准。",
-                    footnote: "支持 A4 参考音高与显示精度设置。",
+                    title: L10n.tr("专业级音准反馈"),
+                    subtitle: L10n.tr("实时显示音名、频率与 cents 偏差，像专业调音单块一样快速锁定音准。"),
+                    footnote: L10n.tr("支持 A4 参考音高与显示精度设置。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -23,9 +23,9 @@ struct LandingView: View {
                 },
                 .standard(
                     id: "multi-pitch",
-                    title: "多音与和弦识别",
-                    subtitle: "同时检测多根弦，或直接识别当前和弦名称，适合快速校音与演奏辅助。",
-                    footnote: "多音调音与和弦识别为 Pro 功能。",
+                    title: L10n.tr("多音与和弦识别"),
+                    subtitle: L10n.tr("同时检测多根弦，或直接识别当前和弦名称，适合快速校音与演奏辅助。"),
+                    footnote: L10n.tr("多音调音与和弦识别为 Pro 功能。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -34,9 +34,9 @@ struct LandingView: View {
                 },
                 .standard(
                     id: "custom",
-                    title: "为你的乐器而设",
-                    subtitle: "内置吉他、贝斯、尤克里里等调弦，也可以创建任意弦数和音高的自定义调弦。",
-                    footnote: "收藏常用调弦，打开即可调音。",
+                    title: L10n.tr("为你的乐器而设"),
+                    subtitle: L10n.tr("内置吉他、贝斯、尤克里里等调弦，也可以创建任意弦数和音高的自定义调弦。"),
+                    footnote: L10n.tr("收藏常用调弦，打开即可调音。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -48,22 +48,22 @@ struct LandingView: View {
                 configuration: OnboardingNetworkNoticeConfiguration(
                     heroSystemName: "lock.shield",
                     heroTint: AppTheme.success,
-                    badgeTitle: "隐私优先",
-                    title: "调音在设备端完成",
-                    message: "麦克风音频只用于实时音高检测，不会上传服务器。",
-                    secondaryMessage: "仅在同步订阅状态时会访问网络。",
+                    badgeTitle: L10n.tr("隐私优先"),
+                    title: L10n.tr("调音在设备端完成"),
+                    message: L10n.tr("麦克风音频只用于实时音高检测，不会上传服务器。"),
+                    secondaryMessage: L10n.tr("仅在同步订阅状态时会访问网络。"),
                     items: [
                         OnboardingNetworkNoticeConfiguration.Item(
                             iconSystemName: "waveform",
                             iconTint: AppTheme.accent,
-                            title: "本机处理",
-                            message: "音高检测与和弦识别都在设备上运行。"
+                            title: L10n.tr("本机处理"),
+                            message: L10n.tr("音高检测与和弦识别都在设备上运行。")
                         ),
                         OnboardingNetworkNoticeConfiguration.Item(
                             iconSystemName: "creditcard",
                             iconTint: AppTheme.warning,
-                            title: "订阅同步",
-                            message: "App 会向 App Store 核对 Pro 权益状态。"
+                            title: L10n.tr("订阅同步"),
+                            message: L10n.tr("App 会向 App Store 核对 Pro 权益状态。")
                         )
                     ]
                 ),
@@ -73,9 +73,9 @@ struct LandingView: View {
             navigation: OnboardingFlowNavigation(
                 title: "PTuner",
                 showsTitle: true,
-                skipButtonTitle: "跳过",
-                nextButtonTitle: "继续",
-                doneButtonTitle: "开始调音",
+                skipButtonTitle: L10n.tr("跳过"),
+                nextButtonTitle: L10n.tr("继续"),
+                doneButtonTitle: L10n.tr("开始调音"),
                 nextButtonSystemImage: "arrow.right",
                 doneButtonSystemImage: "waveform"
             ),
@@ -133,7 +133,7 @@ struct LandingView: View {
         Task {
             await paywallManager.presentPaywall(
                 featureID: "onboarding",
-                marketingMessage: "解锁多音调音、和弦识别与自定义调弦。"
+                marketingMessage: L10n.tr("解锁多音调音、和弦识别与自定义调弦。")
             )
         }
     }

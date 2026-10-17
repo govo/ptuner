@@ -15,13 +15,13 @@ enum InstrumentCategory: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "全部"
-        case .favorites: return "收藏"
-        case .guitar: return "吉他"
-        case .bass: return "贝斯"
-        case .ukulele: return "尤克里里"
-        case .other: return "其他"
-        case .custom: return "自定义"
+        case .all: return L10n.tr("全部")
+        case .favorites: return L10n.tr("收藏")
+        case .guitar: return L10n.tr("吉他")
+        case .bass: return L10n.tr("贝斯")
+        case .ukulele: return L10n.tr("尤克里里")
+        case .other: return L10n.tr("其他")
+        case .custom: return L10n.tr("自定义")
         }
     }
 
@@ -69,7 +69,7 @@ struct InstrumentCategoryStrip: View {
 
 struct InstrumentSearchField: View {
     @Binding var text: String
-    var placeholder: String = "搜索乐器或调弦方式"
+    var placeholder: String = L10n.tr("搜索乐器或调弦方式")
 
     var body: some View {
         HStack(spacing: 9) {
@@ -162,17 +162,17 @@ struct PresetManagedRow: View {
             .buttonStyle(.plain)
 
             Menu {
-                Button("设为当前调弦", action: onSelect)
+                Button(L10n.tr("设为当前调弦"), action: onSelect)
 
-                Button(isFavorite ? "取消收藏" : "收藏", action: onToggleFavorite)
+                Button(isFavorite ? L10n.tr("取消收藏") : L10n.tr("收藏"), action: onToggleFavorite)
 
-                Button("以此新建自定义调弦", action: onDuplicate)
+                Button(L10n.tr("以此新建自定义调弦"), action: onDuplicate)
 
                 if let onEdit, !preset.isBuiltIn {
                     Divider()
-                    Button("编辑调弦", action: onEdit)
+                    Button(L10n.tr("编辑调弦"), action: onEdit)
                     if let onDelete {
-                        Button("删除调弦", role: .destructive, action: onDelete)
+                        Button(L10n.tr("删除调弦"), role: .destructive, action: onDelete)
                     }
                 }
             } label: {
@@ -258,10 +258,10 @@ struct TuningModeSegmentedControl: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            segment(title: "乐器调音",
+            segment(title: L10n.tr("乐器调音"),
                     isSelected: !isFreeTuning,
                     action: onSelectInstrument)
-            segment(title: "半音阶",
+            segment(title: L10n.tr("半音阶"),
                     isSelected: isFreeTuning,
                     action: onSelectChromatic)
         }

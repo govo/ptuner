@@ -24,13 +24,13 @@ struct ChordRecognitionView: View {
     }
 
     private var inputNoteText: String {
-        guard tuner.isRunning else { return "未开始监听" }
+        guard tuner.isRunning else { return L10n.tr("未开始监听") }
         let pitches = tuner.polyReadouts
-        guard !pitches.isEmpty else { return "等待声音…" }
+        guard !pitches.isEmpty else { return L10n.tr("等待声音…") }
 
         let names = pitches.prefix(4).map { NoteNames.name(midi: $0.midiPitch) }
         let summary = names.joined(separator: " · ")
-        return pitches.count > 4 ? "\(summary) 等 \(pitches.count) 个音" : summary
+        return pitches.count > 4 ? L10n.tr("%@ 等 %d 个音", summary, pitches.count) : summary
     }
 
     var body: some View {
@@ -81,7 +81,7 @@ struct ChordRecognitionView: View {
                 .font(.system(size: 21, weight: .semibold))
                 .foregroundStyle(AppTheme.accent)
 
-            Text("和弦识别")
+            Text(L10n.tr("和弦识别"))
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
@@ -111,17 +111,17 @@ struct ChordRecognitionView: View {
         if tuner.permissionDenied {
             TunerStatusBanner(
                 icon: "mic.slash.fill",
-                title: "没有麦克风权限",
-                message: "请在系统设置中允许 PTuner 使用麦克风，然后返回重试。",
-                actionTitle: "去设置",
+                title: L10n.tr("没有麦克风权限"),
+                message: L10n.tr("请在系统设置中允许 PTuner 使用麦克风，然后返回重试。"),
+                actionTitle: L10n.tr("去设置"),
                 action: { PlatformActions.openMicrophoneSettings() }
             )
         } else if let error = tuner.errorText {
             TunerStatusBanner(
                 icon: "exclamationmark.triangle.fill",
-                title: "音频输入不可用",
+                title: L10n.tr("音频输入不可用"),
                 message: error,
-                actionTitle: "重试",
+                actionTitle: L10n.tr("重试"),
                 action: { tuner.start() }
             )
         }
@@ -135,16 +135,16 @@ struct ChordRecognitionView: View {
                 .font(.system(size: 34, weight: .semibold))
                 .foregroundStyle(AppTheme.accent)
 
-            Text("和弦识别是 Pro 功能")
+            Text(L10n.tr("和弦识别是 Pro 功能"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
-            Text("升级后可以实时识别当前演奏的和弦名称与组成音，不受乐器选择影响。")
+            Text(L10n.tr("升级后可以实时识别当前演奏的和弦名称与组成音，不受乐器选择影响。"))
                 .font(.system(size: 13))
                 .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
 
-            PrimaryTunerButton(title: "解锁 Pro", systemImage: "sparkles") {
+            PrimaryTunerButton(title: L10n.tr("解锁 Pro"), systemImage: "sparkles") {
                 presentPaywall()
             }
         }
@@ -156,7 +156,7 @@ struct ChordRecognitionView: View {
 
     private var chordPanel: some View {
         VStack(spacing: 14) {
-            Text("识别到和弦")
+            Text(L10n.tr("识别到和弦"))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(AppTheme.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,7 +167,7 @@ struct ChordRecognitionView: View {
                 .contentTransition(.numericText())
                 .frame(maxWidth: .infinity)
 
-            Text(chordMatch?.compositionNames.joined(separator: " · ") ?? "弹奏和弦以开始识别")
+            Text(chordMatch?.compositionNames.joined(separator: " · ") ?? L10n.tr("弹奏和弦以开始识别"))
                 .font(.system(size: 14, weight: .medium, design: .monospaced))
                 .foregroundStyle(AppTheme.secondaryText)
 
@@ -183,7 +183,7 @@ struct ChordRecognitionView: View {
                 Divider().overlay(AppTheme.divider)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("组成音")
+                    Text(L10n.tr("组成音"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(AppTheme.secondaryText)
 
@@ -227,11 +227,11 @@ struct ChordRecognitionView: View {
     }
 
     private var chordStatusText: String {
-        guard tuner.isRunning else { return "未开始检测" }
-        if tuner.polyReadouts.isEmpty { return "等待声音" }
-        if chordMatch != nil { return "识别成功" }
-        if tuner.polyReadouts.count < 3 { return "识别中 · 需要更多组成音" }
-        return "识别中"
+        guard tuner.isRunning else { return L10n.tr("未开始检测") }
+        if tuner.polyReadouts.isEmpty { return L10n.tr("等待声音") }
+        if chordMatch != nil { return L10n.tr("识别成功") }
+        if tuner.polyReadouts.count < 3 { return L10n.tr("识别中 · 需要更多组成音") }
+        return L10n.tr("识别中")
     }
 
     private var chordStatusColor: Color {
@@ -255,22 +255,22 @@ struct ChordRecognitionView: View {
     }
 
     private var detectingText: String {
-        guard tuner.isRunning else { return "未开始检测" }
-        if tuner.isPreparingPoly { return "正在准备多音模型…" }
+        guard tuner.isRunning else { return L10n.tr("未开始检测") }
+        if tuner.isPreparingPoly { return L10n.tr("正在准备多音模型…") }
         let count = tuner.polyReadouts.count
-        return count == 0 ? "等待演奏…" : "\(count) 个音同时检测中…"
+        return count == 0 ? L10n.tr("等待演奏…") : L10n.tr("%d 个音同时检测中…", count)
     }
 
     @ViewBuilder
     private var startStopButton: some View {
         if tuner.isStarting {
-            PrimaryTunerButton(title: "正在启动…", systemImage: "hourglass", role: .secondary) {}
+            PrimaryTunerButton(title: L10n.tr("正在启动…"), systemImage: "hourglass", role: .secondary) {}
         } else if tuner.isRunning {
-            PrimaryTunerButton(title: "停止监听", systemImage: "stop.fill", role: .secondary) {
+            PrimaryTunerButton(title: L10n.tr("停止监听"), systemImage: "stop.fill", role: .secondary) {
                 tuner.stop()
             }
         } else {
-            PrimaryTunerButton(title: "开始检测", systemImage: "mic.fill") {
+            PrimaryTunerButton(title: L10n.tr("开始检测"), systemImage: "mic.fill") {
                 tuner.start()
             }
         }
@@ -286,7 +286,7 @@ struct ChordRecognitionView: View {
         Task {
             await paywallManager.presentPaywall(
                 featureID: "chord_recognition",
-                marketingMessage: "升级 Pro，解锁实时和弦识别。"
+                marketingMessage: L10n.tr("升级 Pro，解锁实时和弦识别。")
             )
         }
     }

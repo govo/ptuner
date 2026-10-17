@@ -23,10 +23,10 @@ struct AboutView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .navigationTitle("关于我们")
+            .navigationTitle(L10n.tr("关于我们"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { dismiss() }
+                    Button(L10n.tr("完成")) { dismiss() }
                         .contentShape(Rectangle())
                 }
             }
@@ -49,7 +49,7 @@ struct AboutView: View {
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
-            Text("专业乐器调音器")
+            Text(L10n.tr("专业乐器调音器"))
                 .font(.system(size: 13))
                 .foregroundStyle(AppTheme.secondaryText)
 
@@ -63,12 +63,12 @@ struct AboutView: View {
 
     private var descriptionCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("为音乐爱好者和专业音乐人设计。支持单音调音、多音同时检测、和弦识别与任意弦数的自定义调弦。")
+            Text(L10n.tr("为音乐爱好者和专业音乐人设计。支持单音调音、多音同时检测、和弦识别与任意弦数的自定义调弦。"))
                 .font(.system(size: 13))
                 .foregroundStyle(AppTheme.primaryText)
                 .lineSpacing(3)
 
-            Text("所有音高检测都在设备端完成，麦克风音频不会上传服务器。")
+            Text(L10n.tr("所有音高检测都在设备端完成，麦克风音频不会上传服务器。"))
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.secondaryText)
                 .lineSpacing(3)
@@ -82,14 +82,14 @@ struct AboutView: View {
             Button {
                 openURL(AppConfig.privacyPolicyURL)
             } label: {
-                linkRow(icon: "hand.raised.fill", tint: AppTheme.success, title: "隐私政策", divider: true)
+                linkRow(icon: "hand.raised.fill", tint: AppTheme.success, title: L10n.tr("隐私政策"), divider: true)
             }
             .buttonStyle(.plain)
 
             Button {
                 openURL(AppConfig.termsOfUseURL)
             } label: {
-                linkRow(icon: "doc.text.fill", tint: AppTheme.warning, title: "使用条款", divider: false)
+                linkRow(icon: "doc.text.fill", tint: AppTheme.warning, title: L10n.tr("使用条款"), divider: false)
             }
             .buttonStyle(.plain)
         }
@@ -133,6 +133,6 @@ struct AboutView: View {
     private var versionText: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "版本 \(version) (\(build))"
+        return L10n.tr("版本 %@ (%@)", version, build)
     }
 }

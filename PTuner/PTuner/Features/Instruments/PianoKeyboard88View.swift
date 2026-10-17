@@ -75,7 +75,7 @@ struct PianoKeyboard88View: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("88 键钢琴音高对照图，从 A0 到 C8")
+        .accessibilityLabel(L10n.tr("88 键钢琴音高对照图，从 A0 到 C8"))
     }
 
     private var whiteKeyColor: Color {

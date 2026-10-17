@@ -39,13 +39,13 @@ struct AudioInputDeviceView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("输入设备")
+        .navigationTitle(L10n.tr("输入设备"))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     monitor.refresh()
                 } label: {
-                    Label("刷新", systemImage: "arrow.clockwise")
+                    Label(L10n.tr("刷新"), systemImage: "arrow.clockwise")
                 }
                 .contentShape(Rectangle())
             }
@@ -68,11 +68,11 @@ struct AudioInputDeviceView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("选择麦克风或音频接口")
+                Text(L10n.tr("选择麦克风或音频接口"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
 
-                Text("推荐使用内置麦克风或通过 USB 连接的音频接口。切换设备时会自动重新启动调音检测。")
+                Text(L10n.tr("推荐使用内置麦克风或通过 USB 连接的音频接口。切换设备时会自动重新启动调音检测。"))
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.secondaryText)
                     .lineSpacing(2)
@@ -86,7 +86,7 @@ struct AudioInputDeviceView: View {
 
     private var deviceList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("可用输入")
+            Text(L10n.tr("可用输入"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(AppTheme.secondaryText)
                 .padding(.leading, 4)
@@ -118,8 +118,8 @@ struct AudioInputDeviceView: View {
             deviceRowContent(
                 icon: "gearshape.fill",
                 tint: AppTheme.secondaryText,
-                title: "系统默认",
-                subtitle: defaultDeviceName.map { "当前：\($0)" } ?? "跟随 macOS 声音设置",
+                title: L10n.tr("系统默认"),
+                subtitle: defaultDeviceName.map { L10n.tr("当前：%@", $0) } ?? L10n.tr("跟随 macOS 声音设置"),
                 isSelected: settings.preferredInputDeviceUID == nil
             )
         }
@@ -187,7 +187,7 @@ struct AudioInputDeviceView: View {
     private func subtitle(for device: AudioInputDevice) -> String? {
         var parts: [String] = []
         if device.isDefault {
-            parts.append("系统默认输入")
+            parts.append(L10n.tr("系统默认输入"))
         }
         if let kind = device.kindLabel {
             parts.append(kind)
@@ -206,7 +206,7 @@ struct AudioInputDeviceView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(AppTheme.warning)
 
-                    Text("之前选择的输入设备当前不可用，请重新选择。")
+                    Text(L10n.tr("之前选择的输入设备当前不可用，请重新选择。"))
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -225,7 +225,8 @@ struct AudioInputDeviceView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(AppTheme.success)
 
-                    Text("已检测到新输入设备：\(monitor.recentlyAdded.map(\.name).joined(separator: "、"))")
+                    Text(L10n.tr("已检测到新输入设备：%@",
+                                 monitor.recentlyAdded.map(\.name).joined(separator: ", ")))
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -239,7 +240,7 @@ struct AudioInputDeviceView: View {
             }
 
             if missingPreferredDevice || monitor.recentlyAdded.isEmpty {
-                Text("设备增删或系统默认输入变化会自动更新，也可以点按右上角手动刷新。")
+                Text(L10n.tr("设备增删或系统默认输入变化会自动更新，也可以点按右上角手动刷新。"))
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.tertiaryText)
                     .frame(maxWidth: .infinity, alignment: .center)

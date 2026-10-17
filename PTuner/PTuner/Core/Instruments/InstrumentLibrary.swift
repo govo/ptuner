@@ -113,6 +113,7 @@ final class InstrumentLibrary: ObservableObject {
         guard !trimmed.isEmpty else { return [] }
         return allPresets.filter { preset in
             preset.name.localizedCaseInsensitiveContains(trimmed)
+                || preset.displayName.localizedCaseInsensitiveContains(trimmed)
                 || preset.kind.displayName.localizedCaseInsensitiveContains(trimmed)
                 || preset.notesSummary.localizedCaseInsensitiveContains(trimmed)
                 || preset.title.localizedCaseInsensitiveContains(trimmed)
@@ -202,7 +203,7 @@ final class InstrumentLibrary: ObservableObject {
             return base
         }
         return TuningPreset(id: UUID().uuidString,
-                            name: "我的自定义调弦",
+                            name: L10n.tr("我的自定义调弦"),
                             kind: kind,
                             strings: strings.isEmpty ? [TuningString(midiNote: 40)] : strings,
                             isBuiltIn: false)

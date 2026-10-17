@@ -211,7 +211,7 @@ struct TunerInputStatusBar: View {
     }
 
     private var deviceLabelText: String {
-        deviceName ?? (isRunning ? "输入设备不可用" : "未开始监听")
+        deviceName ?? (isRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
     }
 
     private var deviceLabel: some View {
@@ -266,16 +266,16 @@ struct TunerInputStatusBar: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("选择音频输入设备")
-        .accessibilityLabel("输入设备：\(deviceLabelText)")
+        .help(L10n.tr("选择音频输入设备"))
+        .accessibilityLabel(L10n.tr("输入设备：%@", deviceLabelText))
     }
 
     private var systemDefaultMenuTitle: String {
         if let uid = monitor.defaultDeviceUID,
            let device = monitor.devices.first(where: { $0.id == uid }) {
-            return "系统默认 · \(device.name)"
+            return L10n.tr("系统默认 · %@", device.name)
         }
-        return "系统默认"
+        return L10n.tr("系统默认")
     }
     #endif
 
@@ -324,7 +324,7 @@ struct TunerInputStatusBar: View {
                 }
                 .frame(width: 76, height: 6)
 
-                Text(hasSignal ? "有输入" : (isRunning ? "无输入" : "已停止"))
+                Text(hasSignal ? L10n.tr("有输入") : (isRunning ? L10n.tr("无输入") : L10n.tr("已停止")))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(hasSignal ? AppTheme.success : AppTheme.tertiaryText)
             }
@@ -499,7 +499,7 @@ struct TunerSwitch: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("多音调音")
-        .accessibilityValue(isOn ? "已开启" : "已关闭")
+        .accessibilityLabel(L10n.tr("多音调音"))
+        .accessibilityValue(isOn ? L10n.tr("已开启") : L10n.tr("已关闭"))
     }
 }

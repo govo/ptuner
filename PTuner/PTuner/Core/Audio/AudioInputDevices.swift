@@ -25,7 +25,7 @@ nonisolated enum AudioInputDevices {
         return deviceIDs().compactMap { deviceID in
             guard inputChannelCount(deviceID) > 0 else { return nil }
             let uid = stringProperty(deviceID, selector: kAudioDevicePropertyDeviceUID) ?? "device-\(deviceID)"
-            let name = stringProperty(deviceID, selector: kAudioObjectPropertyName) ?? "未命名输入设备"
+            let name = stringProperty(deviceID, selector: kAudioObjectPropertyName) ?? L10n.tr("未命名输入设备")
             return AudioInputDevice(id: uid,
                                     name: name,
                                     isDefault: deviceID == defaultID,
@@ -119,14 +119,14 @@ nonisolated enum AudioInputDevices {
         }
 
         switch transport {
-        case kAudioDeviceTransportTypeBuiltIn: return "内置"
+        case kAudioDeviceTransportTypeBuiltIn: return L10n.tr("内置")
         case kAudioDeviceTransportTypeUSB: return "USB"
-        case kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE: return "蓝牙"
-        case kAudioDeviceTransportTypeAggregate: return "聚合设备"
-        case kAudioDeviceTransportTypeVirtual: return "虚拟设备"
+        case kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE: return L10n.tr("蓝牙")
+        case kAudioDeviceTransportTypeAggregate: return L10n.tr("聚合设备")
+        case kAudioDeviceTransportTypeVirtual: return L10n.tr("虚拟设备")
         case kAudioDeviceTransportTypeHDMI: return "HDMI"
         case kAudioDeviceTransportTypeDisplayPort: return "DisplayPort"
-        case kAudioDeviceTransportTypeThunderbolt: return "雷雳"
+        case kAudioDeviceTransportTypeThunderbolt: return L10n.tr("雷雳")
         default: return nil
         }
     }
@@ -166,11 +166,11 @@ nonisolated enum AudioInputDevices {
 
     private static func label(for port: AVAudioSession.Port) -> String? {
         switch port {
-        case .builtInMic: return "内置"
+        case .builtInMic: return L10n.tr("内置")
         case .usbAudio: return "USB"
-        case .bluetoothHFP, .bluetoothLE: return "蓝牙"
-        case .headsetMic: return "耳机麦克风"
-        case .lineIn: return "线路输入"
+        case .bluetoothHFP, .bluetoothLE: return L10n.tr("蓝牙")
+        case .headsetMic: return L10n.tr("耳机麦克风")
+        case .lineIn: return L10n.tr("线路输入")
         default: return nil
         }
     }

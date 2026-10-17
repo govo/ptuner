@@ -12,10 +12,10 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .tuner: return "调音器"
-        case .chord: return "和弦"
-        case .instruments: return "乐器"
-        case .settings: return "设置"
+        case .tuner: return L10n.tr("调音器")
+        case .chord: return L10n.tr("和弦")
+        case .instruments: return L10n.tr("乐器")
+        case .settings: return L10n.tr("设置")
         }
     }
 

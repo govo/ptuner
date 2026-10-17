@@ -141,13 +141,13 @@ private struct MultiStringColumn: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityText)
-        .accessibilityHint("播放该弦参考音")
+        .accessibilityHint(L10n.tr("播放该弦参考音"))
     }
 
     private var accessibilityText: String {
-        let target = "\(slot.stringNumber)弦，\(slot.targetNoteName)"
-        guard let cents = displayCents else { return "\(target)，待检测" }
+        let target = L10n.tr("%d弦，%@", slot.stringNumber, slot.targetNoteName)
+        guard let cents = displayCents else { return L10n.tr("%@，待检测", target) }
         let value = String(format: "%.\(centsPrecision.digits)f", abs(cents))
-        return "\(target)，\(status.directionText) \(value) 音分"
+        return L10n.tr("%@，%@ %@ 音分", target, status.directionText, value)
     }
 }

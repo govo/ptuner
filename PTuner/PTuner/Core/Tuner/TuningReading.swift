@@ -25,23 +25,23 @@ nonisolated enum TuningStatus: String, Sendable, Equatable {
 
     var directionText: String {
         switch self {
-        case .idle: return "等待声音"
-        case .inTune: return "音准准确"
-        case .low: return "音准偏低"
-        case .high: return "音准偏高"
-        case .veryLow: return "明显偏低"
-        case .veryHigh: return "明显偏高"
+        case .idle: return L10n.tr("等待声音")
+        case .inTune: return L10n.tr("音准准确")
+        case .low: return L10n.tr("音准偏低")
+        case .high: return L10n.tr("音准偏高")
+        case .veryLow: return L10n.tr("明显偏低")
+        case .veryHigh: return L10n.tr("明显偏高")
         }
     }
 
     var shortText: String {
         switch self {
         case .idle: return "—"
-        case .inTune: return "准"
-        case .low: return "偏低"
-        case .high: return "偏高"
-        case .veryLow: return "偏低"
-        case .veryHigh: return "偏高"
+        case .inTune: return L10n.tr("准")
+        case .low: return L10n.tr("偏低")
+        case .high: return L10n.tr("偏高")
+        case .veryLow: return L10n.tr("偏低")
+        case .veryHigh: return L10n.tr("偏高")
         }
     }
 }
