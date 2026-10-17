@@ -1,36 +1,5 @@
 import SwiftUI
 
-// MARK: - 调音模式
-
-enum TunerMode: String, CaseIterable, Identifiable {
-    case single
-    case multi
-    case chord
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .single: return "单音"
-        case .multi: return "多音"
-        case .chord: return "和弦"
-        }
-    }
-
-    /// 多音与和弦识别属于 Pro 功能。
-    var requiresPro: Bool {
-        self != .single
-    }
-
-    var featureID: String {
-        switch self {
-        case .single: return "single_pitch"
-        case .multi: return "multi_pitch"
-        case .chord: return "chord_recognition"
-        }
-    }
-}
-
 // MARK: - 状态颜色
 
 extension TuningStatus {
@@ -371,47 +340,6 @@ struct TunerInputStatusBar: View {
                 .stroke(hasSignal ? AppTheme.success.opacity(0.25) : AppTheme.cardBorder, lineWidth: 1)
         )
         .animation(.easeOut(duration: 0.12), value: levelRatio)
-    }
-}
-
-// MARK: - 模式切换
-
-struct TunerModePicker: View {
-    let mode: TunerMode
-    let showsLocks: Bool
-    let onSelect: (TunerMode) -> Void
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(TunerMode.allCases) { item in
-                Button {
-                    onSelect(item)
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(item.title)
-                            .font(.system(size: 14, weight: .semibold))
-                        if showsLocks && item.requiresPro {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 9, weight: .bold))
-                        }
-                    }
-                    .foregroundStyle(item == mode ? AppTheme.onAccent : AppTheme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
-                    .background(
-                        Capsule()
-                            .fill(item == mode ? AppTheme.accent : Color.clear)
-                    )
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(4)
-        .background(
-            Capsule()
-                .fill(AppTheme.segmentBackground)
-        )
     }
 }
 

@@ -13,6 +13,12 @@
 import Combine
 import Foundation
 
+/// 需要 Basic Pitch 多音通道的功能。多个功能可以同时占用，任意一个存在时保持开启。
+public nonisolated enum PolyphonyDemand: Hashable, Sendable {
+    case multiStringTuning
+    case chordRecognition
+}
+
 @MainActor
 public final class TunerController: ObservableObject {
 
@@ -39,6 +45,12 @@ public final class TunerController: ObservableObject {
     // MARK: - 多音识别（Basic Pitch）
 
     @Published public private(set) var polyphonicEnabled = false
+    /// 当前占用多音通道的功能集合。任意一个存在时 Basic Pitch 保持开启。
+    @Published public private(set) var polyphonyDemands: Set<PolyphonyDemand> = []
+    /// 调音页的多音调音开关状态。
+    public var isMultiStringTuningRequested: Bool {
+        polyphonyDemands.contains(.multiStringTuning)
+    }
     /// 同时识别的最大音数（2 ~ 12）。
     @Published public private(set) var maxPolyphony = 6
     @Published public private(set) var polyNotes: [TunerNote] = []
@@ -343,7 +355,29 @@ public final class TunerController: ObservableObject {
 
     // MARK: - 多音开关
 
-    public func setPolyphonicEnabled(_ enabled: Bool) {
+    /// 调音页的「多音调音」开关。
+    public func setMultiStringTuningEnabled(_ enabled: Bool) {
+        updateDemand(.multiStringTuning, active: enabled)
+    }
+
+    /// 和弦识别页出现期间占用多音通道；离开时释放，不影响调音页的开关。
+    public func setChordRecognitionActive(_ active: Bool) {
+        updateDemand(.chordRecognition, active: active)
+    }
+
+    private func updateDemand(_ demand: PolyphonyDemand, active: Bool) {
+        var next = polyphonyDemands
+        if active {
+            next.insert(demand)
+        } else {
+            next.remove(demand)
+        }
+        guard next != polyphonyDemands else { return }
+        polyphonyDemands = next
+        applyPolyphonicEnabled(!next.isEmpty)
+    }
+
+    private func applyPolyphonicEnabled(_ enabled: Bool) {
         guard enabled != polyphonicEnabled else { return }
 
         polyphonicEnabled = enabled
@@ -399,6 +433,7 @@ public final class TunerController: ObservableObject {
                     }
                 case .failure(let error):
                     self.polyphonicEnabled = false
+                    self.polyphonyDemands = []
                     self.polyNotes = []
                     self.polyReadouts = []
                     self.errorText = "多音模型加载失败: \(error.localizedDescription)"

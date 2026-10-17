@@ -171,3 +171,90 @@ struct HorizontalGaugeView: View {
         .animation(.linear(duration: 0.08), value: cents)
     }
 }
+
+/// 卡片内的竖向音准指示器：中心 0，偏高在上、偏低在下。
+/// 与横向 CentsBar 不同，它用于纵向排列的整琴校验卡片。
+struct VerticalCentsIndicator: View {
+    /// nil 表示待检测。
+    let cents: Double?
+    let status: TuningStatus
+    var height: CGFloat = 76
+    var showsScaleLabels: Bool = false
+
+    /// +1 = 顶端（+50 cents），-1 = 底端（-50 cents）。
+    private var ratio: Double {
+        guard let cents else { return 0 }
+        return max(-1.0, min(1.0, cents / 50.0))
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            GeometryReader { geo in
+                let trackWidth: CGFloat = 6
+                let usableHeight = max(1, geo.size.height - 10)
+                let offset = CGFloat(ratio) * usableHeight / 2
+                let fillHeight = max(2, abs(offset))
+                let color = cents == nil ? AppTheme.tertiaryText.opacity(0.4) : status.color
+
+                ZStack {
+                    Capsule()
+                        .fill(AppTheme.gaugeTrack)
+                        .frame(width: trackWidth, height: geo.size.height)
+
+                    ForEach([-50.0, -25.0, 0.0, 25.0, 50.0], id: \.self) { mark in
+                        Rectangle()
+                            .fill(mark == 0
+                                  ? AppTheme.primaryText.opacity(0.55)
+                                  : AppTheme.tertiaryText.opacity(0.35))
+                            .frame(width: mark == 0 ? 18 : 12, height: mark == 0 ? 1.5 : 1)
+                            .offset(y: CGFloat(-mark / 50.0) * usableHeight / 2)
+                    }
+
+                    if cents != nil {
+                        if abs(ratio) > 0.0001 {
+                            Capsule()
+                                .fill(color)
+                                .frame(width: trackWidth, height: fillHeight)
+                                .offset(y: ratio >= 0 ? -fillHeight / 2 : fillHeight / 2)
+                        }
+
+                        // 即使音分正好为 0 也要显示指针，让「准」有明确的绿色反馈。
+                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                            .fill(color)
+                            .frame(width: 20, height: 3)
+                            .offset(y: -offset)
+                            .shadow(color: color.opacity(0.35), radius: 3)
+                    } else {
+                        Circle()
+                            .fill(AppTheme.tertiaryText.opacity(0.6))
+                            .frame(width: 5, height: 5)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(width: 20, height: height)
+
+            if showsScaleLabels {
+                VStack(spacing: 0) {
+                    Text("+50")
+                    Spacer()
+                    Text("0")
+                    Spacer()
+                    Text("-50")
+                }
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .foregroundStyle(AppTheme.tertiaryText)
+                .frame(height: height)
+            }
+        }
+        .animation(.linear(duration: 0.08), value: cents)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var accessibilityText: String {
+        guard let cents else { return "待检测" }
+        if status == .inTune { return "音准准确" }
+        return "\(status.directionText) \(Int(abs(cents).rounded())) 音分"
+    }
+}

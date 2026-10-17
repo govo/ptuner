@@ -15,7 +15,11 @@ nonisolated struct BasicPitchNote {
     /// 音符区间内的平均激活值（0 ~ 1），上游称为 amplitude。
     let amplitude: Float
     /// 单位 1/3 半音的音高弯曲序列，长度为 endFrame - startFrame。
+    /// 保持与上游一致的整数格结果。
     let pitchBends: [Int]
+    /// 在整数格基础上做抛物线插值后的连续音高弯曲（单位：格），
+    /// 仅供调音器读取细粒度音分；不改变上面的上游移植结果。
+    let continuousPitchBends: [Double]
 
     var frameCount: Int { endFrame - startFrame }
 }
@@ -36,7 +40,11 @@ nonisolated enum BasicPitchNoteDecoder {
                            pitchBends: pitchBends(contours: contours,
                                                   startFrame: event.start,
                                                   endFrame: event.end,
-                                                  midiPitch: event.midi))
+                                                  midiPitch: event.midi),
+                           continuousPitchBends: continuousPitchBends(contours: contours,
+                                                                      startFrame: event.start,
+                                                                      endFrame: event.end,
+                                                                      midiPitch: event.midi))
         }
     }
 
@@ -258,6 +266,62 @@ nonisolated enum BasicPitchNoteDecoder {
                 }
             }
             out[t] = bestOffset - shift
+        }
+        return out
+    }
+
+    /// 与 `pitchBends` 同一套高斯窗 argmax，但在峰值左右两格上做抛物线插值，
+    /// 把 1/3 半音（约 33 音分）的整数格细化成连续值，供实时调音显示使用。
+    private static func continuousPitchBends(contours: [Float],
+                                             startFrame: Int,
+                                             endFrame: Int,
+                                             midiPitch: Int) -> [Double] {
+        let tolerance = BasicPitchConstants.pitchBendBinsTolerance
+        let contourBins = BasicPitchConstants.nFreqBinsContours
+        let windowLength = tolerance * 2 + 1
+
+        let centerBin = Int(BasicPitchConstants.midiToContourBin(Double(midiPitch)).rounded())
+        let binStart = max(centerBin - tolerance, 0)
+        let binEnd = min(contourBins, centerBin + tolerance + 1)
+        let gaussianStart = max(0, tolerance - centerBin)
+        let gaussianEnd = windowLength - max(0, centerBin - (contourBins - tolerance - 1))
+        let shift = tolerance - gaussianStart
+
+        let count = endFrame - startFrame
+        guard count > 0, binEnd > binStart, gaussianEnd > gaussianStart else { return [] }
+
+        let gaussian = gaussianWindow(length: windowLength)
+        let span = binEnd - binStart
+
+        var out = [Double](repeating: 0, count: count)
+        for t in 0..<count {
+            let row = (startFrame + t) * contourBins
+            var best = -Float.greatestFiniteMagnitude
+            var bestOffset = 0
+
+            for k in 0..<span {
+                let weight = gaussian[gaussianStart + k]
+                let value = contours[row + binStart + k] * weight
+                if value > best {
+                    best = value
+                    bestOffset = k
+                }
+            }
+
+            // 峰值格与左右相邻格做抛物线顶点估计；边界处不平移。
+            var delta = 0.0
+            if bestOffset > 0, bestOffset + 1 < span {
+                let left = Double(contours[row + binStart + bestOffset - 1] * gaussian[gaussianStart + bestOffset - 1])
+                let center = Double(best)
+                let right = Double(contours[row + binStart + bestOffset + 1] * gaussian[gaussianStart + bestOffset + 1])
+                let denominator = left - 2 * center + right
+                if abs(denominator) > 1e-6 {
+                    delta = 0.5 * (left - right) / denominator
+                    delta = max(-0.5, min(0.5, delta))
+                }
+            }
+
+            out[t] = Double(bestOffset) + delta - Double(shift)
         }
         return out
     }

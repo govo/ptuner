@@ -4,6 +4,7 @@ import SwiftUI
 /// 一级导航目标。iOS 使用底部标签栏，macOS 使用侧边栏，共用同一套枚举。
 enum MainTab: String, CaseIterable, Identifiable, Hashable {
     case tuner
+    case chord
     case instruments
     case management
     case settings
@@ -13,6 +14,7 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .tuner: return "调音器"
+        case .chord: return "和弦"
         case .instruments: return "乐器"
         case .management: return "管理"
         case .settings: return "设置"
@@ -22,6 +24,7 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .tuner: return "tuningfork"
+        case .chord: return "music.note.list"
         case .instruments: return "guitars"
         case .management: return "square.grid.2x2"
         case .settings: return "gearshape"
@@ -35,6 +38,10 @@ final class AppRouter: ObservableObject {
 
     func showTuner() {
         selectedTab = .tuner
+    }
+
+    func showChord() {
+        selectedTab = .chord
     }
 
     func showInstruments() {

@@ -39,6 +39,14 @@ struct ContentView: View {
             .tag(MainTab.tuner)
 
             NavigationStack {
+                ChordRecognitionView()
+            }
+            .tabItem {
+                Label(MainTab.chord.title, systemImage: MainTab.chord.systemImage)
+            }
+            .tag(MainTab.chord)
+
+            NavigationStack {
                 InstrumentSelectionView()
             }
             .tabItem {
@@ -85,6 +93,8 @@ struct ContentView: View {
                 switch router.selectedTab {
                 case .tuner:
                     TunerHomeView()
+                case .chord:
+                    ChordRecognitionView()
                 case .instruments:
                     InstrumentSelectionView()
                 case .management:

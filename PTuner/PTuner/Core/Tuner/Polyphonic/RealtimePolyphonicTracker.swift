@@ -17,8 +17,10 @@ import Foundation
 
 nonisolated final class RealtimePolyphonicTracker: @unchecked Sendable {
 
-    /// 每 0.5 秒重跑一次 2 秒窗。推理慢于该间隔时定时器会自动合并触发。
-    static let analysisInterval: TimeInterval = 0.5
+    /// 每 0.25 秒重跑一次 2 秒窗。推理慢于该间隔时定时器会自动合并触发。
+    static let analysisInterval: TimeInterval = 0.25
+    /// 音分只取音符最后这么长的一段，避免整段平均把拨弦后的变化压平。
+    static let recentCentsSeconds: TimeInterval = 0.15
 
     var onUpdate: ((TunerPolyUpdate) -> Void)?
     var onError: ((Error) -> Void)?
@@ -91,7 +93,7 @@ nonisolated final class RealtimePolyphonicTracker: @unchecked Sendable {
         let source = DispatchSource.makeTimerSource(queue: analysisQueue)
         source.schedule(deadline: .now() + Self.analysisInterval,
                         repeating: Self.analysisInterval,
-                        leeway: .milliseconds(80))
+                        leeway: .milliseconds(20))
         source.setEventHandler { [weak self] in
             self?.tick()
         }
@@ -205,7 +207,7 @@ nonisolated final class RealtimePolyphonicTracker: @unchecked Sendable {
                                         end: windowStart + Double(endFrame) * hopSeconds,
                                         midi: note.midiPitch,
                                         amplitude: note.amplitude,
-                                        cents: Self.averageCents(pitchBends: note.pitchBends)))
+                                        cents: Self.recentCents(pitchBends: note.continuousPitchBends)))
         }
 
         // 复音上限只约束「当前仍在发声」的音；已经结束的音作为历史保留，
@@ -247,18 +249,14 @@ nonisolated final class RealtimePolyphonicTracker: @unchecked Sendable {
                 let existing = notes[index]
                 let start = min(existing.startSeconds, candidate.start)
                 let end = max(existing.endSeconds, candidate.end)
-                let oldDuration = existing.durationSeconds
-                let newDuration = max(0, candidate.end - candidate.start)
-                let total = oldDuration + newDuration
-                let cents = total > 0
-                    ? (existing.averageCents * oldDuration + candidate.cents * newDuration) / total
-                    : candidate.cents
 
+                // 直接用本次窗口的最近音分，而不是和整段历史做时长加权平均。
+                // 后者会让持续音在拨弦/推弦后几乎不动，看起来像只判定准或不准。
                 notes[index] = TunerNote(id: existing.id,
                                          startSeconds: start,
                                          endSeconds: end,
                                          midiPitch: existing.midiPitch,
-                                         averageCents: cents,
+                                         averageCents: candidate.cents,
                                          amplitude: max(existing.amplitude, candidate.amplitude))
             } else {
                 notes.append(TunerNote(id: nextNoteID,
@@ -281,10 +279,14 @@ nonisolated final class RealtimePolyphonicTracker: @unchecked Sendable {
     // MARK: - 辅助
 
     /// Basic Pitch 的 contour 每半音 3 格，音高弯曲以 1/3 半音为单位。
-    private static func averageCents(pitchBends: [Int]) -> Double {
+    private static func recentCents(pitchBends: [Double]) -> Double {
         guard !pitchBends.isEmpty else { return 0 }
-        let sum = pitchBends.reduce(0) { $0 + Double($1) }
-        let meanBins = sum / Double(pitchBends.count) - Double(contourGridOffsetBins)
+
+        let hopSeconds = Double(BasicPitchConstants.fftHop) / Double(BasicPitchConstants.sampleRate)
+        let frameCount = max(1, Int((recentCentsSeconds / hopSeconds).rounded()))
+        let recent = pitchBends.suffix(frameCount)
+        let sum = recent.reduce(0, +)
+        let meanBins = sum / Double(recent.count) - Double(contourGridOffsetBins)
         return meanBins * (100.0 / Double(BasicPitchConstants.contoursBinsPerSemitone))
     }
 }
