@@ -8,6 +8,19 @@ final class InstrumentLibrary: ObservableObject {
 
     static let freeTuningID = "__free__"
 
+    /// 已移除的内置调弦 ID 指向合并后的等价调弦，避免旧收藏与当前选择失效。
+    private static let legacyPresetAliases: [String: String] = [
+        "resonator.standard": "guitar.standard",
+        "resonator.openG": "guitar.openG",
+        "resonator.openD": "guitar.openD",
+        "dobro.standard": "guitar.standard",
+        "dobro.openD": "guitar.openD"
+    ]
+
+    private static func resolvedPresetID(_ id: String) -> String {
+        legacyPresetAliases[id] ?? id
+    }
+
     @Published private(set) var customPresets: [TuningPreset] {
         didSet { persistCustomPresets() }
     }
@@ -44,15 +57,20 @@ final class InstrumentLibrary: ObservableObject {
         }
 
         if let stored = defaults.array(forKey: Keys.favoriteIDs) as? [String] {
-            favoriteIDs = Set(stored)
+            favoriteIDs = Set(stored.map(Self.resolvedPresetID))
         } else {
             favoriteIDs = []
         }
 
-        let storedSelection = defaults.string(forKey: Keys.selectedPresetID) ?? "guitar.standard"
+        let storedSelection = Self.resolvedPresetID(
+            defaults.string(forKey: Keys.selectedPresetID) ?? "guitar.standard"
+        )
         selectedPresetID = storedSelection
-        lastInstrumentPresetID = defaults.string(forKey: Keys.lastInstrumentPresetID)
-            ?? (storedSelection == Self.freeTuningID ? "guitar.standard" : storedSelection)
+        let storedLastInstrument = defaults.string(forKey: Keys.lastInstrumentPresetID)
+        lastInstrumentPresetID = Self.resolvedPresetID(
+            storedLastInstrument
+                ?? (storedSelection == Self.freeTuningID ? "guitar.standard" : storedSelection)
+        )
 
         let hasPreset = BuiltInTunings.all.contains { $0.id == storedSelection }
             || customPresets.contains { $0.id == storedSelection }

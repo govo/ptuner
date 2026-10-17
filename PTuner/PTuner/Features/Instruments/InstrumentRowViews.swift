@@ -313,20 +313,32 @@ struct TuningModeSegmentedControl: View {
 
 struct InstrumentGroupCard<Content: View>: View {
     let title: String?
+    let icon: String?
     @ViewBuilder let content: Content
 
-    init(title: String? = nil, @ViewBuilder content: () -> Content) {
+    init(title: String? = nil,
+         icon: String? = nil,
+         @ViewBuilder content: () -> Content) {
         self.title = title
+        self.icon = icon
         self.content = content()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let title {
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppTheme.secondaryText)
-                    .padding(.leading, 4)
+                HStack(spacing: 5) {
+                    if let icon {
+                        Image(systemName: icon)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(AppTheme.warning)
+                    }
+
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
+                .padding(.leading, 4)
             }
 
             VStack(spacing: 0) {

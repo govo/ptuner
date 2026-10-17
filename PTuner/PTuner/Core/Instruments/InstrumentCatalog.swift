@@ -113,8 +113,15 @@ nonisolated enum InstrumentCatalog {
         instruments.filter(\.featured)
     }
 
+    /// 已合并的旧乐器 ID。旧版本保存的自定义调弦可能仍带有这些 ID，
+    /// 解析时指向合并后的乐器，避免显示成“其他乐器”或丢失分类。
+    private static let legacyAliases: [String: String] = [
+        "resonatorGuitar": "guitar"
+    ]
+
     static func instrument(id: String) -> InstrumentDefinition? {
-        file.instruments.first { $0.id == id }
+        let resolvedID = legacyAliases[id] ?? id
+        return file.instruments.first { $0.id == resolvedID }
     }
 
     static func family(id: String) -> InstrumentFamily? {

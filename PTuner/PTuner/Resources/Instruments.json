@@ -1,11 +1,39 @@
 {
   "families": [
     {
-      "id": "modernPlucked",
-      "nameKey": "现代拨弦",
-      "shortNameKey": "现代拨弦",
-      "tint": "#4C8DFF",
+      "id": "guitars",
+      "nameKey": "吉他族",
+      "shortNameKey": "吉他",
+      "tint": "#FF9F5A",
       "order": 10
+    },
+    {
+      "id": "basses",
+      "nameKey": "贝斯族",
+      "shortNameKey": "贝斯",
+      "tint": "#A78BFA",
+      "order": 12
+    },
+    {
+      "id": "ukuleles",
+      "nameKey": "尤克里里族",
+      "shortNameKey": "尤克里里",
+      "tint": "#34D399",
+      "order": 14
+    },
+    {
+      "id": "banjos",
+      "nameKey": "班卓琴族",
+      "shortNameKey": "班卓",
+      "tint": "#F2C14E",
+      "order": 16
+    },
+    {
+      "id": "mandolinFamily",
+      "nameKey": "曼陀林族",
+      "shortNameKey": "曼陀林",
+      "tint": "#5BA8FF",
+      "order": 18
     },
     {
       "id": "westernBowed",
@@ -67,12 +95,12 @@
   "instruments": [
     {
       "id": "guitar",
-      "familyID": "modernPlucked",
+      "familyID": "guitars",
       "nameKey": "吉他",
       "glyph": "guitar",
       "tint": "#4C8DFF",
       "defaultStringCount": 6,
-      "featured": true,
+      "featured": false,
       "order": 10,
       "tunings": [
         {
@@ -225,12 +253,12 @@
     },
     {
       "id": "bass",
-      "familyID": "modernPlucked",
+      "familyID": "basses",
       "nameKey": "贝斯",
       "glyph": "guitar",
       "tint": "#A98BFF",
       "defaultStringCount": 4,
-      "featured": true,
+      "featured": false,
       "order": 20,
       "tunings": [
         {
@@ -295,12 +323,12 @@
     },
     {
       "id": "ukulele",
-      "familyID": "modernPlucked",
+      "familyID": "ukuleles",
       "nameKey": "尤克里里",
       "glyph": "guitar",
       "tint": "#F5A524",
       "defaultStringCount": 4,
-      "featured": true,
+      "featured": false,
       "order": 30,
       "tunings": [
         {
@@ -351,7 +379,7 @@
     },
     {
       "id": "banjo",
-      "familyID": "modernPlucked",
+      "familyID": "banjos",
       "nameKey": "班卓琴",
       "glyph": "lute",
       "defaultStringCount": 5,
@@ -433,7 +461,7 @@
     },
     {
       "id": "mandolin",
-      "familyID": "modernPlucked",
+      "familyID": "mandolinFamily",
       "nameKey": "曼陀林",
       "glyph": "lute",
       "defaultStringCount": 4,
@@ -466,7 +494,7 @@
     },
     {
       "id": "mandola",
-      "familyID": "modernPlucked",
+      "familyID": "mandolinFamily",
       "nameKey": "曼陀拉琴",
       "glyph": "lute",
       "defaultStringCount": 4,
@@ -488,7 +516,7 @@
     },
     {
       "id": "mandocello",
-      "familyID": "modernPlucked",
+      "familyID": "mandolinFamily",
       "nameKey": "曼陀琴",
       "glyph": "lute",
       "defaultStringCount": 4,
@@ -509,58 +537,8 @@
       ]
     },
     {
-      "id": "resonatorGuitar",
-      "familyID": "modernPlucked",
-      "nameKey": "共鸣吉他",
-      "glyph": "guitar",
-      "defaultStringCount": 6,
-      "featured": false,
-      "order": 80,
-      "tunings": [
-        {
-          "id": "resonator.standard",
-          "nameKey": "标准调弦",
-          "order": 10,
-          "strings": [
-            "E2",
-            "A2",
-            "D3",
-            "G3",
-            "B3",
-            "E4"
-          ]
-        },
-        {
-          "id": "resonator.openG",
-          "nameKey": "Open G",
-          "order": 20,
-          "strings": [
-            "D2",
-            "G2",
-            "D3",
-            "G3",
-            "B3",
-            "D4"
-          ]
-        },
-        {
-          "id": "resonator.openD",
-          "nameKey": "Open D",
-          "order": 30,
-          "strings": [
-            "D2",
-            "A2",
-            "D3",
-            "F#3",
-            "A3",
-            "D4"
-          ]
-        }
-      ]
-    },
-    {
       "id": "twelveStringGuitar",
-      "familyID": "modernPlucked",
+      "familyID": "guitars",
       "nameKey": "十二弦吉他",
       "glyph": "guitar",
       "defaultStringCount": 12,
@@ -609,7 +587,7 @@
     },
     {
       "id": "tenorGuitar",
-      "familyID": "modernPlucked",
+      "familyID": "guitars",
       "nameKey": "四弦吉他",
       "glyph": "guitar",
       "defaultStringCount": 4,
@@ -642,7 +620,7 @@
     },
     {
       "id": "dobro",
-      "familyID": "modernPlucked",
+      "familyID": "guitars",
       "nameKey": "多布罗琴",
       "glyph": "guitar",
       "defaultStringCount": 6,
@@ -651,7 +629,7 @@
       "tunings": [
         {
           "id": "dobro.openG",
-          "nameKey": "Open G",
+          "nameKey": "开放 G（High Bass G）",
           "order": 10,
           "strings": [
             "G2",
@@ -659,32 +637,6 @@
             "D3",
             "G3",
             "B3",
-            "D4"
-          ]
-        },
-        {
-          "id": "dobro.standard",
-          "nameKey": "标准调弦",
-          "order": 20,
-          "strings": [
-            "E2",
-            "A2",
-            "D3",
-            "G3",
-            "B3",
-            "E4"
-          ]
-        },
-        {
-          "id": "dobro.openD",
-          "nameKey": "Open D",
-          "order": 30,
-          "strings": [
-            "D2",
-            "A2",
-            "D3",
-            "F#3",
-            "A3",
             "D4"
           ]
         }

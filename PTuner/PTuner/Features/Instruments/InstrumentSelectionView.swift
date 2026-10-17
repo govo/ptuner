@@ -29,6 +29,9 @@ struct InstrumentSelectionView: View {
                         selection: $category,
                         categories: InstrumentCategory.strip(library: library)
                     )
+                    if !isSearching, category.selection != .favorites {
+                        pinnedFavoritesSection
+                    }
                     content
                 }
                 .padding(.horizontal, 18)
@@ -207,6 +210,17 @@ struct InstrumentSelectionView: View {
         }
     }
 
+    /// 全部收藏集中置顶，进入乐器页即可操作，不必先切换到“收藏”分类。
+    @ViewBuilder
+    private var pinnedFavoritesSection: some View {
+        let favorites = library.favoritePresets
+        if !favorites.isEmpty {
+            section(title: L10n.tr("收藏置顶"),
+                    presets: favorites,
+                    icon: "pin.fill")
+        }
+    }
+
     @ViewBuilder
     private func kindSection(for instrument: InstrumentDefinition) -> some View {
         let presets = library.presets(for: instrument)
@@ -254,8 +268,10 @@ struct InstrumentSelectionView: View {
 
     // MARK: - 行
 
-    private func section(title: String, presets: [TuningPreset]) -> some View {
-        InstrumentGroupCard(title: title) {
+    private func section(title: String,
+                         presets: [TuningPreset],
+                         icon: String? = nil) -> some View {
+        InstrumentGroupCard(title: title, icon: icon) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
                 PresetManagedRow(
                     preset: preset,
