@@ -55,14 +55,6 @@ struct ContentView: View {
             .tag(MainTab.instruments)
 
             NavigationStack {
-                InstrumentManagementView()
-            }
-            .tabItem {
-                Label(MainTab.management.title, systemImage: MainTab.management.systemImage)
-            }
-            .tag(MainTab.management)
-
-            NavigationStack {
                 SettingsView()
             }
             .tabItem {
@@ -97,8 +89,6 @@ struct ContentView: View {
                     ChordRecognitionView()
                 case .instruments:
                     InstrumentSelectionView()
-                case .management:
-                    InstrumentManagementView()
                 case .settings:
                     SettingsView()
                 }

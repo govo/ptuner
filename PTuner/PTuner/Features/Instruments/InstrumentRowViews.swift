@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - 分类
 
 enum InstrumentCategory: String, CaseIterable, Identifiable {
+    case all
     case favorites
     case guitar
     case bass
@@ -14,6 +15,7 @@ enum InstrumentCategory: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .all: return "全部"
         case .favorites: return "收藏"
         case .guitar: return "吉他"
         case .bass: return "贝斯"
@@ -29,7 +31,7 @@ enum InstrumentCategory: String, CaseIterable, Identifiable {
         case .bass: return .bass
         case .ukulele: return .ukulele
         case .other: return .other
-        case .favorites, .custom: return nil
+        case .all, .favorites, .custom: return nil
         }
     }
 }
@@ -106,70 +108,6 @@ struct InstrumentSearchField: View {
 }
 
 // MARK: - 行
-
-struct PresetSelectableRow: View {
-    let preset: TuningPreset
-    let isFavorite: Bool
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onToggleFavorite: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Button(action: onSelect) {
-                HStack(spacing: 12) {
-                    presetIcon
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(preset.title)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(AppTheme.primaryText)
-                            .lineLimit(1)
-
-                        Text(preset.notesSummary)
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .foregroundStyle(AppTheme.secondaryText)
-                            .lineLimit(1)
-                    }
-
-                    Spacer(minLength: 6)
-
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(AppTheme.accent)
-                    }
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onToggleFavorite) {
-                Image(systemName: isFavorite ? "star.fill" : "star")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(isFavorite ? AppTheme.warning : AppTheme.tertiaryText)
-                    .frame(width: 34, height: 34)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isFavorite ? "取消收藏" : "收藏")
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
-    }
-
-    private var presetIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(AppTheme.tint(for: preset.kind).opacity(0.11))
-
-            InstrumentGlyph(kind: preset.kind)
-                .frame(width: 18, height: 29)
-        }
-        .frame(width: 38, height: 38)
-    }
-}
 
 struct PresetManagedRow: View {
     let preset: TuningPreset

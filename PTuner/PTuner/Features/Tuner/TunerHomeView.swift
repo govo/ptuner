@@ -509,49 +509,60 @@ struct TunerHomeView: View {
                 onSelectChromatic: selectChromaticMode
             )
 
-            Button {
-                router.showInstruments()
-            } label: {
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill((library.isFreeTuning ? AppTheme.accent : AppTheme.tint(for: preset?.kind ?? .other)).opacity(0.12))
-
-                        if library.isFreeTuning {
-                            Image(systemName: "waveform")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(AppTheme.accent)
-                        } else {
-                            InstrumentGlyph(kind: preset?.kind ?? .other)
-                                .frame(width: 22, height: 36)
-                        }
-                    }
-                    .frame(width: 44, height: 44)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(library.isFreeTuning ? "半音阶调音" : (preset?.title ?? "吉他 · 标准调弦"))
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(AppTheme.primaryText)
-                            .lineLimit(1)
-
-                        Text(library.isFreeTuning ? "不用乐器，自动识别任意音高" : (preset?.notesSummary ?? ""))
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .foregroundStyle(AppTheme.secondaryText)
-                            .lineLimit(1)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(AppTheme.tertiaryText)
+            if library.isFreeTuning {
+                currentTuningRow
+            } else {
+                Button {
+                    router.showInstruments()
+                } label: {
+                    currentTuningRow
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .tunerCard(padding: 14)
+    }
+
+    /// 当前调音方式。乐器模式下可点击进入乐器列表；半音阶模式只作状态展示。
+    private var currentTuningRow: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill((library.isFreeTuning ? AppTheme.accent : AppTheme.tint(for: preset?.kind ?? .other)).opacity(0.12))
+
+                if library.isFreeTuning {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                } else {
+                    InstrumentGlyph(kind: preset?.kind ?? .other)
+                        .frame(width: 22, height: 36)
+                }
+            }
+            .frame(width: 44, height: 44)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(library.isFreeTuning ? "半音阶调音" : (preset?.title ?? "吉他 · 标准调弦"))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppTheme.primaryText)
+                    .lineLimit(1)
+
+                Text(library.isFreeTuning ? "不用乐器，自动识别任意音高" : (preset?.notesSummary ?? ""))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.secondaryText)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            if !library.isFreeTuning {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.tertiaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private func selectInstrumentMode() {

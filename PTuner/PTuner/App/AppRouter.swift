@@ -6,7 +6,6 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
     case tuner
     case chord
     case instruments
-    case management
     case settings
 
     var id: String { rawValue }
@@ -16,7 +15,6 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
         case .tuner: return "调音器"
         case .chord: return "和弦"
         case .instruments: return "乐器"
-        case .management: return "管理"
         case .settings: return "设置"
         }
     }
@@ -26,7 +24,6 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
         case .tuner: return "tuningfork"
         case .chord: return "music.note.list"
         case .instruments: return "guitars"
-        case .management: return "square.grid.2x2"
         case .settings: return "gearshape"
         }
     }
@@ -46,10 +43,6 @@ final class AppRouter: ObservableObject {
 
     func showInstruments() {
         selectedTab = .instruments
-    }
-
-    func showManagement() {
-        selectedTab = .management
     }
 
     func showSettings() {
