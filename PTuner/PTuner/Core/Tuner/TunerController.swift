@@ -30,17 +30,12 @@ public final class TunerController: ObservableObject {
     @Published public private(set) var permissionDenied = false
     @Published public private(set) var errorText: String?
 
-    // MARK: - 实时结果（CREPE 单音通道）
-
-    @Published public private(set) var notes: [TunerNote] = []
-    @Published public private(set) var liveNote: TunerNote?
-    /// 平滑后的连续 MIDI 音高；nil 表示当前没有可用的发声。
-    @Published public private(set) var liveMidi: Double?
-    @Published public private(set) var liveConfidence: Float = 0
-    @Published public private(set) var level: Float = 0
-    /// 最近 30 秒的逐帧音高，供音高曲线使用。
-    @Published public private(set) var frames: [TunerPitchFrame] = []
-    @Published public private(set) var analyzedSeconds: Double = 0
+    /// 音频帧级的实时读数（电平、音高、多音读数）。
+    ///
+    /// 这是普通属性，不是 `@Published`：控制器对外发布的变化只包含启停、
+    /// 权限、设备与配置等低频状态。调音页 / 和弦页观察 `realtime` 本身，
+    /// 设置页、乐器页等观察控制器时不会被监听中的高频刷新牵连。
+    public let realtime = TunerRealtimeState()
 
     // MARK: - 多音识别（Basic Pitch）
 
@@ -53,11 +48,6 @@ public final class TunerController: ObservableObject {
     }
     /// 同时识别的最大音数（2 ~ 12）。
     @Published public private(set) var maxPolyphony = 6
-    @Published public private(set) var polyNotes: [TunerNote] = []
-    /// 当前同时发声的每个音各一行音准读数，最多 maxPolyphony 行。
-    @Published public private(set) var polyReadouts: [TunerPolyReadout] = []
-    @Published public private(set) var polyAnalyzedSeconds: Double = 0
-    @Published public private(set) var polyInferenceMs: Double = 0
     @Published public private(set) var isPreparingPoly = false
 
     // MARK: - 输入源
@@ -99,44 +89,6 @@ public final class TunerController: ObservableObject {
             }
         refreshActiveInputDeviceName()
         #endif
-    }
-
-    // MARK: - 派生读数
-
-    public var liveNearestMidi: Int? {
-        guard let midi = liveMidi, midi.isFinite else { return nil }
-        return Int(midi.rounded())
-    }
-
-    public var liveNoteName: String? {
-        liveNearestMidi.map { BasicPitchConstants.noteName(midi: $0) }
-    }
-
-    public var liveFrequency: Double? {
-        guard let midi = liveMidi, midi.isFinite else { return nil }
-        return 440.0 * pow(2.0, (midi - 69.0) / 12.0)
-    }
-
-    /// 相对最近十二平均律音高的偏差（音分，-50 ~ +50）。
-    public var liveCents: Double? {
-        guard let midi = liveMidi, midi.isFinite else { return nil }
-        return (midi - midi.rounded()) * 100
-    }
-
-    public var liveStatusText: String {
-        guard let cents = liveCents else { return L10n.tr("等待声音") }
-        if abs(cents) <= 5 { return L10n.tr("准") }
-        return cents < 0 ? L10n.tr("偏低") : L10n.tr("偏高")
-    }
-
-    /// 当前模式下应展示的音符：多音模式用 Basic Pitch 的结果，单音模式用 CREPE。
-    public var activeNotes: [TunerNote] {
-        polyphonicEnabled ? polyNotes : notes
-    }
-
-    /// 多音模式下不再叠加单音的「正在发声」块，避免同一个音重复画两次。
-    public var activeLiveNote: TunerNote? {
-        polyphonicEnabled ? nil : liveNote
     }
 
     // MARK: - 麦克风权限
@@ -227,38 +179,30 @@ public final class TunerController: ObservableObject {
         isRunning = false
         isStarting = false
         isPreparingPoly = false
-        liveMidi = nil
+        realtime.liveMidi = nil
         displayMidi = nil
-        liveNote = nil
-        level = 0
+        realtime.liveNote = nil
+        realtime.liveConfidence = 0
+        realtime.level = 0
         // 停止后不再有「正在发声」的音，表盘清空；历史音块保留。
-        polyReadouts = []
+        realtime.polyReadouts = []
 
         if polyphonicEnabled {
-            statusText = polyNotes.isEmpty
+            statusText = realtime.polyNotes.isEmpty
                 ? L10n.tr("已停止 · 多音识别已关闭")
-                : L10n.tr("已停止 · 多音识别共 %d 个音", polyNotes.count)
+                : L10n.tr("已停止 · 多音识别共 %d 个音", realtime.polyNotes.count)
         } else {
-            statusText = notes.isEmpty
+            statusText = realtime.notes.isEmpty
                 ? L10n.tr("已停止")
-                : L10n.tr("已停止 · 本次识别 %d 个音", notes.count)
+                : L10n.tr("已停止 · 本次识别 %d 个音", realtime.notes.count)
         }
     }
 
     /// 清空音符与曲线；运行中保持音频时间轴继续滚动。
     public func clear() {
         engine?.clearNotes()
-        notes = []
-        polyNotes = []
-        polyReadouts = []
-        polyAnalyzedSeconds = 0
-        polyInferenceMs = 0
-        liveNote = nil
-        frames = []
-        liveMidi = nil
+        realtime.reset()
         displayMidi = nil
-        level = 0
-        analyzedSeconds = 0
         lastReportedNoteCount = 0
     }
 
@@ -385,10 +329,10 @@ public final class TunerController: ObservableObject {
         guard enabled != polyphonicEnabled else { return }
 
         polyphonicEnabled = enabled
-        polyNotes = []
-        polyReadouts = []
-        polyAnalyzedSeconds = 0
-        polyInferenceMs = 0
+        realtime.polyNotes = []
+        realtime.polyReadouts = []
+        realtime.polyAnalyzedSeconds = 0
+        realtime.polyInferenceMs = 0
         errorText = nil
 
         guard enabled else {
@@ -410,9 +354,9 @@ public final class TunerController: ObservableObject {
         guard clamped != maxPolyphony else { return }
 
         maxPolyphony = clamped
-        polyNotes = []
-        polyReadouts = []
-        polyAnalyzedSeconds = 0
+        realtime.polyNotes = []
+        realtime.polyReadouts = []
+        realtime.polyAnalyzedSeconds = 0
         engine?.setPolyphonyLimit(clamped)
 
         if isRunning, polyphonicEnabled, !isPreparingPoly {
@@ -438,8 +382,8 @@ public final class TunerController: ObservableObject {
                 case .failure(let error):
                     self.polyphonicEnabled = false
                     self.polyphonyDemands = []
-                    self.polyNotes = []
-                    self.polyReadouts = []
+                    self.realtime.polyNotes = []
+                    self.realtime.polyReadouts = []
                     self.errorText = L10n.tr("多音模型加载失败: %@", error.localizedDescription)
                     self.statusText = L10n.tr("多音识别不可用，已回到单音模式")
                 }
@@ -514,39 +458,30 @@ public final class TunerController: ObservableObject {
     }
 
     private func resetRealtimeState() {
-        notes = []
-        liveNote = nil
-        frames = []
-        liveMidi = nil
+        realtime.reset()
         displayMidi = nil
-        level = 0
-        analyzedSeconds = 0
         lastReportedNoteCount = 0
-        polyNotes = []
-        polyReadouts = []
-        polyAnalyzedSeconds = 0
-        polyInferenceMs = 0
     }
 
     // MARK: - 状态更新
 
     private func apply(_ update: TunerUpdate) {
-        analyzedSeconds = update.analyzedSeconds
-        level = level * 0.6 + update.level * 0.4
+        realtime.analyzedSeconds = update.analyzedSeconds
+        realtime.level = realtime.level * 0.6 + update.level * 0.4
 
         if !update.newFrames.isEmpty {
-            frames.append(contentsOf: update.newFrames)
+            realtime.frames.append(contentsOf: update.newFrames)
             // 界面通常只画最近十几秒，但保留 30 秒供切换窗口长度时回看。
             let cutoff = update.analyzedSeconds - 30
-            if let index = frames.firstIndex(where: { $0.time >= cutoff }), index > 0 {
-                frames.removeFirst(index)
+            if let index = realtime.frames.firstIndex(where: { $0.time >= cutoff }), index > 0 {
+                realtime.frames.removeFirst(index)
             }
         }
 
-        if update.notes != notes {
-            notes = update.notes
+        if update.notes != realtime.notes {
+            realtime.notes = update.notes
         }
-        liveNote = update.liveNote
+        realtime.liveNote = update.liveNote
 
         if let latest = update.latestPitch, latest.midi.isFinite {
             let next: Double
@@ -556,28 +491,31 @@ public final class TunerController: ObservableObject {
                 next = latest.midi
             }
             displayMidi = next
-            liveMidi = next
-            liveConfidence = latest.confidence
+            realtime.liveMidi = next
+            realtime.liveConfidence = latest.confidence
         } else {
             displayMidi = nil
-            liveMidi = nil
-            liveConfidence = 0
+            realtime.liveMidi = nil
+            realtime.liveConfidence = 0
         }
 
-        let count = notes.count + (liveNote == nil ? 0 : 1)
+        let count = realtime.notes.count + (realtime.liveNote == nil ? 0 : 1)
         if isRunning, !polyphonicEnabled, count != lastReportedNoteCount {
             lastReportedNoteCount = count
-            statusText = L10n.tr("正在监听 · 已识别 %d 个音", count)
+            let next = L10n.tr("正在监听 · 已识别 %d 个音", count)
+            if statusText != next {
+                statusText = next
+            }
         }
     }
 
     private func applyPoly(_ update: TunerPolyUpdate) {
         guard isRunning, polyphonicEnabled else { return }
 
-        polyAnalyzedSeconds = update.analyzedSeconds
-        polyInferenceMs = update.inferenceMs
-        if update.notes != polyNotes {
-            polyNotes = update.notes
+        realtime.polyAnalyzedSeconds = update.analyzedSeconds
+        realtime.polyInferenceMs = update.inferenceMs
+        if update.notes != realtime.polyNotes {
+            realtime.polyNotes = update.notes
         }
 
         // 仍然在发声的音：窗口右端受边缘效应影响，留一点余量再判定结束。
@@ -601,14 +539,18 @@ public final class TunerController: ObservableObject {
                                     midiPitch: $0.midiPitch,
                                     cents: $0.averageCents,
                                     amplitude: $0.amplitude) })
-        if readouts != polyReadouts {
-            polyReadouts = readouts
+        if readouts != realtime.polyReadouts {
+            realtime.polyReadouts = readouts
         }
 
         let active = min(update.activeNoteCount, maxPolyphony)
         let base = L10n.tr("正在监听 · 多音 %d/%d", active, maxPolyphony)
-        statusText = update.notes.isEmpty
+        let next = update.notes.isEmpty
             ? base
             : L10n.tr("%@ · 已识别 %d 个音", base, update.notes.count)
+        // 文本相同就不发布，避免多音通道按窗刷新时反复触发控制器观察者。
+        if statusText != next {
+            statusText = next
+        }
     }
 }

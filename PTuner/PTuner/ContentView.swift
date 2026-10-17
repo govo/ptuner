@@ -1,6 +1,21 @@
 import RevenueCatPaywallKit
 import SwiftUI
 
+// MARK: - 非观察型环境注入
+
+/// 只传递 TunerController 的引用，不订阅其 objectWillChange。
+/// 需要调用控制器方法、但不展示实时数据的界面使用它，避免被监听高频刷新。
+struct TunerControllerEnvironmentKey: EnvironmentKey {
+    static let defaultValue: TunerController? = nil
+}
+
+extension EnvironmentValues {
+    var tunerController: TunerController? {
+        get { self[TunerControllerEnvironmentKey.self] }
+        set { self[TunerControllerEnvironmentKey.self] = newValue }
+    }
+}
+
 /// App 主容器：负责共享状态注入与一级导航。
 struct ContentView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
@@ -22,9 +37,16 @@ struct ContentView: View {
         .id(appLanguage.refreshID)
         .tint(AppTheme.accent)
         .environmentObject(tuner)
+        // 高频实时读数单独注入：只有展示实时数据的页面观察它。
+        .environmentObject(tuner.realtime)
+        // 非观察型引用，供设置页等调用控制器方法而不订阅其变化。
+        .environment(\.tunerController, tuner)
         .environmentObject(library)
         .environmentObject(settings)
         .environmentObject(router)
+        .onChange(of: settings.stability) { _, _ in
+            tuner.setDisplaySmoothing(settings.stability.smoothingFactor)
+        }
     }
 
     // MARK: - iOS

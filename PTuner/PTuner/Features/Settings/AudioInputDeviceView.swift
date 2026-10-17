@@ -4,7 +4,7 @@ import SwiftUI
 /// macOS 音频输入设备选择。
 struct AudioInputDeviceView: View {
     @EnvironmentObject private var settings: TunerSettings
-    @EnvironmentObject private var tuner: TunerController
+    @Environment(\.tunerController) private var tuner
     @ObservedObject private var monitor = AudioInputDeviceMonitor.shared
 
     private var devices: [AudioInputDevice] { monitor.devices }
@@ -253,7 +253,9 @@ struct AudioInputDeviceView: View {
 
     private func select(_ uid: String?) {
         settings.preferredInputDeviceUID = uid
-        settings.apply(to: tuner)
+        if let tuner {
+            settings.apply(to: tuner)
+        }
     }
 }
 #endif

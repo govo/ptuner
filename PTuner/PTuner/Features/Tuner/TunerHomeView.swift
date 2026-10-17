@@ -4,6 +4,7 @@ import SwiftUI
 /// 调音器主页：页面骨架固定，单音与多音只替换中间的调音表区域。
 struct TunerHomeView: View {
     @EnvironmentObject private var tuner: TunerController
+    @EnvironmentObject private var live: TunerRealtimeState
     @EnvironmentObject private var library: InstrumentLibrary
     @EnvironmentObject private var settings: TunerSettings
     @EnvironmentObject private var router: AppRouter
@@ -23,14 +24,14 @@ struct TunerHomeView: View {
     }
 
     private var reading: TuningReading? {
-        TuningReading.make(rawMidi: tuner.liveMidi,
+        TuningReading.make(rawMidi: live.liveMidi,
                            referencePitch: settings.referencePitch,
                            preset: preset)
     }
 
     /// 以选定乐器的全部目标弦为主体的整琴校验数据。
     private var resolvedSlots: [PolyStringVerificationStore.ResolvedSlot] {
-        let fresh = PolyStringReadingBuilder.buildSlots(readouts: tuner.polyReadouts,
+        let fresh = PolyStringReadingBuilder.buildSlots(readouts: live.polyReadouts,
                                                         referencePitch: settings.referencePitch,
                                                         preset: preset)
         return verificationStore.resolve(fresh)
@@ -38,7 +39,7 @@ struct TunerHomeView: View {
 
     /// 半音阶调音没有目标弦，多音表退化为实时检测音列表。
     private var freePolyRows: [PolyStringReading] {
-        PolyReadingBuilder.build(readouts: tuner.polyReadouts,
+        PolyReadingBuilder.build(readouts: live.polyReadouts,
                                  referencePitch: settings.referencePitch,
                                  preset: nil)
     }
@@ -58,8 +59,8 @@ struct TunerHomeView: View {
     private var liveStringCents: MultiStringTuningStrip.LiveCents? {
         guard multiEnabled, let match = liveStringMatch() else { return nil }
 
-        if !tuner.polyReadouts.isEmpty {
-            guard tuner.polyReadouts.count == 1,
+        if !live.polyReadouts.isEmpty {
+            guard live.polyReadouts.count == 1,
                   resolvedSlots.contains(where: {
                       $0.slot.stringIndex == match.index && $0.slot.isDetected
                   }) else { return nil }
@@ -101,7 +102,6 @@ struct TunerHomeView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header
-                    inputStatusBar
                     statusBanners
                     contentLayout
                 }
@@ -148,9 +148,6 @@ struct TunerHomeView: View {
                 multiEnabled = false
             }
         }
-        .onChange(of: settings.stability) { _, _ in
-            tuner.setDisplaySmoothing(settings.stability.smoothingFactor)
-        }
         .onChange(of: settings.maxPolyphony) { _, _ in
             applyEffectivePolyphony()
         }
@@ -158,7 +155,7 @@ struct TunerHomeView: View {
             verificationStore.reset()
             applyEffectivePolyphony()
         }
-        .onChange(of: tuner.polyReadouts) { _, _ in
+        .onChange(of: live.polyReadouts) { _, _ in
             ingestPolyReadouts()
         }
         .onChange(of: tuner.isRunning) { _, running in
@@ -184,7 +181,6 @@ struct TunerHomeView: View {
             VStack(spacing: 14) {
                 instrumentCard
                 multiToggleCard
-                startStopCard
             }
             .frame(width: 310)
         }
@@ -193,7 +189,6 @@ struct TunerHomeView: View {
             tuningArea
             instrumentCard
             multiToggleCard
-            startStopCard
         }
         #endif
     }
@@ -219,40 +214,23 @@ struct TunerHomeView: View {
             Text(L10n.tr("调音器"))
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            Button {
-                router.showSettings()
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(AppTheme.secondaryText)
-                    .frame(width: 36, height: 36)
-                    .background(AppTheme.surface)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(AppTheme.cardBorder, lineWidth: 1))
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(L10n.tr("设置"))
+            #if os(macOS)
+            TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
+                                   level: live.level,
+                                   isRunning: tuner.isRunning,
+                                   selectedDeviceUID: settings.preferredInputDeviceUID,
+                                   onSelectDevice: selectInputDevice)
+            #else
+            TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
+                                   level: live.level,
+                                   isRunning: tuner.isRunning)
+            #endif
         }
-    }
-
-    private var inputStatusBar: some View {
-        #if os(macOS)
-        TunerInputStatusBar(deviceName: tuner.activeInputDeviceName,
-                            level: tuner.level,
-                            isRunning: tuner.isRunning,
-                            noteText: inputNoteText,
-                            selectedDeviceUID: settings.preferredInputDeviceUID,
-                            onSelectDevice: selectInputDevice)
-        #else
-        TunerInputStatusBar(deviceName: tuner.activeInputDeviceName,
-                            level: tuner.level,
-                            isRunning: tuner.isRunning,
-                            noteText: inputNoteText)
-        #endif
     }
 
     #if os(macOS)
@@ -264,23 +242,6 @@ struct TunerHomeView: View {
         applyEffectivePolyphony()
     }
     #endif
-
-    /// 当前真正输入的音：单音显示音名与频率，多音显示正在检测的组成音。
-    private var inputNoteText: String {
-        guard tuner.isRunning else { return L10n.tr("未开始监听") }
-
-        if !multiEnabled {
-            guard let reading else { return L10n.tr("等待声音…") }
-            return "\(reading.noteName) · \(frequencyText(reading.frequency))"
-        }
-
-        let pitches = tuner.polyReadouts
-        guard !pitches.isEmpty else { return L10n.tr("等待声音…") }
-
-        let names = pitches.prefix(4).map { NoteNames.name(midi: $0.midiPitch) }
-        let summary = names.joined(separator: " · ")
-        return pitches.count > 4 ? L10n.tr("%@ 等 %d 个音", summary, pitches.count) : summary
-    }
 
     @ViewBuilder
     private var statusBanners: some View {
@@ -450,8 +411,8 @@ struct TunerHomeView: View {
 
                 Spacer()
 
-                if !tuner.polyReadouts.isEmpty {
-                    Text(L10n.tr("%d 个音", tuner.polyReadouts.count))
+                if !live.polyReadouts.isEmpty {
+                    Text(L10n.tr("%d 个音", live.polyReadouts.count))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(AppTheme.accent)
                 }
@@ -459,7 +420,7 @@ struct TunerHomeView: View {
 
             if freePolyRows.isEmpty {
                 VStack(spacing: 10) {
-                    AudioLevelWaveform(level: tuner.level, isActive: tuner.isRunning)
+                    AudioLevelWaveform(level: live.level, isActive: tuner.isRunning)
                         .frame(height: 40)
 
                     Text(tuner.isRunning
@@ -640,6 +601,11 @@ struct TunerHomeView: View {
                 }
             }
             .opacity(multiEnabled ? 1 : 0.55)
+
+            Divider()
+                .overlay(AppTheme.divider)
+
+            startStopButton
         }
         .tunerCard(padding: 16)
     }
@@ -663,33 +629,7 @@ struct TunerHomeView: View {
 
     // MARK: - 启停
 
-    private var startStopCard: some View {
-        VStack(spacing: 12) {
-            AudioLevelWaveform(level: tuner.level, isActive: tuner.isRunning)
-
-            Text(detectingText)
-                .font(.system(size: 12))
-                .foregroundStyle(AppTheme.secondaryText)
-
-            startStopButton(compact: false)
-        }
-        .frame(maxWidth: .infinity)
-        .tunerCard(padding: 16)
-    }
-
-    private var detectingText: String {
-        guard tuner.isRunning else { return L10n.tr("未开始监听") }
-
-        if multiEnabled {
-            if tuner.isPreparingPoly { return L10n.tr("正在准备多音模型…") }
-            let count = tuner.polyReadouts.count
-            return count == 0 ? L10n.tr("等待演奏…") : L10n.tr("%d 个音同时检测中…", count)
-        }
-
-        return reading == nil ? L10n.tr("等待演奏…") : L10n.tr("单音调音中")
-    }
-
-    private func startStopButton(compact: Bool) -> some View {
+    private var startStopButton: some View {
         Group {
             if tuner.isStarting {
                 PrimaryTunerButton(title: L10n.tr("正在启动…"), systemImage: "hourglass", role: .secondary) {}
@@ -698,7 +638,7 @@ struct TunerHomeView: View {
                     tuner.stop()
                 }
             } else {
-                PrimaryTunerButton(title: compact ? L10n.tr("开始调音") : L10n.tr("开始检测"), systemImage: "mic.fill") {
+                PrimaryTunerButton(title: L10n.tr("开始检测"), systemImage: "mic.fill") {
                     tuner.start()
                 }
             }
@@ -709,7 +649,7 @@ struct TunerHomeView: View {
 
     private func ingestPolyReadouts() {
         guard multiEnabled else { return }
-        let slots = PolyStringReadingBuilder.buildSlots(readouts: tuner.polyReadouts,
+        let slots = PolyStringReadingBuilder.buildSlots(readouts: live.polyReadouts,
                                                         referencePitch: settings.referencePitch,
                                                         preset: preset)
         verificationStore.ingest(slots)

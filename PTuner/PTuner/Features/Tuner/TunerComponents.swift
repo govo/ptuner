@@ -343,6 +343,245 @@ struct TunerInputStatusBar: View {
     }
 }
 
+// MARK: - 头部输入状态
+
+/// 调音页右上角的紧凑输入状态：输入源与输入电平。
+/// 取代原来独占一行的输入状态条，节省一整条 UI 的高度。
+struct TunerHeaderInputStatus: View {
+    let deviceName: String?
+    let level: Float
+    let isRunning: Bool
+    /// macOS 下拉选择输入设备。nil 表示当前没有绑定选择动作。
+    var selectedDeviceUID: String? = nil
+    var onSelectDevice: ((String?) -> Void)? = nil
+
+    #if os(macOS)
+    @ObservedObject private var monitor = AudioInputDeviceMonitor.shared
+    @State private var showsDevicePicker = false
+    @State private var isHovering = false
+    #endif
+
+    private var hasSignal: Bool {
+        isRunning && level > 0.002
+    }
+
+    private var levelRatio: CGFloat {
+        CGFloat(min(1, max(0, level * 16)))
+    }
+
+    private var deviceLabelText: String {
+        deviceName ?? (isRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
+    }
+
+    private var isHighlighted: Bool {
+        #if os(macOS)
+        isHovering
+        #else
+        false
+        #endif
+    }
+
+    var body: some View {
+        #if os(macOS)
+        if let onSelectDevice {
+            // 不用 Menu 作为外层：macOS 的 Menu 会丢弃自定义 label 的
+            // 背景、电平条与指示器，导致它与 iOS 外观不一致。
+            Button {
+                showsDevicePicker = true
+            } label: {
+                content(showsChevron: true)
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovering = $0 }
+            .help(L10n.tr("选择音频输入设备"))
+            .accessibilityLabel(L10n.tr("输入设备：%@", deviceLabelText))
+            .popover(isPresented: $showsDevicePicker,
+                     attachmentAnchor: .rect(.bounds),
+                     arrowEdge: .top) {
+                devicePicker(onSelect: onSelectDevice)
+            }
+        } else {
+            content(showsChevron: false)
+        }
+        #else
+        content(showsChevron: false)
+        #endif
+    }
+
+    // MARK: - 胶囊
+
+    private func content(showsChevron: Bool) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: isRunning ? "mic.fill" : "mic.slash.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(hasSignal ? AppTheme.success : AppTheme.tertiaryText)
+
+            Text(deviceLabelText)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(AppTheme.secondaryText)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: deviceNameMaxWidth, alignment: .leading)
+
+            levelMeter
+
+            if showsChevron {
+                chevronBadge
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(
+            Capsule()
+                .fill(AppTheme.surface)
+        )
+        .overlay(
+            Capsule()
+                .stroke(borderColor, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .animation(.easeOut(duration: 0.12), value: hasSignal)
+        .animation(.easeOut(duration: 0.12), value: isHighlighted)
+    }
+
+    /// 可切换输入源时的下拉指示：强调色小圆底 + 实心下三角，
+    /// 小尺寸下比线性 chevron 更容易辨认，也更像可展开的控件。
+    private var chevronBadge: some View {
+        ZStack {
+            Circle()
+                .fill(isHighlighted ? AppTheme.accent.opacity(0.24) : AppTheme.accentSoft)
+
+            Image(systemName: "arrowtriangle.down.fill")
+                .font(.system(size: 6, weight: .bold))
+                .foregroundStyle(AppTheme.accent)
+                .offset(y: 0.5)
+        }
+        .frame(width: 15, height: 15)
+        .animation(.easeOut(duration: 0.12), value: isHighlighted)
+    }
+
+    private var borderColor: Color {
+        if isHighlighted {
+            return AppTheme.accent.opacity(0.45)
+        }
+        return hasSignal ? AppTheme.success.opacity(0.3) : AppTheme.cardBorder
+    }
+
+    private var deviceNameMaxWidth: CGFloat {
+        #if os(macOS)
+        180
+        #else
+        100
+        #endif
+    }
+
+    private var levelMeter: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(AppTheme.gaugeTrack)
+
+                Capsule()
+                    .fill(hasSignal ? AppTheme.success : AppTheme.tertiaryText.opacity(0.4))
+                    .frame(width: max(3, geo.size.width * levelRatio))
+            }
+        }
+        .frame(width: 38, height: 5)
+        .animation(.easeOut(duration: 0.12), value: levelRatio)
+    }
+
+    // MARK: - 设备列表（macOS）
+
+    #if os(macOS)
+    private func devicePicker(onSelect: @escaping (String?) -> Void) -> some View {
+        let defaultName = monitor.defaultDeviceUID
+            .flatMap { uid in monitor.devices.first { $0.id == uid }?.name }
+            ?? monitor.devices.first(where: \.isDefault)?.name
+
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(L10n.tr("输入设备"))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(AppTheme.secondaryText)
+                .padding(.horizontal, 10)
+                .padding(.top, 2)
+                .padding(.bottom, 4)
+
+            pickerRow(icon: "gearshape.fill",
+                      tint: AppTheme.secondaryText,
+                      title: L10n.tr("系统默认"),
+                      subtitle: defaultName.map { L10n.tr("当前：%@", $0) }
+                          ?? L10n.tr("跟随 macOS 声音设置"),
+                      isSelected: selectedDeviceUID == nil) {
+                onSelect(nil)
+            }
+
+            ForEach(monitor.devices) { device in
+                pickerRow(icon: device.isDefault ? "mic.fill" : "mic",
+                          tint: device.isDefault ? AppTheme.accent : AppTheme.secondaryText,
+                          title: device.name,
+                          subtitle: device.isDefault
+                              ? L10n.tr("系统默认输入")
+                              : device.kindLabel,
+                          isSelected: selectedDeviceUID == device.id) {
+                    onSelect(device.id)
+                }
+            }
+        }
+        .padding(8)
+        .frame(width: 290)
+    }
+
+    private func pickerRow(icon: String,
+                           tint: Color,
+                           title: String,
+                           subtitle: String?,
+                           isSelected: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            showsDevicePicker = false
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(AppTheme.primaryText)
+                        .lineLimit(1)
+
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 10))
+                            .foregroundStyle(AppTheme.secondaryText)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(AppTheme.accent)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isSelected ? AppTheme.accentSoft : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
+}
+
 // MARK: - 状态横幅
 
 struct TunerStatusBanner: View {

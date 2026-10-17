@@ -161,7 +161,13 @@ nonisolated enum AudioInputDevices {
     }
 
     static func currentInputName() -> String? {
-        AVAudioSession.sharedInstance().currentRoute.inputs.first?.portName
+        guard let port = AVAudioSession.sharedInstance().currentRoute.inputs.first else { return nil }
+        // 系统内置麦克风的 portName 在模拟器上是 "MicrophoneBuiltIn" 这类原始值，
+        // 统一显示为本地化名称；外接设备（AirPods、USB 等）保留系统给出的名称。
+        if port.portType == .builtInMic {
+            return L10n.tr("内置麦克风")
+        }
+        return port.portName
     }
 
     private static func label(for port: AVAudioSession.Port) -> String? {

@@ -298,7 +298,10 @@
     "7 弦标准": "7-String Standard",
     "四弦标准调弦": "4-String Standard",
     "五弦标准调弦": "5-String Standard",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "Built-in Microphone"
   },
   "zh-Hant": {
     "%+.0f cents": "%+.0f 音分",
@@ -599,7 +602,10 @@
     "7 弦标准": "7 弦標準",
     "四弦标准调弦": "四弦標準調弦",
     "五弦标准调弦": "五弦標準調弦",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "鼓機AI",
+    "节拍器大师": "節拍器大師",
+    "内置麦克风": "內建麥克風"
   },
   "ja": {
     "%+.0f cents": "%+.0f セント",
@@ -900,7 +906,10 @@
     "7 弦标准": "7弦スタンダード",
     "四弦标准调弦": "4弦スタンダード",
     "五弦标准调弦": "5弦スタンダード",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "ドラムAI",
+    "节拍器大师": "メトロノーム・グルーヴ",
+    "内置麦克风": "内蔵マイク"
   },
   "ko": {
     "%+.0f cents": "%+.0f 센트",
@@ -1201,7 +1210,10 @@
     "7 弦标准": "7현 표준",
     "四弦标准调弦": "4현 표준",
     "五弦标准调弦": "5현 표준",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "내장 마이크"
   },
   "es": {
     "%+.0f cents": "%+.0f cents",
@@ -1502,7 +1514,10 @@
     "7 弦标准": "Estándar de 7 cuerdas",
     "四弦标准调弦": "Estándar de 4 cuerdas",
     "五弦标准调弦": "Estándar de 5 cuerdas",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "Micrófono integrado"
   },
   "de": {
     "%+.0f cents": "%+.0f Cent",
@@ -1803,7 +1818,10 @@
     "7 弦标准": "7-Saiter-Standard",
     "四弦标准调弦": "4-Saiter-Standard",
     "五弦标准调弦": "5-Saiter-Standard",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "Integriertes Mikrofon"
   },
   "fr": {
     "%+.0f cents": "%+.0f cents",
@@ -2104,7 +2122,10 @@
     "7 弦标准": "Standard 7 cordes",
     "四弦标准调弦": "Standard 4 cordes",
     "五弦标准调弦": "Standard 5 cordes",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "Micro intégré"
   },
   "it": {
     "%+.0f cents": "%+.0f cent",
@@ -2405,6 +2426,9 @@
     "7 弦标准": "Standard 7 corde",
     "四弦标准调弦": "Standard 4 corde",
     "五弦标准调弦": "Standard 5 corde",
-    "Low G": "Low G"
+    "Low G": "Low G",
+    "鼓AI": "Drum AI",
+    "节拍器大师": "Metronome Groove",
+    "内置麦克风": "Microfono integrato"
   }
 }

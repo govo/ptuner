@@ -4,6 +4,7 @@ import SwiftUI
 /// 和弦识别是独立功能：只依赖多音检测结果，不读取当前乐器或调弦配置。
 struct ChordRecognitionView: View {
     @EnvironmentObject private var tuner: TunerController
+    @EnvironmentObject private var live: TunerRealtimeState
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @ObservedObject private var proAccess = ProAccessController.shared
@@ -13,19 +14,19 @@ struct ChordRecognitionView: View {
     }
 
     private var chordRows: [PolyStringReading] {
-        PolyReadingBuilder.build(readouts: tuner.polyReadouts,
+        PolyReadingBuilder.build(readouts: live.polyReadouts,
                                  referencePitch: 440,
                                  preset: nil)
             .sorted { $0.midiPitch < $1.midiPitch }
     }
 
     private var chordMatch: ChordMatch? {
-        ChordRecognizer.recognize(pitchClasses: tuner.polyReadouts.map(\.midiPitch))
+        ChordRecognizer.recognize(pitchClasses: live.polyReadouts.map(\.midiPitch))
     }
 
     private var inputNoteText: String {
         guard tuner.isRunning else { return L10n.tr("未开始监听") }
-        let pitches = tuner.polyReadouts
+        let pitches = live.polyReadouts
         guard !pitches.isEmpty else { return L10n.tr("等待声音…") }
 
         let names = pitches.prefix(4).map { NoteNames.name(midi: $0.midiPitch) }
@@ -41,7 +42,7 @@ struct ChordRecognitionView: View {
                 VStack(spacing: 14) {
                     header
                     TunerInputStatusBar(deviceName: tuner.activeInputDeviceName,
-                                        level: tuner.level,
+                                        level: live.level,
                                         isRunning: tuner.isRunning,
                                         noteText: inputNoteText)
                     statusBanners
@@ -228,21 +229,21 @@ struct ChordRecognitionView: View {
 
     private var chordStatusText: String {
         guard tuner.isRunning else { return L10n.tr("未开始检测") }
-        if tuner.polyReadouts.isEmpty { return L10n.tr("等待声音") }
+        if live.polyReadouts.isEmpty { return L10n.tr("等待声音") }
         if chordMatch != nil { return L10n.tr("识别成功") }
-        if tuner.polyReadouts.count < 3 { return L10n.tr("识别中 · 需要更多组成音") }
+        if live.polyReadouts.count < 3 { return L10n.tr("识别中 · 需要更多组成音") }
         return L10n.tr("识别中")
     }
 
     private var chordStatusColor: Color {
         if chordMatch != nil { return AppTheme.success }
-        if tuner.polyReadouts.isEmpty { return AppTheme.tertiaryText }
+        if live.polyReadouts.isEmpty { return AppTheme.tertiaryText }
         return AppTheme.warning
     }
 
     private var chordControlCard: some View {
         VStack(spacing: 14) {
-            AudioLevelWaveform(level: tuner.level, isActive: tuner.isRunning)
+            AudioLevelWaveform(level: live.level, isActive: tuner.isRunning)
 
             Text(detectingText)
                 .font(.system(size: 12))
@@ -257,7 +258,7 @@ struct ChordRecognitionView: View {
     private var detectingText: String {
         guard tuner.isRunning else { return L10n.tr("未开始检测") }
         if tuner.isPreparingPoly { return L10n.tr("正在准备多音模型…") }
-        let count = tuner.polyReadouts.count
+        let count = live.polyReadouts.count
         return count == 0 ? L10n.tr("等待演奏…") : L10n.tr("%d 个音同时检测中…", count)
     }
 

@@ -7,7 +7,6 @@ struct SettingsView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @EnvironmentObject private var reviewController: AppReviewPromptController
     @EnvironmentObject private var settings: TunerSettings
-    @EnvironmentObject private var tuner: TunerController
     @ObservedObject private var proAccess = ProAccessController.shared
     @ObservedObject private var languageSettings = AppLanguageSettings.shared
     #if os(macOS)
@@ -65,9 +64,6 @@ struct SettingsView: View {
             }
         }
         .navigationTitle(L10n.tr("设置"))
-        .onChange(of: settings.stability) { _, _ in
-            settings.apply(to: tuner)
-        }
         .sheet(isPresented: $showsCustomPitchSheet) {
             ReferencePitchSheet(currentPitch: settings.referencePitch) { value in
                 settings.setReferencePitch(value)
