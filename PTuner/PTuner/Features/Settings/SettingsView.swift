@@ -41,10 +41,13 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             ScrollView {
                 VStack(spacing: 16) {
+                    #if os(iOS)
+                    pageHeader
+                    #endif
                     header
                     basicSection
                     languageSection
@@ -64,6 +67,10 @@ struct SettingsView: View {
             }
         }
         .navigationTitle(L10n.tr("设置"))
+        #if os(iOS)
+        // 隐藏系统大标题导航栏：它会在顶部留出一条大空白，并和自定义标题重复。
+        .toolbar(.hidden, for: .navigationBar)
+        #endif
         .sheet(isPresented: $showsCustomPitchSheet) {
             ReferencePitchSheet(currentPitch: settings.referencePitch) { value in
                 settings.setReferencePitch(value)
@@ -151,6 +158,23 @@ struct SettingsView: View {
 
     // MARK: - 头部
 
+    /// 与调音页保持一致的自定义标题行，替代系统大标题导航栏。
+    private var pageHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "gearshape")
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+                .shadow(color: AppTheme.accent.opacity(0.6), radius: 7)
+
+            Text(L10n.tr("设置"))
+                .font(.system(size: 27, weight: .semibold))
+                .foregroundStyle(AppTheme.primaryText)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+        }
+    }
+
     private var header: some View {
         HStack(spacing: 14) {
             ZStack {
@@ -176,14 +200,7 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(AppTheme.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(AppTheme.cardBorder, lineWidth: 1)
-        )
+        .background(GlassCardBackground(cornerRadius: 20))
     }
 
     // MARK: - 基础设置

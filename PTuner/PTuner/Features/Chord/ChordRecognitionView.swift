@@ -36,7 +36,7 @@ struct ChordRecognitionView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             ScrollView {
                 VStack(spacing: 14) {

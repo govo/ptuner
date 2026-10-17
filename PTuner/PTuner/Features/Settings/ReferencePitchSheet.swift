@@ -19,7 +19,7 @@ struct ReferencePitchSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.background.ignoresSafeArea()
+                AppBackground()
 
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 6) {
@@ -35,14 +35,7 @@ struct ReferencePitchSheet: View {
                                 .monospacedDigit()
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(AppTheme.surface)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(AppTheme.cardBorder, lineWidth: 1)
-                                )
+                                .background(GlassControlBackground(cornerRadius: 14))
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
                                 #endif

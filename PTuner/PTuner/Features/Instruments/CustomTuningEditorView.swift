@@ -22,7 +22,7 @@ struct CustomTuningEditorView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.background.ignoresSafeArea()
+                AppBackground()
 
                 ScrollView {
                     VStack(spacing: 14) {
@@ -159,14 +159,7 @@ struct CustomTuningEditorView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 
@@ -197,14 +190,7 @@ struct CustomTuningEditorView: View {
                 }
             }
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 
@@ -249,14 +235,7 @@ struct CustomTuningEditorView: View {
                 .buttonStyle(.plain)
                 .disabled(draft.strings.count >= 12)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 

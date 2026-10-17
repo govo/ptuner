@@ -19,14 +19,7 @@ struct SettingsSectionCard<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 }

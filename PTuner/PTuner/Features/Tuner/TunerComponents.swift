@@ -25,18 +25,12 @@ extension TuningStatus {
 // MARK: - 卡片
 
 extension View {
+    /// 全 App 统一的毛玻璃卡片：材质模糊 + 低透白色渐变 + 受光描边。
     func tunerCard(padding: CGFloat = 18, cornerRadius: CGFloat = 22) -> some View {
         self
             .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
-            .shadow(color: AppTheme.shadow.opacity(0.25), radius: 12, x: 0, y: 5)
+            .background(GlassCardBackground(cornerRadius: cornerRadius))
+            .shadow(color: Color.black.opacity(0.38), radius: 22, x: 0, y: 12)
     }
 }
 
@@ -126,13 +120,14 @@ struct CentsBar: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(AppTheme.gaugeTrack)
+                    .fill(Color.white.opacity(0.07))
                     .frame(height: height)
 
                 Capsule()
                     .fill(status.color)
                     .frame(width: fillWidth, height: height)
                     .offset(x: ratio >= 0 ? width / 2 : width / 2 - fillWidth)
+                    .shadow(color: status.color.opacity(0.55), radius: 4)
 
                 Rectangle()
                     .fill(AppTheme.secondaryText.opacity(0.45))
@@ -159,9 +154,11 @@ struct AudioLevelWaveform: View {
             ForEach(Array(samples.enumerated()), id: \.offset) { index, value in
                 Capsule()
                     .fill(isActive
-                          ? AppTheme.accent.opacity(0.75)
-                          : AppTheme.tertiaryText.opacity(0.35))
+                          ? AppTheme.gaugeBlue.opacity(0.9)
+                          : AppTheme.tertiaryText.opacity(0.3))
                     .frame(width: 2, height: barHeight(value: value, index: index))
+                    .shadow(color: isActive ? AppTheme.gaugeBlue.opacity(0.5) : .clear,
+                            radius: 2)
             }
         }
         .frame(maxWidth: .infinity)
@@ -331,13 +328,11 @@ struct TunerInputStatusBar: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(AppTheme.surface)
-        )
+        .background(GlassCardBackground(cornerRadius: 15))
         .overlay(
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(hasSignal ? AppTheme.success.opacity(0.25) : AppTheme.cardBorder, lineWidth: 1)
+                .stroke(hasSignal ? AppTheme.success.opacity(0.22) : Color.white.opacity(0.08),
+                        lineWidth: 0.8)
         )
         .animation(.easeOut(duration: 0.12), value: levelRatio)
     }
@@ -433,11 +428,19 @@ struct TunerHeaderInputStatus: View {
         .padding(.vertical, 7)
         .background(
             Capsule()
-                .fill(AppTheme.surface)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Capsule()
+                        .fill(
+                            LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.03)],
+                                           startPoint: .top,
+                                           endPoint: .bottom)
+                        )
+                )
         )
         .overlay(
             Capsule()
-                .stroke(borderColor, lineWidth: 1)
+                .stroke(borderColor, lineWidth: 0.8)
         )
         .contentShape(Rectangle())
         .animation(.easeOut(duration: 0.12), value: hasSignal)
@@ -625,13 +628,10 @@ struct TunerStatusBanner: View {
             }
         }
         .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(AppTheme.surface)
-        )
+        .background(GlassCardBackground(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppTheme.warning.opacity(0.25), lineWidth: 1)
+                .stroke(AppTheme.warning.opacity(0.22), lineWidth: 0.8)
         )
     }
 }
@@ -689,8 +689,19 @@ struct PrimaryTunerButton: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(role == .primary ? AppTheme.accent : AppTheme.controlBackground)
+                    .fill(role == .primary
+                          ? AnyShapeStyle(AppTheme.accentGradient)
+                          : AnyShapeStyle(Color.white.opacity(0.06)))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(role == .primary
+                            ? Color.white.opacity(0.22)
+                            : Color.white.opacity(0.09),
+                            lineWidth: 0.8)
+            )
+            .shadow(color: role == .primary ? AppTheme.accent.opacity(0.45) : .clear,
+                    radius: 14, x: 0, y: 6)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -711,27 +722,22 @@ struct TunerSwitch: View {
         } label: {
             ZStack {
                 Capsule()
-                    .fill(isOn ? AppTheme.accent : AppTheme.controlBackground)
+                    .fill(isOn
+                          ? AnyShapeStyle(LinearGradient(colors: [Color(hex: 0x4AA3FF), Color(hex: 0x1C6BFF)],
+                                                         startPoint: .top,
+                                                         endPoint: .bottom))
+                          : AnyShapeStyle(Color.white.opacity(0.09)))
                     .overlay(
                         Capsule()
-                            .stroke(isOn ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
+                            .stroke(Color.white.opacity(isOn ? 0.22 : 0.07), lineWidth: 0.8)
                     )
-                    .shadow(color: isOn ? AppTheme.accent.opacity(0.28) : .clear,
-                            radius: 6, x: 0, y: 2)
+                    .shadow(color: isOn ? Color(hex: 0x2E7CFF).opacity(0.55) : .clear,
+                            radius: 9, x: 0, y: 3)
 
                 Circle()
-                    .fill(isOn ? AppTheme.onAccent : AppTheme.surface)
-                    .overlay(
-                        Circle()
-                            .stroke(isOn ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
-                    )
-                    .overlay(
-                        Image(systemName: "waveform")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(isOn ? AppTheme.accent : AppTheme.tertiaryText)
-                    )
-                    .shadow(color: AppTheme.shadow.opacity(0.35), radius: 2, x: 0, y: 1)
-                    .padding(3)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.35), radius: 3, x: 0, y: 1)
+                    .padding(2.5)
                     .offset(x: isOn ? 11 : -11)
             }
             .frame(width: 50, height: 28)

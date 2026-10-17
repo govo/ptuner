@@ -24,7 +24,7 @@ struct AudioInputDeviceView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -100,14 +100,7 @@ struct AudioInputDeviceView: View {
                     deviceRow(device)
                 }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 

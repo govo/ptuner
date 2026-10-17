@@ -7,7 +7,7 @@ struct AboutView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.background.ignoresSafeArea()
+                AppBackground()
 
                 ScrollView {
                     VStack(spacing: 18) {

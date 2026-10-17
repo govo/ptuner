@@ -97,10 +97,10 @@ struct TunerHomeView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             ScrollView {
-                VStack(spacing: 14) {
+                VStack(spacing: 16) {
                     header
                     statusBanners
                     contentLayout
@@ -209,10 +209,11 @@ struct TunerHomeView: View {
         HStack(spacing: 10) {
             Image(systemName: "tuningfork")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(AppTheme.accent)
+                .foregroundStyle(AppTheme.gaugeBlue)
+                .shadow(color: AppTheme.gaugeBlue.opacity(0.7), radius: 8)
 
             Text(L10n.tr("调音器"))
-                .font(.system(size: 26, weight: .bold))
+                .font(.system(size: 27, weight: .semibold))
                 .foregroundStyle(AppTheme.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
@@ -267,53 +268,81 @@ struct TunerHomeView: View {
     // MARK: - 单音调音表
 
     private var singlePanel: some View {
-        VStack(spacing: 14) {
-            gauge
+        VStack(spacing: 8) {
+            readoutArea
+                .background(gaugeHalo)
 
-            VStack(spacing: 2) {
-                Text(reading?.noteName ?? "—")
-                    .font(.system(size: 58, weight: .heavy, design: .rounded))
-                    .foregroundStyle(AppTheme.primaryText)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-
-                HStack(spacing: 16) {
-                    Text(frequencyText(reading?.frequency))
-                        .font(.system(size: 15, weight: .medium, design: .monospaced))
-                        .foregroundStyle(AppTheme.secondaryText)
-
-                    if let reading {
-                        Text(centsText(reading.cents))
-                            .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(reading.status.color)
-                    }
-                }
-            }
-
-            statusPill(status: reading?.status ?? .idle,
-                       activeText: reading?.status.directionText)
+            directionLine(status: reading?.status ?? .idle)
 
             if let preset {
                 stringChips(preset: preset)
+                    .padding(.top, 4)
             } else {
                 Text(L10n.tr("半音阶调音 · 显示距离最近的标准音"))
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.tertiaryText)
+                    .padding(.top, 6)
             }
         }
         .frame(maxWidth: .infinity)
-        .tunerCard(padding: 18)
+        .padding(.bottom, 4)
     }
 
-    private var gauge: some View {
-        Group {
-            switch settings.indicatorStyle {
-            case .needle:
-                NeedleGaugeView(cents: reading?.cents, status: reading?.status ?? .idle)
-            case .bar:
-                HorizontalGaugeView(cents: reading?.cents, status: reading?.status ?? .idle)
+    /// 指针表内部直接叠放音名、频率与音分胶囊，整体高度更紧凑。
+    @ViewBuilder
+    private var readoutArea: some View {
+        switch settings.indicatorStyle {
+        case .needle:
+            ZStack(alignment: .bottom) {
+                NeedleGaugeView(cents: reading?.cents,
+                                status: reading?.status ?? .idle)
+
+                noteReadout
+                    .padding(.bottom, 2)
             }
+        case .bar:
+            VStack(spacing: 14) {
+                HorizontalGaugeView(cents: reading?.cents,
+                                    status: reading?.status ?? .idle)
+
+                noteReadout
+            }
+            .padding(.top, 10)
         }
+    }
+
+    private var noteReadout: some View {
+        VStack(spacing: 2) {
+            Text(reading?.noteName ?? "—")
+                .font(.system(size: 42, weight: .semibold, design: .rounded))
+                .foregroundStyle(reading == nil
+                                 ? AppTheme.tertiaryText.opacity(0.45)
+                                 : AppTheme.primaryText)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .shadow(color: reading == nil ? .clear : Color.white.opacity(0.10),
+                        radius: 16)
+
+            Text(frequencyText(reading?.frequency))
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .foregroundStyle(AppTheme.secondaryText)
+
+            statusPill(status: reading?.status ?? .idle)
+                .padding(.top, 5)
+        }
+        .padding(.horizontal, 20)
+    }
+
+    /// 调音表背后的氛围光：跟随当前音准状态，让发光感不只是装饰。
+    private var gaugeHalo: some View {
+        let color = reading.map { $0.status.color } ?? AppTheme.accent
+
+        return RadialGradient(colors: [color.opacity(reading == nil ? 0.03 : 0.14), .clear],
+                              center: .center,
+                              startRadius: 0,
+                              endRadius: 230)
+            .blur(radius: 24)
+            .allowsHitTesting(false)
     }
 
     private func stringChips(preset: TuningPreset) -> some View {
@@ -328,29 +357,33 @@ struct TunerHomeView: View {
                     VStack(spacing: 5) {
                         Text(string.displayName)
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(isActive ? AppTheme.accent : AppTheme.secondaryText)
+                            .foregroundStyle(isActive ? status.color : AppTheme.secondaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
 
                         ZStack {
                             Circle()
-                                .fill(isActive ? status.color.opacity(0.14) : AppTheme.controlBackground)
+                                .fill(isActive
+                                      ? AnyShapeStyle(status.color.opacity(0.16))
+                                      : AnyShapeStyle(Color.white.opacity(0.055)))
 
                             Circle()
-                                .stroke(isActive ? status.color.opacity(0.7) : AppTheme.cardBorder,
-                                        lineWidth: 1)
+                                .stroke(isActive ? status.color.opacity(0.6) : Color.white.opacity(0.09),
+                                        lineWidth: 0.8)
 
                             if isActive {
                                 Image(systemName: status.symbolName)
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundStyle(status.color)
+                                    .shadow(color: status.color.opacity(0.8), radius: 4)
                             } else {
                                 Text("\(preset.stringNumber(at: index))")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                                     .foregroundStyle(AppTheme.tertiaryText)
                             }
                         }
-                        .frame(width: 30, height: 30)
+                        .frame(width: 32, height: 32)
+                        .shadow(color: isActive ? status.color.opacity(0.35) : .clear, radius: 8)
                     }
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
@@ -369,22 +402,49 @@ struct TunerHomeView: View {
         tonePlayer.play(frequency: frequency)
     }
 
-    private func statusPill(status: TuningStatus, activeText: String?) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(status.color)
-                .frame(width: 6, height: 6)
+    /// 参考图里的音准胶囊：显示音分读数，颜色与光晕跟随音准状态。
+    private func statusPill(status: TuningStatus) -> some View {
+        let isIdle = status == .idle
+        let color = isIdle ? AppTheme.secondaryText : status.color
+        let text = reading.map { centsText($0.cents) } ?? "—"
 
-            Text(activeText ?? status.directionText)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(status == .idle ? AppTheme.secondaryText : status.color)
+        return Text(text)
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .foregroundStyle(color)
+            .monospacedDigit()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(isIdle ? Color.white.opacity(0.055) : color.opacity(0.14))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(isIdle ? Color.white.opacity(0.08) : color.opacity(0.26),
+                            lineWidth: 0.8)
+            )
+            .shadow(color: isIdle ? .clear : color.opacity(0.35), radius: 14)
+            .animation(.easeOut(duration: 0.18), value: status)
+    }
+
+    /// 胶囊下方的方向提示：「— 稍低 —」。
+    private func directionLine(status: TuningStatus) -> some View {
+        HStack(spacing: 10) {
+            dashLine
+
+            Text(status.directionText)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(status == .idle ? AppTheme.tertiaryText : status.color.opacity(0.9))
+
+            dashLine
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(status == .idle ? AppTheme.controlBackground : status.color.opacity(0.12))
-        )
+        .animation(.easeOut(duration: 0.18), value: status)
+    }
+
+    private var dashLine: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.14))
+            .frame(width: 26, height: 1)
     }
 
     // MARK: - 多音调音表
@@ -503,30 +563,44 @@ struct TunerHomeView: View {
 
     /// 当前调音方式。乐器模式下可点击进入乐器列表；半音阶模式只作状态展示。
     private var currentTuningRow: some View {
-        HStack(spacing: 14) {
+        let tint = library.isFreeTuning
+            ? AppTheme.accent
+            : AppTheme.tint(for: preset?.kind ?? .other)
+
+        return HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill((library.isFreeTuning ? AppTheme.accent : AppTheme.tint(for: preset?.kind ?? .other)).opacity(0.12))
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(colors: [tint.opacity(0.24), tint.opacity(0.06)],
+                                       startPoint: .topLeading,
+                                       endPoint: .bottomTrailing)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(tint.opacity(0.18), lineWidth: 0.8)
+                    )
 
                 if library.isFreeTuning {
                     Image(systemName: "waveform")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(AppTheme.accent)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundStyle(tint)
+                        .shadow(color: tint.opacity(0.6), radius: 8)
                 } else {
                     InstrumentGlyph(kind: preset?.kind ?? .other)
-                        .frame(width: 22, height: 36)
+                        .frame(width: 28, height: 46)
                 }
             }
-            .frame(width: 44, height: 44)
+            .frame(width: 64, height: 64)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(library.isFreeTuning ? L10n.tr("半音阶调音") : (preset?.title ?? L10n.tr("吉他 · 标准调弦")))
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(1)
 
                 Text(library.isFreeTuning ? L10n.tr("不用乐器，自动识别任意音高") : (preset?.notesSummary ?? ""))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .tracking(library.isFreeTuning ? 0 : 3)
                     .foregroundStyle(AppTheme.secondaryText)
                     .lineLimit(1)
             }
@@ -535,7 +609,7 @@ struct TunerHomeView: View {
 
             if !library.isFreeTuning {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.tertiaryText)
             }
         }
@@ -558,12 +632,32 @@ struct TunerHomeView: View {
     // MARK: - 多音开关（固定位置）
 
     private var multiToggleCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(colors: [AppTheme.gaugeBlue.opacity(0.24),
+                                                    AppTheme.gaugeBlue.opacity(0.06)],
+                                           startPoint: .topLeading,
+                                           endPoint: .bottomTrailing)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(AppTheme.gaugeBlue.opacity(0.18), lineWidth: 0.8)
+                        )
+
+                    Image(systemName: "waveform")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(AppTheme.gaugeBlue)
+                        .shadow(color: AppTheme.gaugeBlue.opacity(0.6), radius: 6)
+                }
+                .frame(width: 40, height: 40)
+
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 5) {
                         Text(L10n.tr("多音调音"))
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(AppTheme.primaryText)
 
                         if !proUnlocked {
@@ -585,22 +679,35 @@ struct TunerHomeView: View {
                 TunerSwitch(isOn: multiBinding)
             }
 
-            HStack {
+            Divider()
+                .overlay(AppTheme.divider)
+
+            HStack(spacing: 6) {
                 Text(library.isFreeTuning
-                     ? L10n.tr("一次最多检测 %d 个音", settings.maxPolyphony)
-                     : L10n.tr("按乐器弦数自动检测 %d 个音", effectiveMaxPolyphony))
-                    .font(.system(size: 12))
+                     ? L10n.tr("最大同时检测音数")
+                     : L10n.tr("按乐器弦数自动检测"))
+                    .font(.system(size: 13))
                     .foregroundStyle(AppTheme.secondaryText)
 
-                Spacer()
+                Image(systemName: "info.circle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.tertiaryText)
+
+                Spacer(minLength: 8)
 
                 if library.isFreeTuning {
                     StepperValue(value: settings.maxPolyphony, range: 2...12) { value in
                         settings.setMaxPolyphony(value)
                     }
+                    .opacity(multiEnabled ? 1 : 0.5)
+                } else {
+                    Text(L10n.tr("%d 个音", effectiveMaxPolyphony))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(AppTheme.primaryText.opacity(0.85))
+                        .monospacedDigit()
                 }
             }
-            .opacity(multiEnabled ? 1 : 0.55)
+            .opacity(multiEnabled ? 1 : 0.6)
 
             Divider()
                 .overlay(AppTheme.divider)
@@ -712,17 +819,27 @@ struct StepperValue: View {
             }
         }
         .padding(3)
-        .background(AppTheme.controlBackground)
-        .clipShape(Capsule())
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.32))
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.07), lineWidth: 0.8)
+                )
+        )
     }
 
     private func stepButton(systemImage: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(enabled ? AppTheme.primaryText : AppTheme.tertiaryText)
-                .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(enabled ? AppTheme.primaryText.opacity(0.9) : AppTheme.tertiaryText.opacity(0.5))
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(enabled ? 0.08 : 0.03))
+                )
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .disabled(!enabled)

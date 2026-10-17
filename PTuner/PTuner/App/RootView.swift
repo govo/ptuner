@@ -9,7 +9,7 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             Group {
                 if hasCompletedOnboarding {
@@ -21,6 +21,8 @@ struct RootView: View {
                 }
             }
         }
+        // 本版只提供深色主题；亮色 token 保留，后续可再打开。
+        .preferredColorScheme(.dark)
         .animation(.easeInOut(duration: 0.25), value: hasCompletedOnboarding)
         .revenueCatPaywallSheet(using: paywallManager)
         .onChange(of: paywallManager.isPaywallPresented) { _, isPresented in

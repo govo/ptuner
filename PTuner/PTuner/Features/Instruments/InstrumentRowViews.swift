@@ -96,14 +96,7 @@ struct InstrumentSearchField: View {
         }
         .padding(.horizontal, 13)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppTheme.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(AppTheme.cardBorder, lineWidth: 1)
-        )
+        .background(GlassControlBackground(cornerRadius: 12))
     }
 }
 
@@ -268,7 +261,11 @@ struct TuningModeSegmentedControl: View {
         .padding(3)
         .background(
             RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .fill(AppTheme.segmentBackground)
+                .fill(Color.black.opacity(0.32))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .stroke(Color.white.opacity(0.06), lineWidth: 0.8)
         )
     }
 
@@ -279,12 +276,19 @@ struct TuningModeSegmentedControl: View {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(isSelected ? AppTheme.onAccent : AppTheme.secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .padding(.horizontal, 6)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isSelected ? AppTheme.accent : Color.clear)
+                        .fill(isSelected
+                              ? AnyShapeStyle(AppTheme.accentGradient)
+                              : AnyShapeStyle(Color.clear))
                 )
+                .shadow(color: isSelected ? AppTheme.accent.opacity(0.35) : .clear,
+                        radius: 6, x: 0, y: 2)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -314,14 +318,7 @@ struct InstrumentGroupCard<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(GlassCardBackground(cornerRadius: 18))
         }
     }
 }

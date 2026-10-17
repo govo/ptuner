@@ -17,10 +17,13 @@ struct InstrumentSelectionView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.background.ignoresSafeArea()
+            AppBackground()
 
             ScrollView {
                 VStack(spacing: 14) {
+                    #if os(iOS)
+                    pageHeader
+                    #endif
                     InstrumentSearchField(text: $searchText)
                     InstrumentCategoryStrip(selection: $category)
                     content
@@ -33,6 +36,10 @@ struct InstrumentSelectionView: View {
             }
         }
         .navigationTitle(L10n.tr("乐器"))
+        #if os(iOS)
+        // 隐藏系统大标题导航栏：它会在顶部留出一条大空白，并和自定义标题重复。
+        .toolbar(.hidden, for: .navigationBar)
+        #else
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -47,6 +54,7 @@ struct InstrumentSelectionView: View {
                 .accessibilityLabel(L10n.tr("新建自定义调弦"))
             }
         }
+        #endif
         .sheet(item: $editorContext) { context in
             CustomTuningEditorView(preset: context.preset, isNew: context.isNew)
                 .environmentObject(library)
@@ -70,6 +78,46 @@ struct InstrumentSelectionView: View {
             }
         } message: {
             Text(L10n.tr("「%@」将被永久删除，无法恢复。", pendingDelete?.name ?? ""))
+        }
+    }
+
+    // MARK: - 头部
+
+    /// 与调音页保持一致的自定义标题行，替代系统大标题导航栏。
+    private var pageHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "guitars")
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+                .shadow(color: AppTheme.accent.opacity(0.6), radius: 7)
+
+            Text(L10n.tr("乐器"))
+                .font(.system(size: 27, weight: .semibold))
+                .foregroundStyle(AppTheme.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+
+            Spacer(minLength: 8)
+
+            Button {
+                createCustomTuning()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppTheme.primaryText)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 0.8)
+                            )
+                    )
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L10n.tr("新建自定义调弦"))
         }
     }
 
