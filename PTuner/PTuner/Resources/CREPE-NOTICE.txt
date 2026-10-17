@@ -1,0 +1,79 @@
+CREPE-NOTICE
+============
+
+本工程内 CREPE 相关资源的来源、许可与真值说明。
+
+
+模型
+----
+
+文件：btc/btc/btc/Crepe.mlpackage
+来源：https://github.com/marl/crepe （原论文作者发布的 TensorFlow 实现）
+      权重经由 https://github.com/maxrmorrison/torchcrepe 的 PyTorch 移植取得，
+      该移植的 full.pth 由上游 TF 模型转换而来，数值与上游一致。
+版权：Copyright (c) 2018 Jong Wook Kim
+      torchcrepe 部分 Copyright (c) 2022 Max Morrison
+许可：MIT License
+
+说明：CREPE 是单声部（monophonic）音高追踪模型，与 basic-pitch 的复音转谱
+      不是一个任务；本工程把它接进来是为了和 basic-pitch 的旋律识别结果对照。
+      本工程只导出网络本体，逐帧归一化与分帧都在 Swift 侧实现，
+      以保证可以和 `torchcrepe.infer` 逐元素对照。
+
+模型接口（实测确认）：
+  输入  frames        FLOAT32  [batch, 1024]   16000 Hz 单声道**已归一化**帧
+  输出  activations   FLOAT32  [batch, 360]    360 个音高 bin 的激活（已过 sigmoid）
+
+  注意：与 BasicPitch 同样的教训——输出 MLMultiArray 的 strides 由运行时决定，
+        读取必须依据 strides，不可按 shape 连乘索引。CrepeModel 已按 strides 读取。
+
+
+关键常数（与 torchcrepe 0.0.24 一致）
+-------------------------------------
+
+  采样率            16000 Hz
+  窗长              1024 采样（64 ms）
+  跳步              160 采样（10 ms）-> 100 fps
+  音高 bin 数       360
+  每 bin            20 音分
+  bin -> 音分       cents = 20 * bin + 1997.3794084376191
+  音分 -> 频率      f = 10 * 2 ** (cents / 1200)
+  覆盖频率          31.70 Hz ~ 2006.00 Hz
+  对应 MIDI         23.37 ~ 95.36（约 72 个半音，比 88 键钢琴窄）
+
+逐帧归一化（模型外用，与 torchcrepe.core.preprocess 一致）：
+  帧内减均值 -> 除以 max(1e-10, 帧内标准差)，标准差取样本标准差（ddof = 1）。
+  每个采样点被 1024/160 ≈ 6.4 帧覆盖，所以帧序列是重叠加窗的。
+
+分帧（与 torchcrepe.core.preprocess 一致）：
+  音频两端各补 WINDOW_SIZE / 2 = 512 个零，
+  帧 i 覆盖补零后音频的 [i * 160, i * 160 + 1024)，即原始音频的 [i*160 - 512, i * 160 + 512)。
+
+解码（与 marl/crepe 的 local average 一致）：
+  center = argmax(激活)
+  在 [center - 4, center + 5) 共 9 个 bin 上做加权平均得到音分，
+  权重即激活值；置信度取激活最大值。
+  说明：torchcrepe 默认用 viterbi 解码，本工程按用户指定的上游仓库
+  （marl/crepe）实现了它的 local average 解码，未用 viterbi。
+
+
+实测注意
+--------
+
+1. 转换脚本 `core_ml/convert_crepe.py`，对照脚本 `core_ml/crepe_reference.py`。
+   实测 CoreML(float16) 与 PyTorch 在同一批帧上最大绝对偏差 6.4e-4，
+   801 / 801 帧的 argmax 完全一致。
+
+2. 模型体积约 42 MB（full 档，约 2220 万参数，float16 权重），首次加载与
+   首帧推理包含一次性图编译，必须先做一次预热推理，否则耗时统计会失真。
+
+3. 模型是纯 CNN（6 层卷积 + 全连接），输入形状 batch 维可变（1 ~ 1024），
+   导出时用 RangeDim，避免逐帧单次推理的开销。
+
+
+参考
+----
+
+Kim, J. W., Salamon, J., Li, P., & Bello, J. P. (2018).
+CREPE: A Convolutional Representation for Pitch Estimation.
+ICASSP 2018.

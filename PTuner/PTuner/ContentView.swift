@@ -4,6 +4,7 @@ import SwiftUI
 /// 调音器主界面占位。当前阶段只搭好入口与基础服务，音频分析在后续迭代接入。
 struct ContentView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
+    @ObservedObject private var proAccess = ProAccessController.shared
     @Environment(\.openURL) private var openURL
 
     @State private var showsSettings = false
@@ -143,7 +144,7 @@ struct ContentView: View {
 
     private var modePanel: some View {
         VStack(spacing: 12) {
-            ProFeatureButton(
+            ProGatedButton(
                 manager: paywallManager,
                 featureID: "multi_pitch",
                 marketingMessage: "升级 Pro，解锁多音同时调音。"
@@ -158,7 +159,7 @@ struct ContentView: View {
                 )
             }
 
-            ProFeatureButton(
+            ProGatedButton(
                 manager: paywallManager,
                 featureID: "chord_recognition",
                 marketingMessage: "升级 Pro，解锁实时和弦识别。"
@@ -216,12 +217,12 @@ struct ContentView: View {
 
     private var proPanel: some View {
         HStack(spacing: 14) {
-            Image(systemName: paywallManager.hasActiveEntitlement ? "checkmark.seal.fill" : "crown.fill")
+            Image(systemName: proAccess.isPro(paywallManager) ? "checkmark.seal.fill" : "crown.fill")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(paywallManager.hasActiveEntitlement ? AppTheme.success : AppTheme.warning)
+                .foregroundStyle(proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(paywallManager.hasActiveEntitlement ? "Pro 已激活" : "免费版")
+                Text(proAccess.isPro(paywallManager) ? "Pro 已激活" : "免费版")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
 
@@ -234,7 +235,7 @@ struct ContentView: View {
             Spacer(minLength: 12)
 
             Button {
-                if paywallManager.hasActiveEntitlement {
+                if proAccess.isPro(paywallManager) {
                     openURL(AppConfig.manageSubscriptionsURL)
                 } else {
                     Task {
@@ -245,7 +246,7 @@ struct ContentView: View {
                     }
                 }
             } label: {
-                Text(paywallManager.hasActiveEntitlement ? "管理" : "升级 Pro")
+                Text(proAccess.isPro(paywallManager) ? "管理" : "升级 Pro")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(AppTheme.primaryText)
                     .padding(.horizontal, 16)
@@ -269,6 +270,12 @@ struct ContentView: View {
     }
 
     private var proDetail: String {
+        #if DEBUG
+        if proAccess.skipsEntitlementCheck {
+            return "Debug 模式已跳过权益校验"
+        }
+        #endif
+
         guard paywallManager.hasActiveEntitlement else {
             return "多音调音、和弦识别与自定义调弦"
         }

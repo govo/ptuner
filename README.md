@@ -86,11 +86,12 @@ macOS 与 iOS 保持一致的功能结构与视觉语言，并针对桌面操作
 - 设置页组件、应用评分提示。
 - Sentry 崩溃上报、埋点与诊断统一出口。
 - 深色主题与调音器主页占位界面。
+- 调音器核心模块：麦克风采集、CREPE 单音检测、Basic Pitch 多音检测与 `TunerController` 可观察封装。
 
 待后续迭代实现：
 
-- 音频采集与实时音高检测。
-- 多音检测与和弦识别算法。
+- 和弦识别算法。
+- 调音器界面与音高曲线绘制。
 - 乐器、调弦与收藏的数据模型及持久化。
 - 乐器选择、乐器管理、自定义调弦编辑等页面。
 - macOS Core Audio 输入设备选择。
@@ -115,12 +116,54 @@ ptuner/
         │   ├── AppTheme.swift   全局主题色
         │   ├── AppAnalytics.swift  埋点统一出口
         │   └── AppDiagnostics.swift  诊断与面包屑
+        ├── Core/
+        │   └── Tuner/
+        │       ├── Audio/       麦克风采集与双采样率重采样
+        │       ├── CREPE/       单音音高模型、解码与常数
+        │       ├── Polyphonic/  Basic Pitch 多音模型、后处理与滑窗追踪
+        │       ├── TunerEngine.swift      实时分析引擎
+        │       ├── TunerController.swift  可观察状态封装
+        │       ├── TunerModels.swift      对外数据模型
+        │       └── CoreMLModelLocator.swift
         ├── Features/
         │   ├── Onboarding/      引导页
         │   └── Settings/        设置页
+        ├── Resources/
+        │   └── Models/          Crepe / BasicPitch 模型与许可说明
         ├── ContentView.swift    调音器主页占位
         └── Assets.xcassets
 ```
+
+## 调音器核心
+
+核心模块不依赖任何界面，界面层只需持有 `TunerController`：
+
+```swift
+@StateObject private var tuner = TunerController()
+
+var body: some View {
+    VStack(spacing: 12) {
+        Text(tuner.liveNoteName ?? "--")
+        Text(tuner.liveCents.map { String(format: "%+.1f cents", $0) } ?? "等待声音")
+        Text(tuner.liveStatusText)
+        Button(tuner.isRunning ? "停止" : "开始") { tuner.toggle() }
+        Toggle("多音识别", isOn: Binding(
+            get: { tuner.polyphonicEnabled },
+            set: { tuner.setPolyphonicEnabled($0) }
+        ))
+    }
+}
+```
+
+分工：
+
+- `MicrophoneAudioCapture`：AVAudioEngine 采集，重采样为 CREPE 需要的 16 kHz 与 Basic Pitch 需要的 22050 Hz，音频时间轴由采样计数推导。
+- `TunerEngine`：CREPE 50 ms 流式推理产出连续音高与音分；Basic Pitch 2 秒滑窗产出复音音符。
+- `TunerController`：主线程状态、权限、启停、多音开关与展示用平滑，全部通过 `@Published` 暴露。
+
+CREPE 的模型输入为 1024 采样（64 ms 窗）、hop 160（10 ms），因此单音通道约有 100 ms 延迟；Basic Pitch 输入固定 2 秒，多音结果天然有约 2 秒延迟，这是模型结构决定的。
+
+模型包位于 `PTuner/PTuner/Resources/Models`。按工程 `.gitignore` 策略，`*.mlpackage` 不入库；clone 后需要从参考工程或 `core_ml` 母本复制 `Crepe.mlpackage` 与 `BasicPitch.mlpackage`，否则 App 可编译但运行时会报模型加载失败。
 
 ## 开发与构建
 

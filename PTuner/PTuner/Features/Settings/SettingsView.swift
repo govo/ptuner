@@ -6,6 +6,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @EnvironmentObject private var reviewController: AppReviewPromptController
+    @ObservedObject private var proAccess = ProAccessController.shared
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
@@ -20,6 +21,9 @@ struct SettingsView: View {
                 proSection
                 supportSection
                 aboutSection
+                #if DEBUG
+                debugProSection
+                #endif
             }
             .navigationTitle("设置")
             .toolbar {
@@ -92,8 +96,8 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 AppSettingsRow(
                     icon: "crown.fill",
-                    iconTint: paywallManager.hasActiveEntitlement ? AppTheme.success : AppTheme.warning,
-                    title: paywallManager.hasActiveEntitlement ? "Pro 已激活" : "免费版",
+                    iconTint: proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning,
+                    title: proAccess.isPro(paywallManager) ? "Pro 已激活" : "免费版",
                     subtitle: proDetail,
                     showsChevron: false,
                     showsDivider: true,
@@ -101,7 +105,7 @@ struct SettingsView: View {
                 )
 
                 Button {
-                    if paywallManager.hasActiveEntitlement {
+                    if proAccess.isPro(paywallManager) {
                         openURL(AppConfig.manageSubscriptionsURL)
                     } else {
                         Task {
@@ -113,9 +117,9 @@ struct SettingsView: View {
                     }
                 } label: {
                     AppSettingsRow(
-                        icon: paywallManager.hasActiveEntitlement ? "arrow.up.right.circle.fill" : "sparkles",
+                        icon: proAccess.isPro(paywallManager) ? "arrow.up.right.circle.fill" : "sparkles",
                         iconTint: AppTheme.accent,
-                        title: paywallManager.hasActiveEntitlement ? "管理订阅" : "升级 Pro",
+                        title: proAccess.isPro(paywallManager) ? "管理订阅" : "升级 Pro",
                         showsDivider: true,
                         theme: rowTheme
                     )
@@ -142,6 +146,12 @@ struct SettingsView: View {
     }
 
     private var proDetail: String {
+        #if DEBUG
+        if proAccess.skipsEntitlementCheck {
+            return "Debug 模式已跳过权益校验"
+        }
+        #endif
+
         guard paywallManager.hasActiveEntitlement else {
             return "多音调音、和弦识别与自定义调弦"
         }
@@ -244,6 +254,44 @@ struct SettingsView: View {
             )
         }
     }
+
+    // MARK: - 开发者（仅 Debug）
+
+    #if DEBUG
+    private var debugProSection: some View {
+        AppSettingsSectionCard(
+            backgroundColor: AppTheme.surface,
+            shadowColor: Color.black.opacity(0.25)
+        ) {
+            HStack(spacing: 14) {
+                Image(systemName: "ladybug.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(AppTheme.warning)
+                    .frame(width: 28, height: 28)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("跳过 Pro 权益校验")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(AppTheme.primaryText)
+
+                    Text("仅 Debug 构建可用。开启后所有 Pro 功能直接可用，不再校验 RevenueCat 权益。")
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 12)
+
+                Toggle("跳过 Pro 权益校验", isOn: $proAccess.skipsEntitlementCheck)
+                    .labelsHidden()
+                    .tint(AppTheme.accent)
+                    .contentShape(Rectangle())
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+    }
+    #endif
 
     // MARK: - 辅助
 
