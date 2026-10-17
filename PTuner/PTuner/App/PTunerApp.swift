@@ -1,0 +1,132 @@
+import AppSupportKit
+import RevenueCatPaywallKit
+import Sentry
+import SwiftUI
+
+@main
+struct PTunerApp: App {
+    @StateObject private var paywallManager: RevenueCatPaywallManager
+    @StateObject private var reviewController: AppReviewPromptController
+
+    init() {
+        Self.configureSentry()
+        AppAnalytics.appOpen()
+
+        _paywallManager = StateObject(
+            wrappedValue: RevenueCatPaywallManager(
+                configuration: AppConfig.revenueCatConfiguration
+            )
+        )
+        _reviewController = StateObject(
+            wrappedValue: AppReviewPromptController(
+                policy: AppReviewPromptPolicy(
+                    automaticPromptThreshold: 3,
+                    cooldownDays: 10,
+                    storagePrefix: "ptuner.reviewPrompt"
+                )
+            )
+        )
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environmentObject(paywallManager)
+                .environmentObject(reviewController)
+                .appReviewPromptPresenter(
+                    controller: reviewController,
+                    configuration: AppReviewPromptConfiguration.ptuner,
+                    theme: AppReviewPromptTheme.ptuner
+                )
+                .preferredColorScheme(.dark)
+                .frame(minWidth: 420, minHeight: 640)
+                .task {
+                    await paywallManager.start()
+                }
+        }
+        .defaultSize(width: 480, height: 760)
+        .windowResizability(.contentMinSize)
+    }
+
+    // MARK: - Sentry
+
+    private static func configureSentry() {
+        guard !AppConfig.Sentry.dsn.isEmpty else {
+            AppDiagnostics.breadcrumb(.app, "sentry_skipped_missing_dsn")
+            return
+        }
+
+        SentrySDK.start { options in
+            options.dsn = AppConfig.Sentry.dsn
+
+            // 只做崩溃与错误上报；性能监控显式关闭。
+            options.tracesSampleRate = 0
+
+            options.attachStacktrace = true
+            options.enableWatchdogTerminationTracking = true
+            options.enableAppHangTracking = true
+
+            #if DEBUG
+            options.environment = "debug"
+            #else
+            options.environment = "production"
+            #endif
+        }
+    }
+}
+
+// MARK: - Review Prompt 文案
+
+extension AppReviewPromptConfiguration {
+    static var ptuner: AppReviewPromptConfiguration {
+        AppReviewPromptConfiguration(
+            title: { context in
+                context.source == .automatic ? "喜欢 PTuner 吗？" : "支持 PTuner"
+            },
+            message: { _ in
+                "如果 PTuner 对你的练习和演出有帮助，欢迎留下一个评分。"
+            },
+            detailText: { context in
+                context.detailText ?? "已完成 \(context.completedMilestoneCount) 次调音"
+            },
+            badges: { _ in
+                [
+                    AppReviewPromptBadge(iconSystemName: "lock.shield", title: "端侧处理"),
+                    AppReviewPromptBadge(iconSystemName: "star.bubble", title: "感谢支持")
+                ]
+            },
+            primaryButtonTitle: "去评分",
+            secondaryButtonTitle: "写评论",
+            secondaryLoadingTitle: "正在打开 App Store…",
+            laterButtonTitle: "以后再说",
+            lookupFailureMessage: "暂时无法打开 App Store 评分页。",
+            openFailureMessage: "无法在本设备上打开 App Store。"
+        )
+    }
+}
+
+extension AppReviewPromptTheme {
+    static var ptuner: AppReviewPromptTheme {
+        AppReviewPromptTheme(
+            overlayColor: Color.black.opacity(0.55),
+            heroBackground: AppTheme.accentSoft,
+            heroForeground: AppTheme.accent,
+            cardBackground: AppTheme.surfaceElevated,
+            cardBorder: Color.white.opacity(0.10),
+            titleColor: AppTheme.primaryText,
+            messageColor: AppTheme.secondaryText,
+            detailBackground: AppTheme.accentSoft,
+            detailForeground: AppTheme.accent,
+            primaryButtonBackground: AppTheme.accent,
+            primaryButtonForeground: Color(red: 0.02, green: 0.08, blue: 0.10),
+            secondaryButtonBackground: Color.white.opacity(0.06),
+            secondaryButtonForeground: AppTheme.primaryText,
+            secondaryButtonBorder: Color.white.opacity(0.12),
+            tertiaryButtonForeground: AppTheme.secondaryText,
+            badgeBackground: Color.white.opacity(0.06),
+            badgeForeground: AppTheme.primaryText,
+            badgeIconTint: AppTheme.accent,
+            shadowColor: Color.black.opacity(0.45)
+        )
+    }
+}
