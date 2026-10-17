@@ -28,7 +28,6 @@ struct CustomTuningEditorView: View {
                     VStack(spacing: 14) {
                         basicSection
                         stringsSection
-                        hintText
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 10)
@@ -89,60 +88,72 @@ struct CustomTuningEditorView: View {
             sectionTitle("基本信息")
 
             VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    Text("名称")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(AppTheme.primaryText)
-                        .frame(width: 64, alignment: .leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 12) {
+                        Text("名称")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(AppTheme.primaryText)
+                            .frame(width: 64, alignment: .leading)
 
-                    TextField("调弦名称", text: $draft.name)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                        .foregroundStyle(AppTheme.primaryText)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(AppTheme.controlBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        TextField("调弦名称", text: $draft.name)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.primaryText)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(AppTheme.controlBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    }
+
+                    fieldDescription("用于在乐器列表和调音页显示。")
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
 
                 Divider().overlay(AppTheme.divider).padding(.leading, 14)
 
-                HStack(spacing: 12) {
-                    Text("乐器类型")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(AppTheme.primaryText)
-                        .frame(width: 64, alignment: .leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 12) {
+                        Text("乐器类型")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(AppTheme.primaryText)
+                            .frame(width: 64, alignment: .leading)
 
-                    Spacer()
+                        Spacer()
 
-                    Menu {
-                        ForEach(InstrumentKind.allCases) { kind in
-                            Button(kind.displayName) {
-                                draft.kind = kind
+                        Menu {
+                            ForEach(InstrumentKind.allCases) { kind in
+                                Button(kind.displayName) {
+                                    draft.kind = kind
+                                }
                             }
+                        } label: {
+                            menuLabel(draft.kind.displayName)
                         }
-                    } label: {
-                        menuLabel(draft.kind.displayName)
                     }
+
+                    fieldDescription("决定在乐器列表中的分类和图标。")
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
 
                 Divider().overlay(AppTheme.divider).padding(.leading, 14)
 
-                HStack(spacing: 12) {
-                    Text("弦数")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(AppTheme.primaryText)
-                        .frame(width: 64, alignment: .leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 12) {
+                        Text("弦数")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(AppTheme.primaryText)
+                            .frame(width: 64, alignment: .leading)
 
-                    Spacer()
+                        Spacer()
 
-                    StepperValue(value: draft.strings.count, range: 1...12) { value in
-                        changeStringCount(to: value)
+                        StepperValue(value: draft.strings.count, range: 1...12) { value in
+                            changeStringCount(to: value)
+                        }
                     }
+
+                    fieldDescription("这个调弦包含的弦数，最多 12 根。")
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -163,6 +174,13 @@ struct CustomTuningEditorView: View {
     private var stringsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("弦的音高设置")
+
+            VStack(alignment: .leading, spacing: 2) {
+                fieldDescription("每行依次为音名、八度、音分偏移。")
+                fieldDescription("音名与八度决定目标音高；音分偏移用于微调，正数偏高、负数偏低。")
+                fieldDescription("右侧菜单可以上移、下移或删除这根弦。")
+            }
+            .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
                 ForEach(Array(draft.strings.enumerated()), id: \.element.id) { index, string in
@@ -312,12 +330,11 @@ struct CustomTuningEditorView: View {
         .clipShape(Capsule())
     }
 
-    private var hintText: some View {
-        Text("音名、八度和音分偏移都会影响该弦的目标音准。音分偏移可输入正负值，用于微调。")
+    private func fieldDescription(_ text: String) -> some View {
+        Text(text)
             .font(.system(size: 11))
             .foregroundStyle(AppTheme.tertiaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 4)
     }
 
     private func sectionTitle(_ text: String) -> some View {

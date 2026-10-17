@@ -457,3 +457,49 @@ struct PrimaryTunerButton: View {
         .buttonStyle(.plain)
     }
 }
+
+// MARK: - 开关
+
+/// 调音页自定义开关：圆角轨道加滑动圆钮，比系统 Toggle 更贴合卡片风格。
+struct TunerSwitch: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isOn.toggle()
+            }
+        } label: {
+            ZStack {
+                Capsule()
+                    .fill(isOn ? AppTheme.accent : AppTheme.controlBackground)
+                    .overlay(
+                        Capsule()
+                            .stroke(isOn ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
+                    )
+                    .shadow(color: isOn ? AppTheme.accent.opacity(0.28) : .clear,
+                            radius: 6, x: 0, y: 2)
+
+                Circle()
+                    .fill(isOn ? AppTheme.onAccent : AppTheme.surface)
+                    .overlay(
+                        Circle()
+                            .stroke(isOn ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
+                    )
+                    .overlay(
+                        Image(systemName: "waveform")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(isOn ? AppTheme.accent : AppTheme.tertiaryText)
+                    )
+                    .shadow(color: AppTheme.shadow.opacity(0.35), radius: 2, x: 0, y: 1)
+                    .padding(3)
+                    .offset(x: isOn ? 11 : -11)
+            }
+            .frame(width: 50, height: 28)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("多音调音")
+        .accessibilityValue(isOn ? "已开启" : "已关闭")
+    }
+}

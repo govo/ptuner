@@ -265,7 +265,11 @@ struct PresetManagedRow: View {
     }
 }
 
-struct FreeTuningRow: View {
+/// 调音方式行：选择「按乐器调音」或「半音阶调音」。
+struct TuningModeRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
     let isSelected: Bool
     let onSelect: () -> Void
 
@@ -274,25 +278,25 @@ struct FreeTuningRow: View {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(AppTheme.accentSoft)
+                        .fill(isSelected ? AppTheme.accentSoft : AppTheme.controlBackground)
 
-                    Image(systemName: "waveform")
+                    Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(AppTheme.accent)
+                        .foregroundStyle(isSelected ? AppTheme.accent : AppTheme.secondaryText)
                 }
                 .frame(width: 38, height: 38)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("自由调音")
+                    Text(title)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(AppTheme.primaryText)
 
-                    Text("不限制乐器和调弦方式")
+                    Text(subtitle)
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
 
-                Spacer()
+                Spacer(minLength: 6)
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
@@ -303,6 +307,47 @@ struct FreeTuningRow: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// 主页乐器卡片顶部的调音模式快捷切换。
+struct TuningModeSegmentedControl: View {
+    let isFreeTuning: Bool
+    let onSelectInstrument: () -> Void
+    let onSelectChromatic: () -> Void
+
+    var body: some View {
+        HStack(spacing: 3) {
+            segment(title: "乐器调音",
+                    isSelected: !isFreeTuning,
+                    action: onSelectInstrument)
+            segment(title: "半音阶",
+                    isSelected: isFreeTuning,
+                    action: onSelectChromatic)
+        }
+        .padding(3)
+        .background(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(AppTheme.segmentBackground)
+        )
+    }
+
+    private func segment(title: String,
+                         isSelected: Bool,
+                         action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(isSelected ? AppTheme.onAccent : AppTheme.secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? AppTheme.accent : Color.clear)
+                )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

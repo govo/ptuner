@@ -20,12 +20,16 @@ final class InstrumentLibrary: ObservableObject {
         didSet { defaults.set(selectedPresetID, forKey: Keys.selectedPresetID) }
     }
 
+    /// 最近一次真正使用乐器时的调弦 ID，用于从半音阶模式一键切回。
+    private var lastInstrumentPresetID: String
+
     private let defaults: UserDefaults
 
     private enum Keys {
         static let customPresets = "ptuner.customPresets"
         static let favoriteIDs = "ptuner.favoritePresetIDs"
         static let selectedPresetID = "ptuner.selectedPresetID"
+        static let lastInstrumentPresetID = "ptuner.lastInstrumentPresetID"
         static let didSeedFavorites = "ptuner.didSeedFavorites"
     }
 
@@ -47,11 +51,17 @@ final class InstrumentLibrary: ObservableObject {
 
         let storedSelection = defaults.string(forKey: Keys.selectedPresetID) ?? "guitar.standard"
         selectedPresetID = storedSelection
+        lastInstrumentPresetID = defaults.string(forKey: Keys.lastInstrumentPresetID)
+            ?? (storedSelection == Self.freeTuningID ? "guitar.standard" : storedSelection)
+
         let hasPreset = BuiltInTunings.all.contains { $0.id == storedSelection }
             || customPresets.contains { $0.id == storedSelection }
             || storedSelection == Self.freeTuningID
         if !hasPreset {
             selectedPresetID = "guitar.standard"
+        }
+        if preset(id: lastInstrumentPresetID) == nil {
+            lastInstrumentPresetID = "guitar.standard"
         }
 
         // 首次启动预置一个收藏，让收藏区有可用内容。
@@ -112,11 +122,30 @@ final class InstrumentLibrary: ObservableObject {
     // MARK: - 选择
 
     func select(_ preset: TuningPreset) {
+        rememberAsLastInstrument(preset.id)
         selectedPresetID = preset.id
     }
 
     func selectFreeTuning() {
+        guard !isFreeTuning else { return }
+        rememberAsLastInstrument(selectedPresetID)
         selectedPresetID = Self.freeTuningID
+    }
+
+    /// 从半音阶模式切回最近使用的乐器；没有可用记录时回到吉他标准调弦。
+    func restoreLastInstrument() {
+        if let preset = preset(id: lastInstrumentPresetID) {
+            select(preset)
+            return
+        }
+        rememberAsLastInstrument("guitar.standard")
+        selectedPresetID = "guitar.standard"
+    }
+
+    private func rememberAsLastInstrument(_ id: String) {
+        guard id != Self.freeTuningID else { return }
+        lastInstrumentPresetID = id
+        defaults.set(id, forKey: Keys.lastInstrumentPresetID)
     }
 
     // MARK: - 收藏
@@ -145,13 +174,16 @@ final class InstrumentLibrary: ObservableObject {
         } else {
             customPresets.append(saved)
         }
-        selectedPresetID = saved.id
+        select(saved)
         return saved
     }
 
     func deleteCustom(id: String) {
         customPresets.removeAll { $0.id == id }
         favoriteIDs.remove(id)
+        if lastInstrumentPresetID == id {
+            rememberAsLastInstrument("guitar.standard")
+        }
         if selectedPresetID == id {
             selectedPresetID = "guitar.standard"
         }

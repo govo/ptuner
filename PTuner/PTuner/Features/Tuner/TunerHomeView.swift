@@ -35,7 +35,7 @@ struct TunerHomeView: View {
         return verificationStore.resolve(fresh)
     }
 
-    /// 自由调音没有目标弦，多音表退化为实时检测音列表。
+    /// 半音阶调音没有目标弦，多音表退化为实时检测音列表。
     private var freePolyRows: [PolyStringReading] {
         PolyReadingBuilder.build(readouts: tuner.polyReadouts,
                                  referencePitch: settings.referencePitch,
@@ -44,6 +44,12 @@ struct TunerHomeView: View {
 
     private var proUnlocked: Bool {
         proAccess.isPro(paywallManager)
+    }
+
+    /// 乐器模式跟随乐器弦数，半音阶模式使用用户在设置中选择的值。
+    private var effectiveMaxPolyphony: Int {
+        guard let preset else { return settings.maxPolyphony }
+        return min(12, max(2, preset.stringCount))
     }
 
     /// 只拨响一根弦时，用 CREPE 的实时单音读数驱动这根弦的指针。
@@ -107,6 +113,7 @@ struct TunerHomeView: View {
         }
         .task {
             settings.apply(to: tuner)
+            applyEffectivePolyphony()
             if multiEnabled && !proUnlocked {
                 multiEnabled = false
             }
@@ -120,7 +127,7 @@ struct TunerHomeView: View {
         }
         .onChange(of: multiEnabled) { _, enabled in
             if enabled {
-                ensurePolyphonyCapacity()
+                applyEffectivePolyphony()
             } else {
                 verificationStore.reset()
             }
@@ -143,14 +150,12 @@ struct TunerHomeView: View {
         .onChange(of: settings.stability) { _, _ in
             tuner.setDisplaySmoothing(settings.stability.smoothingFactor)
         }
-        .onChange(of: settings.maxPolyphony) { _, value in
-            tuner.setMaxPolyphony(value)
+        .onChange(of: settings.maxPolyphony) { _, _ in
+            applyEffectivePolyphony()
         }
         .onChange(of: library.selectedPresetID) { _, _ in
             verificationStore.reset()
-            if multiEnabled {
-                ensurePolyphonyCapacity()
-            }
+            applyEffectivePolyphony()
         }
         .onChange(of: tuner.polyReadouts) { _, _ in
             ingestPolyReadouts()
@@ -255,6 +260,7 @@ struct TunerHomeView: View {
         guard uid != settings.preferredInputDeviceUID else { return }
         settings.preferredInputDeviceUID = uid
         settings.apply(to: tuner)
+        applyEffectivePolyphony()
     }
     #endif
 
@@ -328,7 +334,7 @@ struct TunerHomeView: View {
             if let preset {
                 stringChips(preset: preset)
             } else {
-                Text("自由调音 · 显示距离最近的标准音")
+                Text("半音阶调音 · 显示距离最近的标准音")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.tertiaryText)
             }
@@ -419,7 +425,7 @@ struct TunerHomeView: View {
         }
     }
 
-    /// 自由调音：没有目标弦，只展示当前检测到的音。
+    /// 半音阶调音：没有目标弦，只展示当前检测到的音。
     private var freeTuningPolyPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -496,49 +502,75 @@ struct TunerHomeView: View {
 
     @ViewBuilder
     private var instrumentCard: some View {
-        Button {
-            router.showInstruments()
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(AppTheme.tint(for: preset?.kind ?? .other).opacity(0.12))
+        VStack(spacing: 10) {
+            TuningModeSegmentedControl(
+                isFreeTuning: library.isFreeTuning,
+                onSelectInstrument: selectInstrumentMode,
+                onSelectChromatic: selectChromaticMode
+            )
 
-                    InstrumentGlyph(kind: preset?.kind ?? .other)
-                        .frame(width: 22, height: 36)
+            Button {
+                router.showInstruments()
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill((library.isFreeTuning ? AppTheme.accent : AppTheme.tint(for: preset?.kind ?? .other)).opacity(0.12))
+
+                        if library.isFreeTuning {
+                            Image(systemName: "waveform")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(AppTheme.accent)
+                        } else {
+                            InstrumentGlyph(kind: preset?.kind ?? .other)
+                                .frame(width: 22, height: 36)
+                        }
+                    }
+                    .frame(width: 44, height: 44)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(library.isFreeTuning ? "半音阶调音" : (preset?.title ?? "吉他 · 标准调弦"))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(AppTheme.primaryText)
+                            .lineLimit(1)
+
+                        Text(library.isFreeTuning ? "不用乐器，自动识别任意音高" : (preset?.notesSummary ?? ""))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(AppTheme.secondaryText)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppTheme.tertiaryText)
                 }
-                .frame(width: 44, height: 44)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(preset?.title ?? "自由调音")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(AppTheme.primaryText)
-                        .lineLimit(1)
-
-                    Text(preset?.notesSummary ?? "不限制乐器和调弦方式")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(AppTheme.secondaryText)
-                        .lineLimit(1)
-                }
-
-                Spacer(minLength: 8)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppTheme.tertiaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .tunerCard(padding: 14)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .tunerCard(padding: 14)
+    }
+
+    private func selectInstrumentMode() {
+        guard library.isFreeTuning else { return }
+        library.restoreLastInstrument()
+        AppDiagnostics.breadcrumb(.tuner, "instrument_mode_selected")
+    }
+
+    private func selectChromaticMode() {
+        guard !library.isFreeTuning else { return }
+        library.selectFreeTuning()
+        AppDiagnostics.breadcrumb(.tuner, "chromatic_selected")
     }
 
     // MARK: - 多音开关（固定位置）
 
     private var multiToggleCard: some View {
         VStack(spacing: 12) {
-            Toggle(isOn: multiBinding) {
+            HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 5) {
                         Text("多音调音")
@@ -552,23 +584,31 @@ struct TunerHomeView: View {
                         }
                     }
 
-                    Text("同时检测多根弦，一次完成整琴校验")
+                    Text(library.isFreeTuning
+                         ? "同时识别多个音高，适合任意乐器"
+                         : "同时检测多根弦，一次完成整琴校验")
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
+
+                Spacer(minLength: 8)
+
+                TunerSwitch(isOn: multiBinding)
             }
-            .tint(AppTheme.accent)
 
             HStack {
-                Text("一次最多检测 \(settings.maxPolyphony) 个音")
+                Text(library.isFreeTuning
+                     ? "一次最多检测 \(settings.maxPolyphony) 个音"
+                     : "按乐器弦数自动检测 \(effectiveMaxPolyphony) 个音")
                     .font(.system(size: 12))
                     .foregroundStyle(AppTheme.secondaryText)
 
                 Spacer()
 
-                StepperValue(value: settings.maxPolyphony, range: 2...12) { value in
-                    settings.setMaxPolyphony(value)
-                    tuner.setMaxPolyphony(value)
+                if library.isFreeTuning {
+                    StepperValue(value: settings.maxPolyphony, range: 2...12) { value in
+                        settings.setMaxPolyphony(value)
+                    }
                 }
             }
             .opacity(multiEnabled ? 1 : 0.55)
@@ -647,12 +687,9 @@ struct TunerHomeView: View {
         verificationStore.ingest(slots)
     }
 
-    /// 保证多音通道能覆盖乐器的全部弦。
-    private func ensurePolyphonyCapacity() {
-        guard let preset, !preset.strings.isEmpty else { return }
-        let required = min(12, preset.stringCount)
-        guard settings.maxPolyphony < required else { return }
-        settings.setMaxPolyphony(required)
+    /// 把当前模式实际需要的最大音数同步给调音器。
+    private func applyEffectivePolyphony() {
+        tuner.setMaxPolyphony(effectiveMaxPolyphony)
     }
 
     private func presentMultiPaywall() {

@@ -55,7 +55,7 @@ nonisolated struct TuningReading: Equatable, Sendable {
     let noteName: String
     /// 相对目标音的偏差（音分）。
     let cents: Double
-    /// 命中的弦在配置中的下标；自由调音或未命中时为 nil。
+    /// 命中的弦在配置中的下标；半音阶调音或未命中时为 nil。
     let matchedStringIndex: Int?
     let targetDisplayName: String?
 
@@ -64,7 +64,7 @@ nonisolated struct TuningReading: Equatable, Sendable {
     /// - Parameters:
     ///   - rawMidi: CREPE 输出的 MIDI（按 A4 = 440 计算）。
     ///   - referencePitch: 用户设置的 A4 参考频率。
-    ///   - preset: 当前调弦配置；nil 表示自由调音。
+    ///   - preset: 当前调弦配置；nil 表示半音阶调音。
     static func make(rawMidi: Double?,
                      referencePitch: Double,
                      preset: TuningPreset?) -> TuningReading? {
@@ -139,7 +139,7 @@ nonisolated struct PolyStringReading: Identifiable, Equatable, Sendable {
 nonisolated enum PolyReadingBuilder {
 
     /// 把 Basic Pitch 的读数映射到目标调弦。
-    /// 有乐器时优先按弦序排列；自由调音或未命中的音按音高从低到高排列。
+    /// 有乐器时优先按弦序排列；半音阶调音或未命中的音按音高从低到高排列。
     static func build(readouts: [TunerPolyReadout],
                       referencePitch: Double,
                       preset: TuningPreset?) -> [PolyStringReading] {

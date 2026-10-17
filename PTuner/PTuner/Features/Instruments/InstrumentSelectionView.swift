@@ -18,8 +18,17 @@ struct InstrumentSelectionView: View {
 
             ScrollView {
                 VStack(spacing: 14) {
-                    InstrumentSearchField(text: $searchText)
-                    InstrumentCategoryStrip(selection: $category)
+                    tuningModeSection
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("选择乐器")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(AppTheme.secondaryText)
+                            .padding(.leading, 4)
+
+                        InstrumentSearchField(text: $searchText)
+                        InstrumentCategoryStrip(selection: $category)
+                    }
 
                     if isSearching {
                         searchResults
@@ -36,8 +45,6 @@ struct InstrumentSelectionView: View {
                             categorySection
                         }
                     }
-
-                    freeTuningSection
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 8)
@@ -46,7 +53,7 @@ struct InstrumentSelectionView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("选择乐器")
+        .navigationTitle("选择调音方式")
     }
 
     // MARK: - 搜索
@@ -147,13 +154,27 @@ struct InstrumentSelectionView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - 自由调音
+    // MARK: - 调音方式
 
-    private var freeTuningSection: some View {
-        InstrumentGroupCard(title: "自由调音") {
-            FreeTuningRow(isSelected: library.isFreeTuning) {
+    private var tuningModeSection: some View {
+        InstrumentGroupCard(title: "调音方式") {
+            TuningModeRow(icon: "guitars",
+                          title: "按乐器调音",
+                          subtitle: "按所选乐器的目标弦逐一调音",
+                          isSelected: !library.isFreeTuning) {
+                library.restoreLastInstrument()
+                AppDiagnostics.breadcrumb(.tuner, "instrument_mode_selected")
+                router.showTuner()
+            }
+
+            InstrumentRowDivider()
+
+            TuningModeRow(icon: "waveform",
+                          title: "半音阶调音",
+                          subtitle: "不用乐器，自动识别任意音高",
+                          isSelected: library.isFreeTuning) {
                 library.selectFreeTuning()
-                AppDiagnostics.breadcrumb(.tuner, "free_tuning_selected")
+                AppDiagnostics.breadcrumb(.tuner, "chromatic_selected")
                 router.showTuner()
             }
         }
