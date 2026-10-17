@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
+
 // MARK: - 状态颜色
 
 extension TuningStatus {
@@ -37,72 +43,246 @@ extension View {
 // MARK: - 乐器图标
 
 struct InstrumentGlyph: View {
-    let kind: InstrumentKind
+    let style: InstrumentGlyphStyle
+    /// Assets 图片名。图片存在时优先显示图片，否则回退到共享矢量轮廓。
+    var imageName: String? = nil
     var tint: Color? = nil
 
+    init(instrument: InstrumentDefinition, tint: Color? = nil) {
+        self.style = instrument.glyph
+        self.imageName = instrument.imageName
+        self.tint = tint ?? AppTheme.tint(for: instrument)
+    }
+
+    init(style: InstrumentGlyphStyle, imageName: String? = nil, tint: Color? = nil) {
+        self.style = style
+        self.imageName = imageName
+        self.tint = tint
+    }
+
     var body: some View {
-        let color = tint ?? AppTheme.tint(for: kind)
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = geo.size.height
-            let neckHeight = neckRatio * h
-            let neckCenterY = neckCenterRatio * h
+        let color = tint ?? AppTheme.accent
 
-            ZStack {
-                Capsule()
-                    .fill(color.opacity(0.9))
-                    .frame(width: w * 0.18, height: neckHeight)
-                    .position(x: w * 0.5, y: neckCenterY)
-
-                RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
-                    .fill(color)
-                    .frame(width: w * 0.30, height: h * 0.09)
-                    .position(x: w * 0.5, y: h * 0.055)
-
-                Circle()
-                    .fill(color)
-                    .frame(width: w * 0.56, height: w * 0.56)
-                    .position(x: w * 0.5, y: h * 0.60)
-
-                Circle()
-                    .fill(color)
-                    .frame(width: w * 0.74, height: w * 0.74)
-                    .position(x: w * 0.5, y: h * 0.76)
-
-                Circle()
-                    .fill(AppTheme.surface)
-                    .frame(width: w * 0.15, height: w * 0.15)
-                    .position(x: w * 0.5, y: h * (kind == .ukulele ? 0.62 : 0.635))
-
-                HStack(spacing: w * 0.06) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        Capsule()
-                            .fill(AppTheme.surface.opacity(0.85))
-                            .frame(width: max(0.8, w * 0.02), height: h * 0.42)
+        Group {
+            if let imageName, Self.hasAsset(named: imageName) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                GeometryReader { geo in
+                    switch style {
+                    case .guitar:
+                        guitarGlyph(color: color, size: geo.size)
+                    case .lute:
+                        luteGlyph(color: color, size: geo.size)
+                    case .bowed:
+                        bowedGlyph(color: color, size: geo.size)
+                    case .zither:
+                        zitherGlyph(color: color, size: geo.size)
+                    case .harp:
+                        harpGlyph(color: color, size: geo.size)
                     }
                 }
-                .position(x: w * 0.5, y: h * 0.37)
+                .aspectRatio(0.62, contentMode: .fit)
             }
         }
-        .aspectRatio(0.62, contentMode: .fit)
         .accessibilityHidden(true)
     }
 
-    private var neckRatio: CGFloat {
-        switch kind {
-        case .bass: return 0.52
-        case .ukulele: return 0.36
-        default: return 0.46
+    private static func hasAsset(named name: String) -> Bool {
+        #if os(macOS)
+        return NSImage(named: name) != nil
+        #else
+        return UIImage(named: name) != nil
+        #endif
+    }
+
+    // MARK: - 拨弦（吉他、贝斯、尤克里里）
+
+    private func guitarGlyph(color: Color, size: CGSize) -> some View {
+        let w = size.width
+        let h = size.height
+        let neckHeight = neckRatio * h
+        let neckCenterY = neckCenterRatio * h
+
+        return ZStack {
+            Capsule()
+                .fill(color.opacity(0.9))
+                .frame(width: w * 0.18, height: neckHeight)
+                .position(x: w * 0.5, y: neckCenterY)
+
+            RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
+                .fill(color)
+                .frame(width: w * 0.30, height: h * 0.09)
+                .position(x: w * 0.5, y: h * 0.055)
+
+            Circle()
+                .fill(color)
+                .frame(width: w * 0.56, height: w * 0.56)
+                .position(x: w * 0.5, y: h * 0.60)
+
+            Circle()
+                .fill(color)
+                .frame(width: w * 0.74, height: w * 0.74)
+                .position(x: w * 0.5, y: h * 0.76)
+
+            Circle()
+                .fill(AppTheme.surface)
+                .frame(width: w * 0.15, height: w * 0.15)
+                .position(x: w * 0.5, y: h * 0.635)
+
+            HStack(spacing: w * 0.06) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Capsule()
+                        .fill(AppTheme.surface.opacity(0.85))
+                        .frame(width: max(0.8, w * 0.02), height: h * 0.42)
+                }
+            }
+            .position(x: w * 0.5, y: h * 0.37)
         }
     }
 
-    private var neckCenterRatio: CGFloat {
-        switch kind {
-        case .bass: return 0.31
-        case .ukulele: return 0.27
-        default: return 0.30
+    // MARK: - 短颈弹拨（曼陀林、琵琶、乌德琴等）
+
+    private func luteGlyph(color: Color, size: CGSize) -> some View {
+        let w = size.width
+        let h = size.height
+
+        return ZStack {
+            Capsule()
+                .fill(color.opacity(0.9))
+                .frame(width: w * 0.16, height: h * 0.42)
+                .position(x: w * 0.5, y: h * 0.26)
+
+            RoundedRectangle(cornerRadius: w * 0.04, style: .continuous)
+                .fill(color)
+                .frame(width: w * 0.28, height: h * 0.08)
+                .position(x: w * 0.5, y: h * 0.045)
+
+            Ellipse()
+                .fill(color)
+                .frame(width: w * 0.78, height: h * 0.52)
+                .position(x: w * 0.5, y: h * 0.70)
+
+            Circle()
+                .fill(AppTheme.surface)
+                .frame(width: w * 0.17, height: w * 0.17)
+                .position(x: w * 0.5, y: h * 0.68)
+
+            HStack(spacing: w * 0.07) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Capsule()
+                        .fill(AppTheme.surface.opacity(0.85))
+                        .frame(width: max(0.8, w * 0.018), height: h * 0.36)
+                }
+            }
+            .position(x: w * 0.5, y: h * 0.36)
         }
     }
+
+    // MARK: - 弓弦（小提琴、二胡、萨兰吉等）
+
+    private func bowedGlyph(color: Color, size: CGSize) -> some View {
+        let w = size.width
+        let h = size.height
+
+        return ZStack {
+            Capsule()
+                .fill(color)
+                .frame(width: w * 0.13, height: h * 0.50)
+                .position(x: w * 0.47, y: h * 0.30)
+
+            RoundedRectangle(cornerRadius: w * 0.04, style: .continuous)
+                .fill(color)
+                .frame(width: w * 0.24, height: h * 0.07)
+                .position(x: w * 0.47, y: h * 0.035)
+
+            Ellipse()
+                .fill(color)
+                .frame(width: w * 0.46, height: h * 0.24)
+                .position(x: w * 0.47, y: h * 0.62)
+
+            Ellipse()
+                .fill(color)
+                .frame(width: w * 0.62, height: h * 0.30)
+                .position(x: w * 0.47, y: h * 0.79)
+
+            Capsule()
+                .fill(color.opacity(0.55))
+                .frame(width: max(1, w * 0.05), height: h * 0.78)
+                .rotationEffect(.degrees(24))
+                .position(x: w * 0.76, y: h * 0.46)
+        }
+    }
+
+    // MARK: - 筝类（古筝、古琴、日本筝、扬琴等）
+
+    private func zitherGlyph(color: Color, size: CGSize) -> some View {
+        let w = size.width
+        let h = size.height
+        let inset = w * 0.16
+
+        return ZStack {
+            Path { path in
+                path.move(to: CGPoint(x: inset, y: h * 0.18))
+                path.addLine(to: CGPoint(x: w - inset * 0.5, y: h * 0.08))
+                path.addLine(to: CGPoint(x: w - inset * 0.5, y: h * 0.88))
+                path.addLine(to: CGPoint(x: inset, y: h * 0.96))
+                path.closeSubpath()
+            }
+            .fill(color.opacity(0.92))
+
+            HStack(spacing: w * 0.035) {
+                ForEach(0..<6, id: \.self) { _ in
+                    Capsule()
+                        .fill(AppTheme.surface.opacity(0.8))
+                        .frame(width: max(0.7, w * 0.014), height: h * 0.62)
+                }
+            }
+            .rotationEffect(.degrees(-4))
+            .position(x: w * 0.5, y: h * 0.54)
+        }
+    }
+
+    // MARK: - 竖琴类（科拉琴、恩戈尼琴）
+
+    private func harpGlyph(color: Color, size: CGSize) -> some View {
+        let w = size.width
+        let h = size.height
+
+        return ZStack {
+            Capsule()
+                .fill(color)
+                .frame(width: w * 0.12, height: h * 0.90)
+                .position(x: w * 0.24, y: h * 0.52)
+
+            Capsule()
+                .fill(color)
+                .frame(width: max(1, w * 0.07), height: h * 0.78)
+                .rotationEffect(.degrees(-24))
+                .position(x: w * 0.56, y: h * 0.48)
+
+            RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
+                .fill(color)
+                .frame(width: w * 0.62, height: h * 0.09)
+                .rotationEffect(.degrees(-10))
+                .position(x: w * 0.52, y: h * 0.08)
+
+            HStack(spacing: w * 0.05) {
+                ForEach(0..<5, id: \.self) { _ in
+                    Capsule()
+                        .fill(AppTheme.surface.opacity(0.8))
+                        .frame(width: max(0.7, w * 0.012), height: h * 0.66)
+                }
+            }
+            .rotationEffect(.degrees(-6))
+            .position(x: w * 0.48, y: h * 0.50)
+        }
+    }
+
+    private var neckRatio: CGFloat { 0.46 }
+
+    private var neckCenterRatio: CGFloat { 0.30 }
 }
 
 // MARK: - 音分条

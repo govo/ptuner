@@ -91,12 +91,31 @@ final class InstrumentLibrary: ObservableObject {
         customPresets.first { $0.id == id } ?? BuiltInTunings.preset(id: id)
     }
 
-    func presets(for kind: InstrumentKind) -> [TuningPreset] {
-        allPresets.filter { $0.kind == kind }
+    func presets(for instrument: InstrumentDefinition) -> [TuningPreset] {
+        allPresets.filter { $0.kind == instrument.id }
     }
 
-    func customPresets(for kind: InstrumentKind) -> [TuningPreset] {
-        customPresets.filter { $0.kind == kind }
+    func customPresets(for instrument: InstrumentDefinition) -> [TuningPreset] {
+        customPresets.filter { $0.kind == instrument.id }
+    }
+
+    func presets(for family: InstrumentFamily) -> [TuningPreset] {
+        allPresets.filter { $0.instrument.familyID == family.id }
+    }
+
+    /// 某个族下按具体乐器分组的调弦，用于「全部」页展开。
+    func instrumentGroups(in family: InstrumentFamily) -> [(instrument: InstrumentDefinition, presets: [TuningPreset])] {
+        InstrumentCatalog.instruments(in: family.id).compactMap { instrument in
+            let presets = presets(for: instrument)
+            return presets.isEmpty ? nil : (instrument, presets)
+        }
+    }
+
+    /// 配置中实际有调弦内容的族，避免筛选条出现空分类。
+    var instrumentFamilies: [InstrumentFamily] {
+        InstrumentCatalog.families.filter { family in
+            allPresets.contains { $0.instrument.familyID == family.id }
+        }
     }
 
     var favoritePresets: [TuningPreset] {
@@ -114,7 +133,8 @@ final class InstrumentLibrary: ObservableObject {
         return allPresets.filter { preset in
             preset.name.localizedCaseInsensitiveContains(trimmed)
                 || preset.displayName.localizedCaseInsensitiveContains(trimmed)
-                || preset.kind.displayName.localizedCaseInsensitiveContains(trimmed)
+                || preset.kindDisplayName.localizedCaseInsensitiveContains(trimmed)
+                || preset.family.displayName.localizedCaseInsensitiveContains(trimmed)
                 || preset.notesSummary.localizedCaseInsensitiveContains(trimmed)
                 || preset.title.localizedCaseInsensitiveContains(trimmed)
         }
@@ -191,31 +211,29 @@ final class InstrumentLibrary: ObservableObject {
     }
 
     /// 从任意配置复制出一份尚未保存的自定义草稿。
-    func makeDraft(from preset: TuningPreset? = nil, kind: InstrumentKind = .guitar) -> TuningPreset {
+    func makeDraft(from preset: TuningPreset? = nil,
+                   instrument: InstrumentDefinition? = nil) -> TuningPreset {
         if let preset {
             return preset.duplicated()
         }
-        let defaults = kind.defaultStringCount
-        let strings = (0..<defaults).map { index -> TuningString in
-            // 从低弦到高弦按四度递增，生成一个可编辑的起点。
-            let base = TuningString(parsing: defaultStarterNotes(kind: kind).dropFirst(index).first ?? "E2")
-                ?? TuningString(midiNote: 40)
-            return base
-        }
+        let instrument = instrument
+            ?? InstrumentCatalog.instrument(id: "guitar")
+            ?? InstrumentCatalog.fallbackInstrument
+        let starterNotes = defaultStarterNotes(instrument: instrument)
+        let strings = starterNotes.map { TuningString(parsing: $0) ?? TuningString(midiNote: 40) }
         return TuningPreset(id: UUID().uuidString,
                             name: L10n.tr("我的自定义调弦"),
-                            kind: kind,
+                            kind: instrument.id,
                             strings: strings.isEmpty ? [TuningString(midiNote: 40)] : strings,
                             isBuiltIn: false)
     }
 
-    private func defaultStarterNotes(kind: InstrumentKind) -> [String] {
-        switch kind {
-        case .guitar: return ["E2", "A2", "D3", "G3", "B3", "E4"]
-        case .bass: return ["E1", "A1", "D2", "G2", "B2", "E3"]
-        case .ukulele: return ["G4", "C4", "E4", "A4", "D5", "G5"]
-        case .other: return ["C2", "G2", "D3", "A3", "E4", "B4"]
+    private func defaultStarterNotes(instrument: InstrumentDefinition) -> [String] {
+        // 优先沿用该乐器最常用的内置调弦，避免新建自定义调弦时出现陌生音高。
+        if let preset = BuiltInTunings.all.first(where: { $0.kind == instrument.id }) {
+            return preset.strings.map(\.displayName)
         }
+        return ["C2", "G2", "D3", "A3", "E4", "B4"]
     }
 
     // MARK: - 持久化

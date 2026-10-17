@@ -25,7 +25,10 @@ struct InstrumentSelectionView: View {
                     pageHeader
                     #endif
                     InstrumentSearchField(text: $searchText)
-                    InstrumentCategoryStrip(selection: $category)
+                    InstrumentCategoryStrip(
+                        selection: $category,
+                        categories: InstrumentCategory.strip(library: library)
+                    )
                     content
                 }
                 .padding(.horizontal, 18)
@@ -128,13 +131,19 @@ struct InstrumentSelectionView: View {
         if isSearching {
             searchResults
         } else {
-            switch category {
+            switch category.selection {
             case .all:
                 allSections
             case .favorites:
                 favoritesSection
-            case .guitar, .bass, .ukulele, .other:
-                selectedKindSection
+            case .instrument(let id):
+                if let instrument = InstrumentCatalog.instrument(id: id) {
+                    kindSection(for: instrument)
+                }
+            case .family(let id):
+                if let family = InstrumentCatalog.family(id: id) {
+                    familyInstrumentSections(for: family)
+                }
             case .custom:
                 customSection
             }
@@ -156,11 +165,35 @@ struct InstrumentSelectionView: View {
 
     @ViewBuilder
     private var allSections: some View {
-        kindSection(for: .guitar)
-        kindSection(for: .bass)
-        kindSection(for: .ukulele)
-        kindSection(for: .other)
+        // 「全部」按乐器族展开，族内所有乐器放在同一张卡片里，
+        // 每行仍以「乐器 · 调弦」区分，避免 50 多张卡片把页面拉得过长。
+        ForEach(library.instrumentFamilies) { family in
+            familySection(for: family)
+        }
         customSection
+    }
+
+    @ViewBuilder
+    private func familySection(for family: InstrumentFamily) -> some View {
+        let presets = library.presets(for: family)
+        if !presets.isEmpty {
+            section(title: family.displayName, presets: presets)
+        }
+    }
+
+    /// 选中某个族时，族内再按具体乐器分卡片，方便查找同族的不同乐器。
+    @ViewBuilder
+    private func familyInstrumentSections(for family: InstrumentFamily) -> some View {
+        let groups = library.instrumentGroups(in: family)
+        if groups.isEmpty {
+            EmptyStateView(icon: "guitars",
+                           title: L10n.tr("暂无%@调弦", family.displayName),
+                           message: L10n.tr("可以新建一个自定义调弦。"))
+        } else {
+            ForEach(groups, id: \.instrument.id) { group in
+                section(title: group.instrument.displayName, presets: group.presets)
+            }
+        }
     }
 
     @ViewBuilder
@@ -175,20 +208,13 @@ struct InstrumentSelectionView: View {
     }
 
     @ViewBuilder
-    private var selectedKindSection: some View {
-        if let kind = category.kind {
-            kindSection(for: kind)
-        }
-    }
-
-    @ViewBuilder
-    private func kindSection(for kind: InstrumentKind) -> some View {
-        let presets = library.presets(for: kind)
+    private func kindSection(for instrument: InstrumentDefinition) -> some View {
+        let presets = library.presets(for: instrument)
         if !presets.isEmpty {
-            section(title: kind.displayName, presets: presets)
-        } else if category != .all {
+            section(title: instrument.displayName, presets: presets)
+        } else if category.selection != .all {
             EmptyStateView(icon: "guitars",
-                           title: L10n.tr("暂无%@调弦", kind.displayName),
+                           title: L10n.tr("暂无%@调弦", instrument.displayName),
                            message: L10n.tr("可以新建一个自定义调弦。"))
         }
     }
@@ -267,7 +293,7 @@ struct InstrumentSelectionView: View {
     }
 
     private func createCustomTuning() {
-        let draft = library.makeDraft(kind: .guitar)
+        let draft = library.makeDraft(instrument: InstrumentCatalog.instrument(id: "guitar"))
         editorContext = EditorContext(preset: draft, isNew: true)
     }
 }

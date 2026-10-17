@@ -345,56 +345,72 @@ struct TunerHomeView: View {
             .allowsHitTesting(false)
     }
 
+    @ViewBuilder
     private func stringChips(preset: TuningPreset) -> some View {
-        HStack(spacing: 4) {
-            ForEach(Array(preset.strings.enumerated()), id: \.offset) { index, string in
-                let isActive = reading?.matchedStringIndex == index
-                let status = isActive ? (reading?.status ?? .idle) : .idle
-
-                Button {
-                    playReferenceTone(frequency: string.frequency(referenceA4: settings.referencePitch))
-                } label: {
-                    VStack(spacing: 5) {
-                        Text(string.displayName)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(isActive ? status.color : AppTheme.secondaryText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-
-                        ZStack {
-                            Circle()
-                                .fill(isActive
-                                      ? AnyShapeStyle(status.color.opacity(0.16))
-                                      : AnyShapeStyle(Color.white.opacity(0.055)))
-
-                            Circle()
-                                .stroke(isActive ? status.color.opacity(0.6) : Color.white.opacity(0.09),
-                                        lineWidth: 0.8)
-
-                            if isActive {
-                                Image(systemName: status.symbolName)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(status.color)
-                                    .shadow(color: status.color.opacity(0.8), radius: 4)
-                            } else {
-                                Text("\(preset.stringNumber(at: index))")
-                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(AppTheme.tertiaryText)
-                            }
-                        }
-                        .frame(width: 32, height: 32)
-                        .shadow(color: isActive ? status.color.opacity(0.35) : .clear, radius: 8)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-                .accessibilityLabel(L10n.tr("播放 %@ 参考音", string.displayName))
-                .animation(.easeOut(duration: 0.15), value: isActive)
+        // 12 弦以内保持一排；古筝 21 弦、坎侬琴 26 组弦等多弦乐器改用网格，
+        // 否则每根弦会被压缩到无法点击的宽度。
+        if preset.stringCount <= 12 {
+            HStack(spacing: 4) {
+                stringChipButtons(preset: preset)
             }
+            .padding(.vertical, 4)
+        } else {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 42, maximum: 68), spacing: 6)],
+                      spacing: 8) {
+                stringChipButtons(preset: preset)
+            }
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func stringChipButtons(preset: TuningPreset) -> some View {
+        ForEach(Array(preset.strings.enumerated()), id: \.offset) { index, string in
+            let isActive = reading?.matchedStringIndex == index
+            let status = isActive ? (reading?.status ?? .idle) : .idle
+
+            Button {
+                playReferenceTone(frequency: string.frequency(referenceA4: settings.referencePitch))
+            } label: {
+                VStack(spacing: 5) {
+                    Text(string.displayName)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(isActive ? status.color : AppTheme.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    ZStack {
+                        Circle()
+                            .fill(isActive
+                                  ? AnyShapeStyle(status.color.opacity(0.16))
+                                  : AnyShapeStyle(Color.white.opacity(0.055)))
+
+                        Circle()
+                            .stroke(isActive ? status.color.opacity(0.6) : Color.white.opacity(0.09),
+                                    lineWidth: 0.8)
+
+                        if isActive {
+                            Image(systemName: status.symbolName)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(status.color)
+                                .shadow(color: status.color.opacity(0.8), radius: 4)
+                        } else {
+                            Text("\(preset.stringNumber(at: index))")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundStyle(AppTheme.tertiaryText)
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+                    .shadow(color: isActive ? status.color.opacity(0.35) : .clear, radius: 8)
+                }
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel(L10n.tr("播放 %@ 参考音", string.displayName))
+            .animation(.easeOut(duration: 0.15), value: isActive)
+        }
     }
 
     /// 点击弦位时播放该弦的目标音高（已计入音分偏移与 A4 参考音高）。
@@ -565,7 +581,7 @@ struct TunerHomeView: View {
     private var currentTuningRow: some View {
         let tint = library.isFreeTuning
             ? AppTheme.accent
-            : AppTheme.tint(for: preset?.kind ?? .other)
+            : AppTheme.tint(for: (preset?.instrument ?? InstrumentCatalog.fallbackInstrument).family)
 
         return HStack(spacing: 14) {
             ZStack {
@@ -586,7 +602,7 @@ struct TunerHomeView: View {
                         .foregroundStyle(tint)
                         .shadow(color: tint.opacity(0.6), radius: 8)
                 } else {
-                    InstrumentGlyph(kind: preset?.kind ?? .other)
+                    InstrumentGlyph(instrument: preset?.instrument ?? InstrumentCatalog.fallbackInstrument)
                         .frame(width: 28, height: 46)
                 }
             }

@@ -76,14 +76,32 @@ enum AppTheme {
         endPoint: .bottom
     )
 
-    /// 乐器分类的识别色。
-    static func tint(for kind: InstrumentKind) -> Color {
-        switch kind {
-        case .guitar: return accent
-        case .bass: return Color(light: 0x7C5CFF, dark: 0xA98BFF)
-        case .ukulele: return Color(light: 0xE07A1F, dark: 0xF5A524)
-        case .other: return Color(light: 0x0E9F9A, dark: 0x2DD4BF)
+    /// 乐器识别色由 `Instruments.json` 提供：优先乐器专属色，其次所属族的颜色。
+    static func tint(for instrument: InstrumentDefinition) -> Color {
+        if let tint = instrument.tint {
+            return Self.tint(hex: tint, fallback: Self.tint(for: instrument.family))
         }
+        return Self.tint(for: instrument.family)
+    }
+
+    static func tint(for family: InstrumentFamily?) -> Color {
+        guard let family else { return accent }
+        return tint(hex: family.tint, fallback: accent)
+    }
+
+    static func tint(forInstrumentID id: String) -> Color {
+        guard let instrument = InstrumentCatalog.instrument(id: id) else {
+            return tint(for: InstrumentCatalog.fallbackFamily)
+        }
+        return tint(for: instrument)
+    }
+
+    static func tint(hex: String, fallback: Color) -> Color {
+        let cleaned = hex
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+        guard let value = UInt32(cleaned, radix: 16) else { return fallback }
+        return Color(hex: value)
     }
 }
 

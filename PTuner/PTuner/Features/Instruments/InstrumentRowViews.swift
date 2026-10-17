@@ -2,58 +2,72 @@ import SwiftUI
 
 // MARK: - 分类
 
-enum InstrumentCategory: String, CaseIterable, Identifiable {
-    case all
-    case favorites
-    case guitar
-    case bass
-    case ukulele
-    case other
-    case custom
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .all: return L10n.tr("全部")
-        case .favorites: return L10n.tr("收藏")
-        case .guitar: return L10n.tr("吉他")
-        case .bass: return L10n.tr("贝斯")
-        case .ukulele: return L10n.tr("尤克里里")
-        case .other: return L10n.tr("其他")
-        case .custom: return L10n.tr("自定义")
-        }
+/// 乐器页筛选条。入口由 `Instruments.json` 决定：
+/// 配置中 `featured: true` 的乐器单独成项，其余按族归类。
+struct InstrumentCategory: Identifiable, Hashable {
+    enum Selection: Hashable {
+        case all
+        case favorites
+        case instrument(String)
+        case family(String)
+        case custom
     }
 
-    var kind: InstrumentKind? {
-        switch self {
-        case .guitar: return .guitar
-        case .bass: return .bass
-        case .ukulele: return .ukulele
-        case .other: return .other
-        case .all, .favorites, .custom: return nil
+    let id: String
+    let title: String
+    let selection: Selection
+
+    static var all: InstrumentCategory {
+        InstrumentCategory(id: "all", title: L10n.tr("全部"), selection: .all)
+    }
+
+    static var favorites: InstrumentCategory {
+        InstrumentCategory(id: "favorites", title: L10n.tr("收藏"), selection: .favorites)
+    }
+
+    static var custom: InstrumentCategory {
+        InstrumentCategory(id: "custom", title: L10n.tr("自定义"), selection: .custom)
+    }
+
+    /// 每次进入页面时按当前语言与配置重新生成。
+    @MainActor
+    static func strip(library: InstrumentLibrary) -> [InstrumentCategory] {
+        let featured = InstrumentCatalog.featuredInstruments.map { instrument in
+            InstrumentCategory(id: "instrument.\(instrument.id)",
+                               title: instrument.displayName,
+                               selection: .instrument(instrument.id))
         }
+
+        let families = library.instrumentFamilies.map { family in
+            InstrumentCategory(id: "family.\(family.id)",
+                               title: family.shortDisplayName,
+                               selection: .family(family.id))
+        }
+
+        return [all, favorites] + featured + families + [custom]
     }
 }
 
 struct InstrumentCategoryStrip: View {
     @Binding var selection: InstrumentCategory
+    let categories: [InstrumentCategory]
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(InstrumentCategory.allCases) { category in
+                ForEach(categories) { category in
+                    let isSelected = selection.id == category.id
                     Button {
                         selection = category
                     } label: {
                         Text(category.title)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(selection == category ? AppTheme.onAccent : AppTheme.secondaryText)
+                            .foregroundStyle(isSelected ? AppTheme.onAccent : AppTheme.secondaryText)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(
                                 Capsule()
-                                    .fill(selection == category ? AppTheme.accent : AppTheme.controlBackground)
+                                    .fill(isSelected ? AppTheme.accent : AppTheme.controlBackground)
                             )
                             .contentShape(Rectangle())
                     }
@@ -187,9 +201,9 @@ struct PresetManagedRow: View {
     private var presetIcon: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(AppTheme.tint(for: preset.kind).opacity(0.11))
+                .fill(AppTheme.tint(for: preset.instrument).opacity(0.11))
 
-            InstrumentGlyph(kind: preset.kind)
+            InstrumentGlyph(instrument: preset.instrument)
                 .frame(width: 18, height: 29)
         }
         .frame(width: 38, height: 38)

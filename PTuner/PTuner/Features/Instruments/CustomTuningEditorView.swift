@@ -123,13 +123,20 @@ struct CustomTuningEditorView: View {
                         Spacer()
 
                         Menu {
-                            ForEach(InstrumentKind.allCases) { kind in
-                                Button(kind.displayName) {
-                                    draft.kind = kind
+                            ForEach(InstrumentCatalog.families) { family in
+                                let instruments = InstrumentCatalog.instruments(in: family.id)
+                                if !instruments.isEmpty {
+                                    Menu(family.displayName) {
+                                        ForEach(instruments) { instrument in
+                                            Button(instrument.displayName) {
+                                                draft.kind = instrument.id
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         } label: {
-                            menuLabel(draft.kind.displayName)
+                            menuLabel(draft.instrument.displayName)
                         }
                     }
 
@@ -149,12 +156,14 @@ struct CustomTuningEditorView: View {
 
                         Spacer()
 
-                        StepperValue(value: draft.strings.count, range: 1...12) { value in
+                        StepperValue(value: draft.strings.count,
+                                     range: 1...TuningLimits.maxStringCount) { value in
                             changeStringCount(to: value)
                         }
                     }
 
-                    fieldDescription(L10n.tr("这个调弦包含的弦数，最多 12 根。"))
+                    fieldDescription(L10n.tr("这个调弦包含的弦数，最多 %d 根。",
+                                             TuningLimits.maxStringCount))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -227,13 +236,13 @@ struct CustomTuningEditorView: View {
                         Text(L10n.tr("添加弦"))
                             .font(.system(size: 14, weight: .semibold))
                     }
-                    .foregroundStyle(draft.strings.count >= 12 ? AppTheme.tertiaryText : AppTheme.accent)
+                    .foregroundStyle(draft.strings.count >= TuningLimits.maxStringCount ? AppTheme.tertiaryText : AppTheme.accent)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(draft.strings.count >= 12)
+                .disabled(draft.strings.count >= TuningLimits.maxStringCount)
             }
             .background(GlassCardBackground(cornerRadius: 18))
         }
@@ -404,7 +413,7 @@ struct CustomTuningEditorView: View {
     }
 
     private func addString() {
-        guard draft.strings.count < 12 else { return }
+        guard draft.strings.count < TuningLimits.maxStringCount else { return }
         draft.strings.append(makeNextString())
     }
 

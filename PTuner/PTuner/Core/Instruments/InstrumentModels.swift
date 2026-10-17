@@ -1,40 +1,15 @@
 import Foundation
 
-// MARK: - 乐器类型
+// MARK: - 图标轮廓
 
-nonisolated enum InstrumentKind: String, Codable, CaseIterable, Identifiable, Sendable {
+/// 图标轮廓：按乐器形态分成少数几种，避免为每件乐器单独绘制。
+/// 具体乐器可在配置中用 `image` 覆盖这里选定的共享轮廓。
+nonisolated enum InstrumentGlyphStyle: String, Codable, CaseIterable, Sendable {
     case guitar
-    case bass
-    case ukulele
-    case other
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .guitar: return L10n.tr("吉他")
-        case .bass: return L10n.tr("贝斯")
-        case .ukulele: return L10n.tr("尤克里里")
-        case .other: return L10n.tr("其他乐器")
-        }
-    }
-
-    var shortDisplayName: String {
-        switch self {
-        case .other: return L10n.tr("其他")
-        default: return displayName
-        }
-    }
-
-    /// 切换乐器类型时用于新建弦数的参考值。
-    var defaultStringCount: Int {
-        switch self {
-        case .guitar: return 6
-        case .bass: return 4
-        case .ukulele: return 4
-        case .other: return 6
-        }
-    }
+    case lute
+    case bowed
+    case zither
+    case harp
 }
 
 // MARK: - 音名拼写
@@ -112,6 +87,15 @@ nonisolated enum NoteNames {
     static func frequency(midi: Double, referenceA4: Double) -> Double {
         referenceA4 * pow(2.0, (midi - 69.0) / 12.0)
     }
+}
+
+// MARK: - 限制
+
+nonisolated enum TuningLimits {
+    /// 自定义调弦允许的最大弦数。扬琴 402 型的十二平均律目标音可达 56 个，
+    /// 古筝 21 弦、坎侬琴 26 组弦也需要从内置配置复制后继续编辑，
+    /// 因此不能沿用旧的 12 弦上限。
+    static let maxStringCount = 64
 }
 
 // MARK: - 单根弦
@@ -202,7 +186,9 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
     /// 内置配置使用稳定字符串 ID，自定义配置使用 UUID 字符串。
     var id: String
     var name: String
-    var kind: InstrumentKind
+    /// 乐器 ID，对应 `Instruments.json` 中的 `instruments[].id`。
+    /// 保留 `kind` 这个字段名与字符串类型，旧版本保存的自定义调弦可直接解码。
+    var kind: String
     /// 按物理弦序排列：第一位是编号最大的弦（最低音弦），最后一位是 1 弦。
     var strings: [TuningString]
     var isBuiltIn: Bool
@@ -210,7 +196,7 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
 
     init(id: String,
          name: String,
-         kind: InstrumentKind,
+         kind: String,
          strings: [TuningString],
          isBuiltIn: Bool,
          createdAt: Date = Date()) {
@@ -222,13 +208,23 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
         self.createdAt = createdAt
     }
 
+    var instrument: InstrumentDefinition {
+        InstrumentCatalog.instrument(id: kind) ?? InstrumentCatalog.fallbackInstrument
+    }
+
+    var kindDisplayName: String { instrument.displayName }
+
+    var family: InstrumentFamily {
+        instrument.family ?? InstrumentCatalog.fallbackFamily
+    }
+
     /// 内置调弦的名称随界面语言切换；自定义调弦保留用户输入的名称。
     var displayName: String {
         isBuiltIn ? L10n.tr(name) : name
     }
 
     var title: String {
-        "\(kind.displayName) · \(displayName)"
+        "\(kindDisplayName) · \(displayName)"
     }
 
     /// 例如 "E A D G B E"，用于列表副标题。
@@ -264,43 +260,26 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
 
 // MARK: - 内置调弦
 
+/// 内置调弦完全由 `Instruments.json` 生成，新增乐器只需改配置。
 nonisolated enum BuiltInTunings {
-    static let all: [TuningPreset] = guitar + bass + ukulele
+    static let all: [TuningPreset] = InstrumentCatalog.instruments.flatMap { instrument in
+        instrument.sortedTunings.compactMap { definition in
+            let strings = definition.strings.compactMap { TuningString(parsing: $0) }
+            guard !strings.isEmpty else { return nil }
+            return TuningPreset(id: definition.id,
+                                name: definition.nameKey,
+                                kind: instrument.id,
+                                strings: strings,
+                                isBuiltIn: true,
+                                createdAt: Date(timeIntervalSince1970: 0))
+        }
+    }
 
     static func preset(id: String) -> TuningPreset? {
         all.first { $0.id == id }
     }
 
-    static let guitar: [TuningPreset] = [
-        make("guitar.standard", "标准调弦", .guitar, ["E2", "A2", "D3", "G3", "B3", "E4"]),
-        make("guitar.dropD", "Drop D", .guitar, ["D2", "A2", "D3", "G3", "B3", "E4"]),
-        make("guitar.openG", "Open G", .guitar, ["D2", "G2", "D3", "G3", "B3", "D4"]),
-        make("guitar.halfStep", "全降半音", .guitar, ["Eb2", "Ab2", "Db3", "Gb3", "Bb3", "Eb4"]),
-        make("guitar.dropDHalfStep", "Drop D 全降半音", .guitar, ["Db2", "Ab2", "Db3", "Gb3", "Bb3", "Eb4"]),
-        make("guitar.sevenString", "7 弦标准", .guitar, ["B1", "E2", "A2", "D3", "G3", "B3", "E4"])
-    ]
-
-    static let bass: [TuningPreset] = [
-        make("bass.standard4", "四弦标准调弦", .bass, ["E1", "A1", "D2", "G2"]),
-        make("bass.standard5", "五弦标准调弦", .bass, ["B0", "E1", "A1", "D2", "G2"]),
-        make("bass.halfStep", "全降半音", .bass, ["Eb1", "Ab1", "Db2", "Gb2"])
-    ]
-
-    static let ukulele: [TuningPreset] = [
-        make("ukulele.standard", "标准调弦", .ukulele, ["G4", "C4", "E4", "A4"]),
-        make("ukulele.lowG", "Low G", .ukulele, ["G3", "C4", "E4", "A4"])
-    ]
-
-    private static func make(_ id: String,
-                             _ name: String,
-                             _ kind: InstrumentKind,
-                             _ notes: [String]) -> TuningPreset {
-        let strings = notes.compactMap { TuningString(parsing: $0) }
-        return TuningPreset(id: id,
-                            name: name,
-                            kind: kind,
-                            strings: strings,
-                            isBuiltIn: true,
-                            createdAt: Date(timeIntervalSince1970: 0))
+    static func presets(for instrumentID: String) -> [TuningPreset] {
+        all.filter { $0.kind == instrumentID }
     }
 }

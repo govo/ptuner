@@ -1,0 +1,2594 @@
+{
+  "families": [
+    {
+      "id": "modernPlucked",
+      "nameKey": "现代拨弦",
+      "shortNameKey": "现代拨弦",
+      "tint": "#4C8DFF",
+      "order": 10
+    },
+    {
+      "id": "westernBowed",
+      "nameKey": "西方弓弦",
+      "shortNameKey": "西方弓弦",
+      "tint": "#2DD4BF",
+      "order": 20
+    },
+    {
+      "id": "chineseBowed",
+      "nameKey": "中国弓弦",
+      "shortNameKey": "中国弓弦",
+      "tint": "#FF7A6B",
+      "order": 30
+    },
+    {
+      "id": "chinesePlucked",
+      "nameKey": "中国弹拨与击弦",
+      "shortNameKey": "中国弹拨",
+      "tint": "#F2C14E",
+      "order": 40
+    },
+    {
+      "id": "southAsian",
+      "nameKey": "南亚传统",
+      "shortNameKey": "南亚",
+      "tint": "#E879CF",
+      "order": 50
+    },
+    {
+      "id": "eastAsian",
+      "nameKey": "日本与朝鲜半岛",
+      "shortNameKey": "日韩",
+      "tint": "#9AA6FF",
+      "order": 60
+    },
+    {
+      "id": "westAsianEuropean",
+      "nameKey": "中东、西亚与欧洲",
+      "shortNameKey": "中东西亚",
+      "tint": "#5BD98A",
+      "order": 70
+    },
+    {
+      "id": "folkWorld",
+      "nameKey": "非洲、北欧及其他",
+      "shortNameKey": "其他传统",
+      "tint": "#45D0E8",
+      "order": 80
+    },
+    {
+      "id": "other",
+      "nameKey": "其他乐器",
+      "shortNameKey": "其他",
+      "tint": "#2DD4BF",
+      "order": 90
+    }
+  ],
+  "instruments": [
+    {
+      "id": "guitar",
+      "familyID": "modernPlucked",
+      "nameKey": "吉他",
+      "glyph": "guitar",
+      "tint": "#4C8DFF",
+      "defaultStringCount": 6,
+      "featured": true,
+      "order": 10,
+      "tunings": [
+        {
+          "id": "guitar.standard",
+          "nameKey": "标准调弦",
+          "order": 10,
+          "strings": [
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        },
+        {
+          "id": "guitar.dropD",
+          "nameKey": "Drop D",
+          "order": 20,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        },
+        {
+          "id": "guitar.dropC",
+          "nameKey": "Drop C",
+          "order": 30,
+          "strings": [
+            "C2",
+            "G2",
+            "C3",
+            "F3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "guitar.dadgad",
+          "nameKey": "DADGAD",
+          "order": 40,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "G3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "guitar.openG",
+          "nameKey": "Open G",
+          "order": 50,
+          "strings": [
+            "D2",
+            "G2",
+            "D3",
+            "G3",
+            "B3",
+            "D4"
+          ]
+        },
+        {
+          "id": "guitar.openD",
+          "nameKey": "Open D",
+          "order": 60,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "F#3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "guitar.halfStep",
+          "nameKey": "全降半音",
+          "order": 70,
+          "strings": [
+            "Eb2",
+            "Ab2",
+            "Db3",
+            "Gb3",
+            "Bb3",
+            "Eb4"
+          ]
+        },
+        {
+          "id": "guitar.dropDHalfStep",
+          "nameKey": "Drop D 全降半音",
+          "order": 80,
+          "strings": [
+            "Db2",
+            "Ab2",
+            "Db3",
+            "Gb3",
+            "Bb3",
+            "Eb4"
+          ]
+        },
+        {
+          "id": "guitar.wholeStep",
+          "nameKey": "全降全音",
+          "order": 90,
+          "strings": [
+            "D2",
+            "G2",
+            "C3",
+            "F3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "guitar.sevenString",
+          "nameKey": "7 弦标准",
+          "order": 100,
+          "strings": [
+            "B1",
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        },
+        {
+          "id": "guitar.eightString",
+          "nameKey": "8 弦标准",
+          "order": 110,
+          "strings": [
+            "F#1",
+            "B1",
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bass",
+      "familyID": "modernPlucked",
+      "nameKey": "贝斯",
+      "glyph": "guitar",
+      "tint": "#A98BFF",
+      "defaultStringCount": 4,
+      "featured": true,
+      "order": 20,
+      "tunings": [
+        {
+          "id": "bass.standard4",
+          "nameKey": "四弦标准调弦",
+          "order": 10,
+          "strings": [
+            "E1",
+            "A1",
+            "D2",
+            "G2"
+          ]
+        },
+        {
+          "id": "bass.standard5",
+          "nameKey": "五弦标准调弦",
+          "order": 20,
+          "strings": [
+            "B0",
+            "E1",
+            "A1",
+            "D2",
+            "G2"
+          ]
+        },
+        {
+          "id": "bass.standard6",
+          "nameKey": "六弦标准调弦",
+          "order": 30,
+          "strings": [
+            "B0",
+            "E1",
+            "A1",
+            "D2",
+            "G2",
+            "C3"
+          ]
+        },
+        {
+          "id": "bass.dropD",
+          "nameKey": "Drop D",
+          "order": 40,
+          "strings": [
+            "D1",
+            "A1",
+            "D2",
+            "G2"
+          ]
+        },
+        {
+          "id": "bass.halfStep",
+          "nameKey": "全降半音",
+          "order": 50,
+          "strings": [
+            "Eb1",
+            "Ab1",
+            "Db2",
+            "Gb2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ukulele",
+      "familyID": "modernPlucked",
+      "nameKey": "尤克里里",
+      "glyph": "guitar",
+      "tint": "#F5A524",
+      "defaultStringCount": 4,
+      "featured": true,
+      "order": 30,
+      "tunings": [
+        {
+          "id": "ukulele.standard",
+          "nameKey": "高音 G 标准调弦",
+          "order": 10,
+          "strings": [
+            "G4",
+            "C4",
+            "E4",
+            "A4"
+          ]
+        },
+        {
+          "id": "ukulele.lowG",
+          "nameKey": "低音 G 调弦",
+          "order": 20,
+          "strings": [
+            "G3",
+            "C4",
+            "E4",
+            "A4"
+          ]
+        },
+        {
+          "id": "ukulele.D",
+          "nameKey": "D 调弦",
+          "order": 30,
+          "strings": [
+            "A4",
+            "D4",
+            "F#4",
+            "B4"
+          ]
+        },
+        {
+          "id": "ukulele.baritone",
+          "nameKey": "巴里东调弦",
+          "order": 40,
+          "strings": [
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "banjo",
+      "familyID": "modernPlucked",
+      "nameKey": "班卓琴",
+      "glyph": "lute",
+      "defaultStringCount": 5,
+      "featured": false,
+      "order": 40,
+      "tunings": [
+        {
+          "id": "banjo.openG5",
+          "nameKey": "五弦 Open G",
+          "order": 10,
+          "strings": [
+            "G4",
+            "D3",
+            "G3",
+            "B3",
+            "D4"
+          ]
+        },
+        {
+          "id": "banjo.doubleC",
+          "nameKey": "Double C",
+          "order": 20,
+          "strings": [
+            "G4",
+            "C3",
+            "G3",
+            "C4",
+            "D4"
+          ]
+        },
+        {
+          "id": "banjo.gModal",
+          "nameKey": "G 调式 (Sawmill)",
+          "order": 30,
+          "strings": [
+            "G4",
+            "D3",
+            "G3",
+            "C4",
+            "D4"
+          ]
+        },
+        {
+          "id": "banjo.tenorCGDA",
+          "nameKey": "四弦 CGDA",
+          "order": 40,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        },
+        {
+          "id": "banjo.tenorGDAE",
+          "nameKey": "四弦 GDAE",
+          "order": 50,
+          "strings": [
+            "G2",
+            "D3",
+            "A3",
+            "E4"
+          ]
+        },
+        {
+          "id": "banjo.sixString",
+          "nameKey": "六弦吉他调弦",
+          "order": 60,
+          "strings": [
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mandolin",
+      "familyID": "modernPlucked",
+      "nameKey": "曼陀林",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 50,
+      "tunings": [
+        {
+          "id": "mandolin.standard",
+          "nameKey": "标准定弦 GDAE",
+          "order": 10,
+          "strings": [
+            "G3",
+            "D4",
+            "A4",
+            "E5"
+          ]
+        },
+        {
+          "id": "mandolin.crossA",
+          "nameKey": "Cross A (AEAE)",
+          "order": 20,
+          "strings": [
+            "A3",
+            "E4",
+            "A4",
+            "E5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mandola",
+      "familyID": "modernPlucked",
+      "nameKey": "曼陀拉琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 60,
+      "tunings": [
+        {
+          "id": "mandola.standard",
+          "nameKey": "标准定弦 CGDA",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mandocello",
+      "familyID": "modernPlucked",
+      "nameKey": "曼陀琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 70,
+      "tunings": [
+        {
+          "id": "mandocello.standard",
+          "nameKey": "标准定弦 CGDA",
+          "order": 10,
+          "strings": [
+            "C2",
+            "G2",
+            "D3",
+            "A3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resonatorGuitar",
+      "familyID": "modernPlucked",
+      "nameKey": "共鸣吉他",
+      "glyph": "guitar",
+      "defaultStringCount": 6,
+      "featured": false,
+      "order": 80,
+      "tunings": [
+        {
+          "id": "resonator.standard",
+          "nameKey": "标准调弦",
+          "order": 10,
+          "strings": [
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        },
+        {
+          "id": "resonator.openG",
+          "nameKey": "Open G",
+          "order": 20,
+          "strings": [
+            "D2",
+            "G2",
+            "D3",
+            "G3",
+            "B3",
+            "D4"
+          ]
+        },
+        {
+          "id": "resonator.openD",
+          "nameKey": "Open D",
+          "order": 30,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "F#3",
+            "A3",
+            "D4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "twelveStringGuitar",
+      "familyID": "modernPlucked",
+      "nameKey": "十二弦吉他",
+      "glyph": "guitar",
+      "defaultStringCount": 12,
+      "featured": false,
+      "order": 90,
+      "tunings": [
+        {
+          "id": "twelveString.standard",
+          "nameKey": "标准调弦",
+          "order": 10,
+          "strings": [
+            "E2",
+            "E3",
+            "A2",
+            "A3",
+            "D3",
+            "D4",
+            "G3",
+            "G4",
+            "B3",
+            "B3",
+            "E4",
+            "E4"
+          ]
+        },
+        {
+          "id": "twelveString.halfStep",
+          "nameKey": "全降半音",
+          "order": 20,
+          "strings": [
+            "Eb2",
+            "Eb3",
+            "Ab2",
+            "Ab3",
+            "Db3",
+            "Db4",
+            "Gb3",
+            "Gb4",
+            "Bb3",
+            "Bb3",
+            "Eb4",
+            "Eb4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tenorGuitar",
+      "familyID": "modernPlucked",
+      "nameKey": "四弦吉他",
+      "glyph": "guitar",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 100,
+      "tunings": [
+        {
+          "id": "tenorGuitar.CGDA",
+          "nameKey": "CGDA 定弦",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        },
+        {
+          "id": "tenorGuitar.GDAE",
+          "nameKey": "GDAE 定弦",
+          "order": 20,
+          "strings": [
+            "G2",
+            "D3",
+            "A3",
+            "E4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dobro",
+      "familyID": "modernPlucked",
+      "nameKey": "多布罗琴",
+      "glyph": "guitar",
+      "defaultStringCount": 6,
+      "featured": false,
+      "order": 110,
+      "tunings": [
+        {
+          "id": "dobro.openG",
+          "nameKey": "Open G",
+          "order": 10,
+          "strings": [
+            "G2",
+            "B2",
+            "D3",
+            "G3",
+            "B3",
+            "D4"
+          ]
+        },
+        {
+          "id": "dobro.standard",
+          "nameKey": "标准调弦",
+          "order": 20,
+          "strings": [
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ]
+        },
+        {
+          "id": "dobro.openD",
+          "nameKey": "Open D",
+          "order": 30,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "F#3",
+            "A3",
+            "D4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "violin",
+      "familyID": "westernBowed",
+      "nameKey": "小提琴",
+      "glyph": "bowed",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 120,
+      "tunings": [
+        {
+          "id": "violin.standard",
+          "nameKey": "标准定弦 GDAE",
+          "order": 10,
+          "strings": [
+            "G3",
+            "D4",
+            "A4",
+            "E5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "viola",
+      "familyID": "westernBowed",
+      "nameKey": "中提琴",
+      "glyph": "bowed",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 130,
+      "tunings": [
+        {
+          "id": "viola.standard",
+          "nameKey": "标准定弦 CGDA",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cello",
+      "familyID": "westernBowed",
+      "nameKey": "大提琴",
+      "glyph": "bowed",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 140,
+      "tunings": [
+        {
+          "id": "cello.standard",
+          "nameKey": "标准定弦 CGDA",
+          "order": 10,
+          "strings": [
+            "C2",
+            "G2",
+            "D3",
+            "A3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doubleBass",
+      "familyID": "westernBowed",
+      "nameKey": "低音提琴",
+      "glyph": "bowed",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 150,
+      "tunings": [
+        {
+          "id": "doubleBass.standard4",
+          "nameKey": "四弦标准定弦",
+          "order": 10,
+          "strings": [
+            "E1",
+            "A1",
+            "D2",
+            "G2"
+          ]
+        },
+        {
+          "id": "doubleBass.standard5",
+          "nameKey": "五弦扩展定弦",
+          "order": 20,
+          "strings": [
+            "B0",
+            "E1",
+            "A1",
+            "D2",
+            "G2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "erhu",
+      "familyID": "chineseBowed",
+      "nameKey": "二胡",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 200,
+      "tunings": [
+        {
+          "id": "erhu.standard",
+          "nameKey": "D-A 标准定弦",
+          "order": 10,
+          "strings": [
+            "D4",
+            "A4"
+          ]
+        },
+        {
+          "id": "erhu.GD",
+          "nameKey": "G-D 托音定弦",
+          "order": 20,
+          "strings": [
+            "G3",
+            "D4"
+          ]
+        },
+        {
+          "id": "erhu.CG",
+          "nameKey": "C-G 定弦",
+          "order": 30,
+          "strings": [
+            "C4",
+            "G4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gaohu",
+      "familyID": "chineseBowed",
+      "nameKey": "高胡",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 210,
+      "tunings": [
+        {
+          "id": "gaohu.cantonese",
+          "nameKey": "G-D 广东音乐定弦",
+          "order": 10,
+          "strings": [
+            "G4",
+            "D5"
+          ]
+        },
+        {
+          "id": "gaohu.ensemble",
+          "nameKey": "A-E 合奏定弦",
+          "order": 20,
+          "strings": [
+            "A4",
+            "E5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zhonghu",
+      "familyID": "chineseBowed",
+      "nameKey": "中胡",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 220,
+      "tunings": [
+        {
+          "id": "zhonghu.standard",
+          "nameKey": "G-D 标准定弦",
+          "order": 10,
+          "strings": [
+            "G3",
+            "D4"
+          ]
+        },
+        {
+          "id": "zhonghu.alt",
+          "nameKey": "A-E 变体定弦",
+          "order": 20,
+          "strings": [
+            "A3",
+            "E4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "banhu",
+      "familyID": "chineseBowed",
+      "nameKey": "板胡",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 230,
+      "tunings": [
+        {
+          "id": "banhu.pingju",
+          "nameKey": "D-A 评剧定弦",
+          "order": 10,
+          "strings": [
+            "D5",
+            "A5"
+          ]
+        },
+        {
+          "id": "banhu.yuju",
+          "nameKey": "G-C 豫剧四度定弦",
+          "order": 20,
+          "strings": [
+            "G4",
+            "C5"
+          ]
+        },
+        {
+          "id": "banhu.qinqiang",
+          "nameKey": "A-E 秦腔/中音定弦",
+          "order": 30,
+          "strings": [
+            "A4",
+            "E5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jinghu",
+      "familyID": "chineseBowed",
+      "nameKey": "京胡",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 240,
+      "tunings": [
+        {
+          "id": "jinghu.xipi",
+          "nameKey": "西皮 A-E",
+          "order": 10,
+          "strings": [
+            "A4",
+            "E5"
+          ]
+        },
+        {
+          "id": "jinghu.erhuang",
+          "nameKey": "二黄 G-D",
+          "order": 20,
+          "strings": [
+            "G4",
+            "D5"
+          ]
+        },
+        {
+          "id": "jinghu.fanerhuang",
+          "nameKey": "反二黄 C-G",
+          "order": 30,
+          "strings": [
+            "C4",
+            "G4"
+          ]
+        },
+        {
+          "id": "jinghu.fanxipi",
+          "nameKey": "反西皮 D-A",
+          "order": 40,
+          "strings": [
+            "D4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "morinKhuur",
+      "familyID": "chineseBowed",
+      "nameKey": "马头琴",
+      "glyph": "bowed",
+      "defaultStringCount": 2,
+      "featured": false,
+      "order": 250,
+      "tunings": [
+        {
+          "id": "morinKhuur.modern",
+          "nameKey": "现代常用 G-C",
+          "order": 10,
+          "strings": [
+            "G3",
+            "C4"
+          ]
+        },
+        {
+          "id": "morinKhuur.traditional",
+          "nameKey": "传统正四度 A-D",
+          "order": 20,
+          "strings": [
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "morinKhuur.fifth",
+          "nameKey": "五度定弦 D-A",
+          "order": 30,
+          "strings": [
+            "D3",
+            "A3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guzheng",
+      "familyID": "chinesePlucked",
+      "nameKey": "古筝",
+      "glyph": "zither",
+      "defaultStringCount": 21,
+      "featured": false,
+      "order": 260,
+      "tunings": [
+        {
+          "id": "guzheng.D",
+          "nameKey": "21 弦 D 调",
+          "order": 10,
+          "strings": [
+            "D2",
+            "E2",
+            "F#2",
+            "A2",
+            "B2",
+            "D3",
+            "E3",
+            "F#3",
+            "A3",
+            "B3",
+            "D4",
+            "E4",
+            "F#4",
+            "A4",
+            "B4",
+            "D5",
+            "E5",
+            "F#5",
+            "A5",
+            "B5",
+            "D6"
+          ]
+        },
+        {
+          "id": "guzheng.G",
+          "nameKey": "21 弦 G 调",
+          "order": 20,
+          "strings": [
+            "D2",
+            "E2",
+            "G2",
+            "A2",
+            "B2",
+            "D3",
+            "E3",
+            "G3",
+            "A3",
+            "B3",
+            "D4",
+            "E4",
+            "G4",
+            "A4",
+            "B4",
+            "D5",
+            "E5",
+            "G5",
+            "A5",
+            "B5",
+            "D6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guqin",
+      "familyID": "chinesePlucked",
+      "nameKey": "古琴",
+      "glyph": "zither",
+      "defaultStringCount": 7,
+      "featured": false,
+      "order": 270,
+      "tunings": [
+        {
+          "id": "guqin.zhengdiao",
+          "nameKey": "正调 F",
+          "order": 10,
+          "strings": [
+            "C2",
+            "D2",
+            "F2",
+            "G2",
+            "A2",
+            "C3",
+            "D3"
+          ]
+        },
+        {
+          "id": "guqin.manjiao",
+          "nameKey": "慢角调 C",
+          "order": 20,
+          "strings": [
+            "C2",
+            "D2",
+            "E2",
+            "G2",
+            "A2",
+            "C3",
+            "D3"
+          ]
+        },
+        {
+          "id": "guqin.ruibin",
+          "nameKey": "蕤宾调 Bb",
+          "order": 30,
+          "strings": [
+            "C2",
+            "D2",
+            "F2",
+            "G2",
+            "Bb2",
+            "C3",
+            "D3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pipa",
+      "familyID": "chinesePlucked",
+      "nameKey": "琵琶",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 280,
+      "tunings": [
+        {
+          "id": "pipa.standard",
+          "nameKey": "D 调标准定弦",
+          "order": 10,
+          "strings": [
+            "A2",
+            "D3",
+            "E3",
+            "A3"
+          ]
+        },
+        {
+          "id": "pipa.G",
+          "nameKey": "G 调定弦",
+          "order": 20,
+          "strings": [
+            "G2",
+            "D3",
+            "E3",
+            "A3"
+          ]
+        },
+        {
+          "id": "pipa.C",
+          "nameKey": "C 调变体",
+          "order": 30,
+          "strings": [
+            "G2",
+            "C3",
+            "E3",
+            "A3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sanxian",
+      "familyID": "chinesePlucked",
+      "nameKey": "三弦",
+      "glyph": "lute",
+      "defaultStringCount": 3,
+      "featured": false,
+      "order": 290,
+      "tunings": [
+        {
+          "id": "sanxian.large",
+          "nameKey": "大三弦 G-D-G",
+          "order": 10,
+          "strings": [
+            "G2",
+            "D3",
+            "G3"
+          ]
+        },
+        {
+          "id": "sanxian.small",
+          "nameKey": "小三弦 A-D-A",
+          "order": 20,
+          "strings": [
+            "A3",
+            "D4",
+            "A4"
+          ]
+        },
+        {
+          "id": "sanxian.largeD",
+          "nameKey": "大三弦低音 D-A-D",
+          "order": 30,
+          "strings": [
+            "D2",
+            "A2",
+            "D3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "liuqin",
+      "familyID": "chinesePlucked",
+      "nameKey": "柳琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 300,
+      "tunings": [
+        {
+          "id": "liuqin.standard",
+          "nameKey": "四弦标准定弦",
+          "order": 10,
+          "strings": [
+            "G3",
+            "D4",
+            "G4",
+            "D5"
+          ]
+        },
+        {
+          "id": "liuqin.threeString",
+          "nameKey": "旧式三弦柳琴",
+          "order": 20,
+          "strings": [
+            "D4",
+            "G4",
+            "D5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ruan",
+      "familyID": "chinesePlucked",
+      "nameKey": "阮",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 310,
+      "tunings": [
+        {
+          "id": "ruan.xiao",
+          "nameKey": "小阮",
+          "order": 10,
+          "strings": [
+            "D3",
+            "A3",
+            "D4",
+            "A4"
+          ]
+        },
+        {
+          "id": "ruan.zhong",
+          "nameKey": "中阮",
+          "order": 20,
+          "strings": [
+            "G2",
+            "D3",
+            "G3",
+            "D4"
+          ]
+        },
+        {
+          "id": "ruan.da",
+          "nameKey": "大阮",
+          "order": 30,
+          "strings": [
+            "D2",
+            "A2",
+            "D3",
+            "A3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yueqin",
+      "familyID": "chinesePlucked",
+      "nameKey": "月琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 320,
+      "tunings": [
+        {
+          "id": "yueqin.modern",
+          "nameKey": "现代四弦定弦",
+          "order": 10,
+          "strings": [
+            "G3",
+            "D4",
+            "G4",
+            "D5"
+          ]
+        },
+        {
+          "id": "yueqin.traditional",
+          "nameKey": "传统双弦组 D4-D4-A4-A4",
+          "order": 20,
+          "strings": [
+            "D4",
+            "D4",
+            "A4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yangqin",
+      "familyID": "chinesePlucked",
+      "nameKey": "扬琴",
+      "glyph": "zither",
+      "defaultStringCount": 56,
+      "featured": false,
+      "order": 330,
+      "tunings": [
+        {
+          "id": "yangqin.chromatic",
+          "nameKey": "402 型十二平均律 F2-C7",
+          "order": 10,
+          "strings": [
+            "F2",
+            "F#2",
+            "G2",
+            "G#2",
+            "A2",
+            "A#2",
+            "B2",
+            "C3",
+            "C#3",
+            "D3",
+            "D#3",
+            "E3",
+            "F3",
+            "F#3",
+            "G3",
+            "G#3",
+            "A3",
+            "A#3",
+            "B3",
+            "C4",
+            "C#4",
+            "D4",
+            "D#4",
+            "E4",
+            "F4",
+            "F#4",
+            "G4",
+            "G#4",
+            "A4",
+            "A#4",
+            "B4",
+            "C5",
+            "C#5",
+            "D5",
+            "D#5",
+            "E5",
+            "F5",
+            "F#5",
+            "G5",
+            "G#5",
+            "A5",
+            "A#5",
+            "B5",
+            "C6",
+            "C#6",
+            "D6",
+            "D#6",
+            "E6",
+            "F6",
+            "F#6",
+            "G6",
+            "G#6",
+            "A6",
+            "A#6",
+            "B6",
+            "C7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oud",
+      "familyID": "westAsianEuropean",
+      "nameKey": "乌德琴",
+      "glyph": "lute",
+      "defaultStringCount": 6,
+      "featured": false,
+      "order": 400,
+      "tunings": [
+        {
+          "id": "oud.arabicModern",
+          "nameKey": "阿拉伯乌德 现代常用",
+          "order": 10,
+          "strings": [
+            "C2",
+            "F2",
+            "A2",
+            "D3",
+            "G3",
+            "C4"
+          ]
+        },
+        {
+          "id": "oud.arabicTraditional",
+          "nameKey": "阿拉伯乌德 传统",
+          "order": 20,
+          "strings": [
+            "D2",
+            "G2",
+            "A2",
+            "D3",
+            "G3",
+            "C4"
+          ]
+        },
+        {
+          "id": "oud.turkish",
+          "nameKey": "土耳其乌德 Bolahenk",
+          "order": 30,
+          "strings": [
+            "C#2",
+            "F#2",
+            "B2",
+            "E3",
+            "A3",
+            "D4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qanun",
+      "familyID": "westAsianEuropean",
+      "nameKey": "坎侬琴",
+      "glyph": "zither",
+      "defaultStringCount": 26,
+      "featured": false,
+      "order": 410,
+      "tunings": [
+        {
+          "id": "qanun.arabic",
+          "nameKey": "阿拉伯坎侬 自然基准",
+          "order": 10,
+          "strings": [
+            "G2",
+            "A2",
+            "B2",
+            "C3",
+            "D3",
+            "E3",
+            "F3",
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "B4",
+            "C5",
+            "D5",
+            "E5",
+            "F5",
+            "G5",
+            "A5",
+            "B5",
+            "C6",
+            "D6"
+          ]
+        },
+        {
+          "id": "qanun.turkish",
+          "nameKey": "土耳其坎侬 Bolahenk",
+          "order": 20,
+          "strings": [
+            "A2",
+            "B2",
+            "C3",
+            "D3",
+            "E3",
+            "F#3",
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F#4",
+            "G4",
+            "A4",
+            "B4",
+            "C5",
+            "D5",
+            "E5",
+            "F#5",
+            "G5",
+            "A5",
+            "B5",
+            "C6",
+            "D6",
+            "E6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bouzouki",
+      "familyID": "westAsianEuropean",
+      "nameKey": "布祖基琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 420,
+      "tunings": [
+        {
+          "id": "bouzouki.tetrachordo",
+          "nameKey": "希腊四弦 CFAD",
+          "order": 10,
+          "strings": [
+            "C3",
+            "F3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "bouzouki.irishGDAD",
+          "nameKey": "爱尔兰 GDAD",
+          "order": 20,
+          "strings": [
+            "G2",
+            "D3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "bouzouki.trichordo",
+          "nameKey": "希腊三弦 DAD",
+          "order": 30,
+          "strings": [
+            "D3",
+            "A3",
+            "D4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "balalaika",
+      "familyID": "westAsianEuropean",
+      "nameKey": "巴拉莱卡琴",
+      "glyph": "lute",
+      "defaultStringCount": 3,
+      "featured": false,
+      "order": 430,
+      "tunings": [
+        {
+          "id": "balalaika.prima",
+          "nameKey": "Prima E-E-A",
+          "order": 10,
+          "strings": [
+            "E4",
+            "E4",
+            "A4"
+          ]
+        },
+        {
+          "id": "balalaika.secunda",
+          "nameKey": "Secunda A-A-D",
+          "order": 20,
+          "strings": [
+            "A3",
+            "A3",
+            "D4"
+          ]
+        },
+        {
+          "id": "balalaika.alto",
+          "nameKey": "Alto E-E-A",
+          "order": 30,
+          "strings": [
+            "E3",
+            "E3",
+            "A3"
+          ]
+        },
+        {
+          "id": "balalaika.bass",
+          "nameKey": "Bass E-A-D",
+          "order": 40,
+          "strings": [
+            "E2",
+            "A2",
+            "D3"
+          ]
+        },
+        {
+          "id": "balalaika.contrabass",
+          "nameKey": "Contrabass E-A-D",
+          "order": 50,
+          "strings": [
+            "E1",
+            "A1",
+            "D2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "domra",
+      "familyID": "westAsianEuropean",
+      "nameKey": "多姆拉琴",
+      "glyph": "lute",
+      "defaultStringCount": 3,
+      "featured": false,
+      "order": 440,
+      "tunings": [
+        {
+          "id": "domra.prima3",
+          "nameKey": "三弦 Prima E-A-D",
+          "order": 10,
+          "strings": [
+            "E4",
+            "A4",
+            "D5"
+          ]
+        },
+        {
+          "id": "domra.prima4",
+          "nameKey": "四弦 Prima GDAE",
+          "order": 20,
+          "strings": [
+            "G3",
+            "D4",
+            "A4",
+            "E5"
+          ]
+        },
+        {
+          "id": "domra.alto4",
+          "nameKey": "四弦 Alto CGDA",
+          "order": 30,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zither",
+      "familyID": "westAsianEuropean",
+      "nameKey": "齐特琴",
+      "glyph": "zither",
+      "defaultStringCount": 5,
+      "featured": false,
+      "order": 450,
+      "tunings": [
+        {
+          "id": "zither.munichMelody",
+          "nameKey": "Munich 旋律弦",
+          "order": 10,
+          "strings": [
+            "A4",
+            "A4",
+            "D4",
+            "G3",
+            "C3"
+          ]
+        },
+        {
+          "id": "zither.munichFull",
+          "nameKey": "Munich 全弦",
+          "order": 20,
+          "strings": [
+            "A4",
+            "A4",
+            "D4",
+            "G3",
+            "C3",
+            "Eb4",
+            "Bb3",
+            "F4",
+            "C4",
+            "G3",
+            "D4",
+            "A3",
+            "E4",
+            "B3",
+            "F#3",
+            "C#4",
+            "G#3",
+            "Eb3",
+            "Bb2",
+            "F3",
+            "C3",
+            "G2",
+            "D3",
+            "A2",
+            "E3",
+            "B2",
+            "F#2",
+            "C#3",
+            "G#2",
+            "F2",
+            "E2",
+            "Eb2",
+            "D2",
+            "C#2",
+            "C2",
+            "B1",
+            "Bb1",
+            "A1",
+            "G#1",
+            "G1",
+            "F#1",
+            "F1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hardangerFiddle",
+      "familyID": "westAsianEuropean",
+      "nameKey": "哈当厄尔小提琴",
+      "glyph": "bowed",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 460,
+      "tunings": [
+        {
+          "id": "hardanger.standard",
+          "nameKey": "标准 A-D-A-E 演奏弦",
+          "order": 10,
+          "strings": [
+            "A3",
+            "D4",
+            "A4",
+            "E5"
+          ]
+        },
+        {
+          "id": "hardanger.withSympathetic",
+          "nameKey": "标准含共鸣弦",
+          "order": 20,
+          "strings": [
+            "A3",
+            "D4",
+            "A4",
+            "E5",
+            "B3",
+            "D4",
+            "E4",
+            "F#4",
+            "A4"
+          ]
+        },
+        {
+          "id": "hardanger.violin",
+          "nameKey": "小提琴定弦 G-D-A-E",
+          "order": 30,
+          "strings": [
+            "G3",
+            "D4",
+            "A4",
+            "E5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nyckelharpa",
+      "familyID": "westAsianEuropean",
+      "nameKey": "尼克尔哈帕琴",
+      "glyph": "bowed",
+      "defaultStringCount": 16,
+      "featured": false,
+      "order": 470,
+      "tunings": [
+        {
+          "id": "nyckelharpa.standard",
+          "nameKey": "标准 C-G-C-A 演奏弦",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "C4",
+            "A4"
+          ]
+        },
+        {
+          "id": "nyckelharpa.withSympathetic",
+          "nameKey": "标准含共鸣弦",
+          "order": 20,
+          "strings": [
+            "C3",
+            "G3",
+            "C4",
+            "A4",
+            "G#3",
+            "A3",
+            "Bb3",
+            "B3",
+            "C4",
+            "C#4",
+            "D4",
+            "Eb4",
+            "E4",
+            "F4",
+            "F#4",
+            "G4"
+          ]
+        },
+        {
+          "id": "nyckelharpa.CGDA",
+          "nameKey": "变体 C-G-D-A",
+          "order": 30,
+          "strings": [
+            "C3",
+            "G3",
+            "D4",
+            "A4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sitar",
+      "familyID": "southAsian",
+      "nameKey": "锡塔尔琴",
+      "glyph": "lute",
+      "defaultStringCount": 7,
+      "featured": false,
+      "order": 500,
+      "tunings": [
+        {
+          "id": "sitar.kharajPancham",
+          "nameKey": "Kharaj Pancham（Sa=C）",
+          "order": 10,
+          "strings": [
+            "C2",
+            "G2",
+            "C3",
+            "F3",
+            "G3",
+            "C4",
+            "C5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tanpura",
+      "familyID": "southAsian",
+      "nameKey": "坦布拉琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 510,
+      "tunings": [
+        {
+          "id": "tanpura.paSa",
+          "nameKey": "Pa-Sa-Sa-Sa（Sa=C）",
+          "order": 10,
+          "strings": [
+            "C2",
+            "G2",
+            "C3",
+            "C3"
+          ]
+        },
+        {
+          "id": "tanpura.maSa",
+          "nameKey": "Ma-Sa-Sa-Sa（Sa=C）",
+          "order": 20,
+          "strings": [
+            "C2",
+            "F2",
+            "C3",
+            "C3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sarod",
+      "familyID": "southAsian",
+      "nameKey": "萨罗德琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 520,
+      "tunings": [
+        {
+          "id": "sarod.saPaSaMa",
+          "nameKey": "Sa-Pa-Sa-Ma（Sa=C）",
+          "order": 10,
+          "strings": [
+            "C2",
+            "G2",
+            "C3",
+            "F3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "veena",
+      "familyID": "southAsian",
+      "nameKey": "维纳琴",
+      "glyph": "lute",
+      "defaultStringCount": 7,
+      "featured": false,
+      "order": 530,
+      "tunings": [
+        {
+          "id": "veena.melody",
+          "nameKey": "Sa-Pa-Sa-Ma 旋律弦",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "C4",
+            "F4"
+          ]
+        },
+        {
+          "id": "veena.full",
+          "nameKey": "旋律弦与持续弦",
+          "order": 20,
+          "strings": [
+            "C3",
+            "G3",
+            "C4",
+            "F4",
+            "C3",
+            "G3",
+            "C4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "swarmandal",
+      "familyID": "southAsian",
+      "nameKey": "斯瓦尔曼达琴",
+      "glyph": "zither",
+      "defaultStringCount": 21,
+      "featured": false,
+      "order": 540,
+      "tunings": [
+        {
+          "id": "swarmandal.cMajor",
+          "nameKey": "C 大调 21 弦",
+          "order": 10,
+          "strings": [
+            "C3",
+            "D3",
+            "E3",
+            "F3",
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "B4",
+            "C5",
+            "D5",
+            "E5",
+            "F5",
+            "G5",
+            "A5",
+            "B5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ektara",
+      "familyID": "southAsian",
+      "nameKey": "埃克塔拉琴",
+      "glyph": "lute",
+      "defaultStringCount": 1,
+      "featured": false,
+      "order": 550,
+      "tunings": [
+        {
+          "id": "ektara.singleC",
+          "nameKey": "单弦 Sa=C4",
+          "order": 10,
+          "strings": [
+            "C4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dotara",
+      "familyID": "southAsian",
+      "nameKey": "多塔拉琴",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 560,
+      "tunings": [
+        {
+          "id": "dotara.paSaSaMa",
+          "nameKey": "Pa-Sa-Sa-Ma（Sa=C）",
+          "order": 10,
+          "strings": [
+            "G2",
+            "C3",
+            "C3",
+            "F3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sarangi",
+      "familyID": "southAsian",
+      "nameKey": "萨兰吉琴",
+      "glyph": "bowed",
+      "defaultStringCount": 3,
+      "featured": false,
+      "order": 570,
+      "tunings": [
+        {
+          "id": "sarangi.chargah",
+          "nameKey": "Chargah Sa-Pa-Sa（Sa=C）",
+          "order": 10,
+          "strings": [
+            "C3",
+            "G3",
+            "C4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shamisen",
+      "familyID": "eastAsian",
+      "nameKey": "三味线",
+      "glyph": "lute",
+      "defaultStringCount": 3,
+      "featured": false,
+      "order": 600,
+      "tunings": [
+        {
+          "id": "shamisen.honchoshi",
+          "nameKey": "本调子 C-F-C",
+          "order": 10,
+          "strings": [
+            "C3",
+            "F3",
+            "C4"
+          ]
+        },
+        {
+          "id": "shamisen.niagari",
+          "nameKey": "二上り C-G-C",
+          "order": 20,
+          "strings": [
+            "C3",
+            "G3",
+            "C4"
+          ]
+        },
+        {
+          "id": "shamisen.sansagari",
+          "nameKey": "三下り C-F-Bb",
+          "order": 30,
+          "strings": [
+            "C3",
+            "F3",
+            "Bb3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "koto",
+      "familyID": "eastAsian",
+      "nameKey": "日本筝",
+      "glyph": "zither",
+      "defaultStringCount": 13,
+      "featured": false,
+      "order": 610,
+      "tunings": [
+        {
+          "id": "koto.hirajoshi",
+          "nameKey": "平调子 Hirajoshi（D 基准）",
+          "order": 10,
+          "strings": [
+            "D3",
+            "G3",
+            "A3",
+            "Bb3",
+            "D4",
+            "Eb4",
+            "G4",
+            "A4",
+            "Bb4",
+            "D5",
+            "Eb5",
+            "G5",
+            "A5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "biwa",
+      "familyID": "eastAsian",
+      "nameKey": "日本琵琶",
+      "glyph": "lute",
+      "defaultStringCount": 4,
+      "featured": false,
+      "order": 620,
+      "tunings": [
+        {
+          "id": "biwa.satsuma",
+          "nameKey": "萨摩琵琶 A-E-A-B",
+          "order": 10,
+          "strings": [
+            "A2",
+            "E3",
+            "A3",
+            "B3"
+          ]
+        },
+        {
+          "id": "biwa.satsumaModern",
+          "nameKey": "萨摩琵琶现代 G-G-C-G",
+          "order": 20,
+          "strings": [
+            "G2",
+            "G2",
+            "C3",
+            "G3"
+          ]
+        },
+        {
+          "id": "biwa.chikuzen4",
+          "nameKey": "筑前琵琶四弦 B-E-F#-B",
+          "order": 30,
+          "strings": [
+            "B2",
+            "E3",
+            "F#3",
+            "B3"
+          ]
+        },
+        {
+          "id": "biwa.chikuzen5",
+          "nameKey": "筑前琵琶五弦 C-G-C-D-G",
+          "order": 40,
+          "strings": [
+            "C3",
+            "G3",
+            "C4",
+            "D4",
+            "G4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gayageum",
+      "familyID": "eastAsian",
+      "nameKey": "伽倻琴",
+      "glyph": "zither",
+      "defaultStringCount": 12,
+      "featured": false,
+      "order": 630,
+      "tunings": [
+        {
+          "id": "gayageum.sanjo",
+          "nameKey": "散调 Sanjo",
+          "order": 10,
+          "strings": [
+            "G2",
+            "C3",
+            "D3",
+            "G3",
+            "A3",
+            "C4",
+            "D4",
+            "E4",
+            "G4",
+            "A4",
+            "C5",
+            "D5"
+          ]
+        },
+        {
+          "id": "gayageum.jeongak",
+          "nameKey": "正乐 Jeongak",
+          "order": 20,
+          "strings": [
+            "Eb2",
+            "F2",
+            "Ab2",
+            "Bb2",
+            "Eb3",
+            "F3",
+            "Ab3",
+            "Bb3",
+            "C4",
+            "Eb4",
+            "F4",
+            "Ab4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "geomungo",
+      "familyID": "eastAsian",
+      "nameKey": "玄琴",
+      "glyph": "zither",
+      "defaultStringCount": 6,
+      "featured": false,
+      "order": 640,
+      "tunings": [
+        {
+          "id": "geomungo.jeongak",
+          "nameKey": "正乐 Jeongak（Bb 中心）",
+          "order": 10,
+          "strings": [
+            "Bb1",
+            "Db2",
+            "Eb2",
+            "Ab2",
+            "Bb2",
+            "Bb2"
+          ]
+        },
+        {
+          "id": "geomungo.sanjoC",
+          "nameKey": "散调 Sanjo（C 中心）",
+          "order": 20,
+          "strings": [
+            "C2",
+            "Eb2",
+            "F2",
+            "Bb2",
+            "C3",
+            "C3"
+          ]
+        },
+        {
+          "id": "geomungo.sanjoBb",
+          "nameKey": "散调 Sanjo（Bb 中心）",
+          "order": 30,
+          "strings": [
+            "Bb1",
+            "Db2",
+            "F2",
+            "Ab2",
+            "Bb2",
+            "Bb2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kora",
+      "familyID": "folkWorld",
+      "nameKey": "科拉琴",
+      "glyph": "harp",
+      "defaultStringCount": 21,
+      "featured": false,
+      "order": 700,
+      "tunings": [
+        {
+          "id": "kora.silabaF",
+          "nameKey": "Silaba F 大调 21 弦",
+          "order": 10,
+          "strings": [
+            "F2",
+            "C3",
+            "D3",
+            "E3",
+            "F3",
+            "G3",
+            "A3",
+            "Bb3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "Bb4",
+            "C5",
+            "D5",
+            "E5",
+            "F5",
+            "G5",
+            "A5"
+          ]
+        },
+        {
+          "id": "kora.sautaB",
+          "nameKey": "Sauta 21 弦",
+          "order": 20,
+          "strings": [
+            "F2",
+            "C3",
+            "D3",
+            "E3",
+            "F3",
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "B4",
+            "C5",
+            "D5",
+            "E5",
+            "F5",
+            "G5",
+            "A5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ngoni",
+      "familyID": "folkWorld",
+      "nameKey": "恩戈尼琴",
+      "glyph": "lute",
+      "defaultStringCount": 6,
+      "featured": false,
+      "order": 710,
+      "tunings": [
+        {
+          "id": "ngoni.eminor",
+          "nameKey": "6 弦 E 小调五声",
+          "order": 10,
+          "strings": [
+            "E2",
+            "G2",
+            "A2",
+            "B2",
+            "D3",
+            "E3"
+          ]
+        },
+        {
+          "id": "ngoni.fsharpMinor",
+          "nameKey": "6 弦 F# 小调五声",
+          "order": 20,
+          "strings": [
+            "F#2",
+            "G#2",
+            "B2",
+            "C#3",
+            "E3",
+            "F#3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kantele",
+      "familyID": "folkWorld",
+      "nameKey": "坎特勒琴",
+      "glyph": "zither",
+      "defaultStringCount": 5,
+      "featured": false,
+      "order": 720,
+      "tunings": [
+        {
+          "id": "kantele.dMajor5",
+          "nameKey": "5 弦 D 大调",
+          "order": 10,
+          "strings": [
+            "D4",
+            "E4",
+            "F#4",
+            "G4",
+            "A4"
+          ]
+        },
+        {
+          "id": "kantele.dMinor5",
+          "nameKey": "5 弦 D 小调",
+          "order": 20,
+          "strings": [
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4"
+          ]
+        },
+        {
+          "id": "kantele.d10",
+          "nameKey": "10 弦 D 调",
+          "order": 30,
+          "strings": [
+            "A3",
+            "B3",
+            "C#4",
+            "D4",
+            "E4",
+            "F#4",
+            "G4",
+            "A4",
+            "B4",
+            "D5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gusli",
+      "familyID": "folkWorld",
+      "nameKey": "古斯里琴",
+      "glyph": "zither",
+      "defaultStringCount": 12,
+      "featured": false,
+      "order": 730,
+      "tunings": [
+        {
+          "id": "gusli.gMixolydian12",
+          "nameKey": "12 弦 G 调式",
+          "order": 10,
+          "strings": [
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "B4",
+            "C5",
+            "D5"
+          ]
+        },
+        {
+          "id": "gusli.traditional9",
+          "nameKey": "9 弦传统调弦",
+          "order": 20,
+          "strings": [
+            "E3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4"
+          ]
+        },
+        {
+          "id": "gusli.cMajor15",
+          "nameKey": "15 弦 C 大调",
+          "order": 30,
+          "strings": [
+            "C3",
+            "D3",
+            "E3",
+            "F3",
+            "G3",
+            "A3",
+            "B3",
+            "C4",
+            "D4",
+            "E4",
+            "F4",
+            "G4",
+            "A4",
+            "B4",
+            "C5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bandura",
+      "familyID": "folkWorld",
+      "nameKey": "班杜拉琴",
+      "glyph": "zither",
+      "defaultStringCount": 56,
+      "featured": false,
+      "order": 740,
+      "tunings": [
+        {
+          "id": "bandura.gMajor56",
+          "nameKey": "56 弦 G 大调",
+          "order": 10,
+          "strings": [
+            "C2",
+            "C#2",
+            "D2",
+            "D#2",
+            "E2",
+            "F2",
+            "F#2",
+            "G2",
+            "G#2",
+            "A2",
+            "Bb2",
+            "B2",
+            "C3",
+            "C#3",
+            "D3",
+            "D#3",
+            "E3",
+            "F3",
+            "F#3",
+            "G3",
+            "G#3",
+            "A3",
+            "Bb3",
+            "B3",
+            "C4",
+            "C#4",
+            "D4",
+            "D#4",
+            "E4",
+            "F4",
+            "F#4",
+            "G4",
+            "G#4",
+            "Bb4",
+            "B4",
+            "C5",
+            "C#5",
+            "D5",
+            "D#5",
+            "E5",
+            "F5",
+            "F#5",
+            "G5",
+            "G#5",
+            "A5",
+            "Bb5",
+            "B5",
+            "C6",
+            "C#6",
+            "D6",
+            "D#6",
+            "E6",
+            "F6",
+            "F#6",
+            "G6",
+            "A6"
+          ]
+        }
+      ]
+    }
+  ]
+}
