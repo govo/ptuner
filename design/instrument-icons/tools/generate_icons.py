@@ -173,62 +173,63 @@ def guitar():
 
 def bass_guitar():
     defs = (
-        radial_grad("body", "#7C6BFF", "#2A1A78", cx=0.5, cy=0.42, r=0.75)
+        radial_grad("body", "#8A76FF", "#2A1A72", cx=0.42, cy=0.35, r=0.8)
         + linear_grad("neck", "#C98B4E", "#8A5224")
         + linear_grad("head", "#2E2722", "#16120F")
     )
     body_d = (
-        "M296 578 C252 592 206 626 192 670 C182 708 194 734 216 752 "
-        "C234 768 230 786 214 804 C174 844 174 896 218 932 "
-        "C264 970 396 970 442 932 C486 896 486 844 446 804 "
-        "C430 786 426 768 444 752 C466 734 478 708 468 670 "
-        "C454 626 408 592 364 604 L348 598 C332 586 314 582 296 578 Z"
+        "M320 586 C300 586 282 592 268 602 "
+        "C246 616 228 640 226 668 "
+        "C224 690 234 708 248 722 "
+        "C262 736 260 752 248 768 "
+        "C220 800 208 848 228 886 "
+        "C250 926 390 926 412 886 "
+        "C432 848 420 800 392 768 "
+        "C380 752 378 736 392 722 "
+        "C406 708 416 690 414 668 "
+        "C412 640 394 616 372 602 "
+        "C358 592 340 586 320 586 Z"
     )
     head_d = (
-        "M290 60 C290 46 302 36 318 36 L338 36 C354 36 366 46 366 60 "
-        "L372 184 C372 200 362 212 346 212 L310 212 C294 212 284 200 284 184 Z"
-    )
-    guard_d = (
-        "M300 604 C270 614 246 642 236 678 C228 708 236 734 254 750 "
-        "C270 764 288 766 302 758 L318 720 C324 680 318 636 300 604 Z"
+        "M292 52 C292 38 304 28 320 28 L340 28 C356 28 368 38 368 52 "
+        "L374 176 C374 190 364 200 348 200 L308 200 C292 200 282 190 282 176 Z"
     )
     b = []
     # neck behind the body
-    b.append(rrect(296, 200, 52, 470, 14, "url(#neck)", "#2A1C12", 5))
+    b.append(rrect(296, 190, 48, 430, 14, "url(#neck)", "#2A1C12", 5))
     # body
     b.append(path(body_d, "url(#body)", "#1E1440", 7))
-    b.append(path(body_d, "none", "#C9C0FF", 3, 0.32))
+    b.append(path(body_d, "none", "#C9C0FF", 3, 0.3))
     # fretboard
-    b.append(rrect(300, 216, 44, 460, 7, "#241D18"))
-    for y in range(248, 664, 32):
-        b.append(line(302, y, 342, y, "#7B6B5E", 2, 0.7))
-    for y in (280, 400, 520, 620):
-        b.append(circle(322, y, 3, CREAM, None, 0, 0.8))
+    b.append(rrect(300, 206, 40, 414, 7, "#241D18"))
+    for y in range(238, 606, 30):
+        b.append(line(302, y, 338, y, "#7B6B5E", 2, 0.7))
+    for y in (270, 390, 510):
+        b.append(circle(320, y, 3, CREAM, None, 0, 0.8))
     # headstock
     b.append(path(head_d, "url(#head)", "#0F0C0A", 5))
-    b.append(rrect(296, 202, 52, 12, 4, CREAM, None, 0, 0.85))
-    for y in (78, 114, 150, 186):
+    b.append(rrect(296, 192, 48, 12, 4, CREAM, None, 0, 0.85))
+    for y in (72, 108, 144, 180):
         b.append(line(266, y, 290, y, GOLD, 4))
         b.append(circle(260, y, 10, GOLD, INK, 2))
-    # pickguard
-    b.append(path(guard_d, "#EFE5CF", "#A8936A", 3, 0.95))
     # pickups
-    for y in (744, 810):
-        b.append(rrect(278, y, 88, 34, 6, "#18141C", CREAM, 3))
+    for y, w in ((728, 96), (796, 110)):
+        b.append(rrect(320 - w / 2, y, w, 32, 6, "#18141C", CREAM, 3))
         for i in range(4):
-            b.append(line(294 + i * 19, y + 9, 294 + i * 19, y + 25, CREAM, 3, 0.85))
+            x = 320 - w / 2 + 16 + i * ((w - 32) / 3)
+            b.append(line(x, y + 9, x, y + 23, CREAM, 3, 0.85))
     # bridge and saddles
-    b.append(rrect(272, 884, 96, 26, 6, STEEL, "#5B6572", 3))
+    b.append(rrect(266, 862, 108, 26, 6, STEEL, "#5B6572", 3))
     for i in range(4):
-        b.append(rrect(284 + i * 20, 888, 13, 18, 3, "#8E99A8"))
+        b.append(rrect(280 + i * 22, 866, 14, 18, 3, "#8E99A8"))
     # control knobs
-    for cx, cy in ((426, 846), (454, 880), (424, 914)):
+    for cx, cy in ((414, 800), (442, 838), (410, 874)):
         b.append(circle(cx, cy, 13, GOLD, INK, 3))
         b.append(circle(cx, cy, 5, "#F4E7CC"))
     # strings
     for i in range(4):
-        x = 306 + i * 11
-        b.append(line(x, 900, x, 216, "#E8EDF5", 3, 0.85))
+        x = 304 + i * 10.5
+        b.append(line(x, 880, x, 206, "#E8EDF5", 3, 0.85))
     return defs, "".join(b)
 
 
@@ -303,34 +304,42 @@ def mandolin():
         + linear_grad("neck", "#8A4A22", "#552B12")
         + linear_grad("head", "#4C2711", "#2A1207")
     )
-    d = (
-        "M320 578 C262 578 222 628 216 698 C210 778 246 858 306 898 "
-        "C366 938 436 906 459 848 C481 793 463 723 429 690 "
-        "C401 663 380 638 380 616 C380 594 352 578 320 578 Z"
+    body_d = (
+        "M360 560 C330 560 300 572 276 596 "
+        "C248 624 232 664 236 704 "
+        "C240 750 268 792 304 822 "
+        "C338 852 396 868 432 850 "
+        "C470 832 484 788 470 748 "
+        "C460 716 432 692 416 664 "
+        "C402 640 400 606 390 584 "
+        "C382 568 372 560 360 560 Z"
     )
-    b = [path(d, "url(#body)", "#5C2A0E", 7)]
-    b.append(path(d, "none", CREAM, 3, opacity=0.55))
-    # scroll
-    b.append(circle(205, 624, 40, "url(#body)", "#5C2A0E", 6))
-    b.append(path("M205 624 C205 606 220 604 228 616 C235 628 225 640 214 636", "none", "#4A210A", 7))
-    # points on lower bout
-    b.append(path("M452 758 L482 746 L462 788 Z", "url(#body)", "#5C2A0E", 5))
-    b.append(path("M440 860 L468 872 L430 888 Z", "url(#body)", "#5C2A0E", 5))
+    b = [path(body_d, "url(#body)", "#5C2A0E", 7)]
+    b.append(path(body_d, "none", CREAM, 3, opacity=0.5))
+    # scroll on the upper-left bout
+    b.append(path("M244 612 C224 600 206 604 200 622 C194 642 208 658 228 656", "none", "#5C2A0E", 14))
+    b.append(circle(214, 620, 38, "url(#body)", "#5C2A0E", 6))
+    b.append(path("M214 620 C214 600 232 598 240 612 C247 626 236 640 224 634", "none", "#4A210A", 7))
+    # points on the lower-right bout
+    b.append(path("M462 744 L494 730 L474 776 Z", "url(#body)", "#5C2A0E", 5))
+    b.append(path("M446 842 L476 856 L436 876 Z", "url(#body)", "#5C2A0E", 5))
     # neck + head
-    b.append(rrect(302, 372, 36, 250, 10, "url(#neck)", "#3A1C0A", 5))
-    b.append(rrect(288, 262, 64, 128, 16, "url(#head)", "#240E05", 5))
-    b.append(tuners([(276, 292), (276, 326), (276, 360), (364, 292), (364, 326), (364, 360)], CREAM_DARK, 8))
+    b.append(rrect(342, 330, 34, 260, 9, "url(#neck)", "#3A1C0A", 5))
+    b.append(rrect(326, 208, 68, 132, 16, "url(#head)", "#240E05", 5))
+    b.append(tuners([(314, 238), (314, 272), (314, 306), (314, 340),
+                     (406, 238), (406, 272), (406, 306), (406, 340)], CREAM_DARK, 8))
     # fretboard + frets
-    b.append(rrect(304, 388, 32, 230, 5, "#2A1D14"))
-    for y in range(414, 610, 26):
-        b.append(line(305, y, 335, y, "#8A7868", 2, 0.75))
+    b.append(rrect(344, 346, 30, 240, 5, "#2A1D14"))
+    for y in range(374, 576, 26):
+        b.append(line(345, y, 373, y, "#8A7868", 2, 0.75))
     # oval hole
-    b.append(ellipse(330, 772, 38, 54, "#24180F", CREAM_DARK, 4))
-    b.append(rrect(286, 824, 68, 14, 5, "#3A2414"))
+    b.append(ellipse(344, 720, 32, 46, "#24180F", CREAM_DARK, 4))
+    b.append(rrect(328, 800, 64, 14, 5, "#3A2414"))
     # 8 strings as 4 courses
     for i in range(4):
-        x = 307 + i * 8
-        b.append(line(x, 828, x, 274, "#F8EBD4", 3, 0.9))
+        x = 348 + i * 8
+        b.append(line(x - 1.4, 804, x - 1.4, 240, "#F8EBD4", 2.0, 0.85))
+        b.append(line(x + 1.4, 804, x + 1.4, 240, "#F8EBD4", 2.0, 0.85))
     return defs, "".join(b)
 
 
@@ -379,25 +388,38 @@ def resonator():
 # ---------------------------------------------------------------------------
 
 VIOLIN_BODY = (
-    "M320 516 C290 516 270 540 264 574 C259 602 278 622 288 640 "
-    "C298 658 280 676 268 694 C255 714 268 732 280 750 "
-    "C292 768 272 796 258 828 C240 870 270 918 320 918 "
-    "C370 918 400 870 382 828 C368 796 348 768 360 750 "
-    "C372 732 385 714 372 694 C360 676 342 658 352 640 "
-    "C362 622 381 602 376 574 C370 540 350 516 320 516 Z"
+    "M320 470 C284 470 256 492 246 528 "
+    "C238 558 248 584 254 606 "
+    "C260 628 262 644 256 660 "
+    "C248 684 232 696 228 724 "
+    "C222 762 234 802 250 830 "
+    "C262 852 260 878 282 898 "
+    "C302 918 338 918 358 898 "
+    "C380 878 378 852 390 830 "
+    "C406 802 418 762 412 724 "
+    "C408 696 392 684 384 660 "
+    "C378 644 380 628 386 606 "
+    "C392 584 402 558 394 528 "
+    "C384 492 356 470 320 470 Z"
 )
 
 DOUBLE_BASS_BODY = (
-    "M320 470 C278 470 250 498 240 548 C232 590 246 620 258 650 "
-    "C270 682 250 700 238 734 C222 780 228 842 258 884 "
-    "C286 924 354 924 382 884 C412 842 418 780 402 734 "
-    "C390 700 370 682 382 650 C394 620 408 590 400 548 "
-    "C390 498 362 470 320 470 Z"
+    "M320 448 C290 448 264 462 250 492 "
+    "C239 517 240 543 247 566 "
+    "C255 590 253 606 243 626 "
+    "C226 656 212 696 216 740 "
+    "C220 796 246 846 284 882 "
+    "C308 905 346 905 370 882 "
+    "C408 846 434 796 438 740 "
+    "C442 696 428 656 411 626 "
+    "C401 606 399 590 407 566 "
+    "C414 543 415 517 404 492 "
+    "C390 462 350 448 320 448 Z"
 )
 
 
-def bowed(name, *, body_color, body_edge, scale_x=1.0, body_top=516, body_bottom=918,
-          neck_top=236, neck_width=26, endpin=False, dark_fingerboard=True,
+def bowed(name, *, body_color, body_edge, scale_x=1.0, body_top=470, body_bottom=918,
+          neck_top=206, neck_width=28, endpin=False, dark_fingerboard=True,
           f_hole_color="#231812", chinrest=True):
     gid = f"{name}Body"
     defs = (
@@ -405,34 +427,35 @@ def bowed(name, *, body_color, body_edge, scale_x=1.0, body_top=516, body_bottom
         + linear_grad(f"{name}Neck", "#7A3D1E", "#3E1C0B")
     )
     b = [f'<g transform="translate(320 0) scale({scale_x} 1) translate(-320 0)">']
-    # neck and fingerboard
-    b.append(rrect(320 - neck_width / 2, neck_top, neck_width, body_bottom - neck_top - 120,
+    # neck stops at the upper bout; the fingerboard runs a little further onto the body
+    fingerboard_end = body_top + 138
+    b.append(rrect(320 - neck_width / 2, neck_top, neck_width, fingerboard_end - neck_top,
                    10, f"url(#{name}Neck)", "#3A1B0A", 5))
     b.append(rrect(320 - neck_width / 2 + 2, neck_top + 16, neck_width - 4,
-                   body_bottom - neck_top - 150, 5, "#241B17"))
+                   fingerboard_end - neck_top - 18, 5, "#241B17"))
     if name == "doubleBass":
         body_d = DOUBLE_BASS_BODY
     else:
         body_d = VIOLIN_BODY
     b.append(path(body_d, f"url(#{gid})", body_edge, 7))
     b.append(path(body_d, "none", "#F2D9B0", 3, opacity=0.42))
-    # f holes
-    if name in ("violin", "viola"):
-        b.append(path("M292 694 C280 724 282 762 296 788 C304 768 304 720 300 700 Z", f_hole_color))
-        b.append(path("M348 694 C360 724 358 762 344 788 C336 768 336 720 340 700 Z", f_hole_color))
-    else:
-        b.append(path("M286 650 C272 690 274 748 292 786 C302 762 302 688 296 656 Z", f_hole_color))
-        b.append(path("M354 650 C368 690 366 748 348 786 C338 762 338 688 344 656 Z", f_hole_color))
+    # f holes: slim curved slots with round eyes
+    for cx, mirror in ((290, 1), (350, -1)):
+        b.append(path(
+            f"M{cx} 700 C{cx - 11 * mirror} 728 {cx - 9 * mirror} 758 {cx - 1 * mirror} 786",
+            "none", f_hole_color, 9))
+        b.append(circle(cx, 700, 8, f_hole_color))
+        b.append(circle(cx - 1 * mirror, 786, 10, f_hole_color))
     # bridge
-    b.append(path("M300 782 L340 782 L336 806 L304 806 Z", "#E9D3A8", "#7A5A34", 3))
+    b.append(path("M294 782 L346 782 L340 808 L300 808 Z", "#E9D3A8", "#7A5A34", 3))
     # tailpiece
-    b.append(path("M306 812 L334 812 L328 892 L312 892 Z", "#241B17", "#0E0A08", 3))
+    b.append(path("M306 818 L334 818 L327 890 L313 890 Z", "#241B17", "#0E0A08", 3))
     if chinrest:
-        b.append(ellipse(287, 888, 30, 22, "#1F1713", "#0D0907", 3, rotate=-18))
+        b.append(ellipse(289, 892, 29, 20, "#1F1713", "#0D0907", 3, rotate=-18))
     # strings
     for i in range(4):
         x = 312 + i * 5.4
-        b.append(line(x, 812, x, neck_top + 18, CREAM, 2.4, 0.92))
+        b.append(line(x, 818, x, neck_top + 18, CREAM, 2.4, 0.92))
     # scroll
     b.append(rrect(320 - neck_width / 2 - 6, neck_top - 90, neck_width + 12, 100, 12, "#4A2511", "#2A1206", 5))
     b.append(circle(320, neck_top - 96, 26, f"url(#{name}Neck)", "#2A1206", 5))
@@ -442,31 +465,32 @@ def bowed(name, *, body_color, body_edge, scale_x=1.0, body_top=516, body_bottom
         "none", "#2A1206", 6))
     b.append("</g>")
     if endpin:
-        b.append(line(320, 912, 320, 996, STEEL, 8))
+        b.append(line(320, 908, 320, 996, STEEL, 8))
         b.append(circle(320, 998, 9, INK))
     return defs, "".join(b)
 
 
 def violin():
-    return bowed("violin", body_color=("#D06A35", "#923817"), body_edge="#5A210D")
+    return bowed("violin", body_color=("#D06A35", "#923817"), body_edge="#5A210D",
+                 scale_x=1.0, body_top=470, body_bottom=918, neck_top=206, neck_width=28)
 
 
 def viola():
     return bowed("viola", body_color=("#B8552E", "#7D2A14"), body_edge="#4A1A0A",
-                 scale_x=1.14, body_top=490, body_bottom=930)
+                 scale_x=1.08, body_top=460, body_bottom=922, neck_top=198, neck_width=30)
 
 
 def cello():
     defs, body = bowed("cello", body_color=("#D18B45", "#9A4E1F"), body_edge="#5A2A0E",
-                       scale_x=1.24, body_top=430, body_bottom=900, neck_top=206,
-                       neck_width=30, endpin=True)
+                       scale_x=1.18, body_top=450, body_bottom=908, neck_top=184,
+                       neck_width=34, endpin=True)
     return defs, body
 
 
 def double_bass():
     defs, body = bowed("doubleBass", body_color=("#A96635", "#5E2A12"), body_edge="#341306",
-                       scale_x=1.34, body_top=470, body_bottom=900, neck_top=150,
-                       neck_width=32, endpin=True, chinrest=False)
+                       scale_x=1.28, body_top=448, body_bottom=900, neck_top=132,
+                       neck_width=38, endpin=True, chinrest=False)
     return defs, body
 
 
@@ -592,19 +616,34 @@ def guzheng():
 def guqin():
     gid = "guqinBody"
     defs = linear_grad(gid, "#3A3733", "#161514")
-    b = [rrect(238, 96, 164, 840, 46, f"url(#{gid})", "#0C0B0A", 7)]
-    b.append(rrect(252, 118, 136, 796, 32, "none", "#8A7A5E", 3, 0.5))
+    body_d = (
+        "M250 96 L390 96 C406 96 417 108 415 124 "
+        "L404 900 C402 924 386 936 362 936 "
+        "L278 936 C254 936 238 924 236 900 "
+        "L225 124 C223 108 234 96 250 96 Z"
+    )
+    b = [path(body_d, f"url(#{gid})", "#0C0B0A", 7)]
+    b.append(path(
+        "M252 120 L386 120 C396 120 402 128 401 138 "
+        "L391 894 C390 910 380 918 362 918 L278 918 "
+        "C260 918 250 910 249 894 L239 138 C238 128 244 120 252 120 Z",
+        "none", "#8A7A5E", 3, 0.5))
     # 7 strings
     for i in range(7):
-        x = 270 + i * 16.6
-        b.append(line(x, 140, x, 892, CREAM, 2.6, 0.9))
+        x = 268 + i * 14.8
+        b.append(line(x, 142, x, 894, CREAM, 2.6, 0.9))
     # 13 hui studs
     for i in range(13):
-        y = 150 + i * 60
+        y = 152 + i * 60
         b.append(circle(386, y, 6, "#DCC18C", "#4A3A22", 2))
-    # tassel
-    b.append(line(320, 936, 320, 980, "#B23A2E", 6))
-    b.append(path("M306 980 L334 980 L328 1010 L312 1010 Z", "#C4493A", None, 0, 0.95))
+    # two ivory feet
+    for x in (292, 348):
+        b.append(circle(x, 918, 8, CREAM_DARK, "#4A3A22", 2))
+    # red tassel cord
+    b.append(line(320, 934, 320, 968, "#B23A2E", 4))
+    b.append(circle(320, 976, 8, "#C4493A"))
+    b.append(line(313, 984, 306, 1002, "#B23A2E", 4))
+    b.append(line(327, 984, 334, 1002, "#B23A2E", 4))
     return defs, "".join(b)
 
 
@@ -615,32 +654,42 @@ def pipa():
         + linear_grad("head", "#6E3418", "#38180A")
     )
     body_d = (
-        "M320 592 C282 592 258 622 254 672 C250 730 236 790 222 840 "
-        "C208 892 242 936 302 944 C370 954 432 920 448 868 "
-        "C464 816 430 768 402 730 C380 700 380 650 380 612 "
-        "C380 598 352 592 320 592 Z"
+        "M320 552 C278 552 248 586 242 638 "
+        "C236 696 222 756 210 808 "
+        "C196 866 234 924 300 940 "
+        "C366 956 430 922 446 866 "
+        "C462 812 430 776 402 744 "
+        "C378 716 372 660 372 612 "
+        "C372 574 350 552 320 552 Z"
+    )
+    face_d = (
+        "M320 574 C292 574 268 602 262 644 "
+        "C256 698 244 754 234 800 "
+        "C222 848 254 896 306 910 "
+        "C362 924 412 896 424 856 "
+        "C436 818 408 788 384 758 "
+        "C362 730 354 668 354 624 "
+        "C354 598 344 574 320 574 Z"
     )
     b = [path(body_d, "url(#body)", "#3A1708", 7)]
-    b.append(path("M320 612 C292 612 274 638 270 680 C266 732 252 790 240 838 "
-                  "C228 884 256 918 306 924 C364 932 414 902 426 862 "
-                  "C438 818 408 776 386 740 C368 712 368 660 368 626 "
-                  "C368 618 346 612 320 612 Z", "url(#face)", "#9A6A3A", 3, 0.95))
+    b.append(path(face_d, "url(#face)", "#9A6A3A", 3, 0.97))
     # neck
-    b.append(rrect(302, 330, 36, 300, 10, "url(#body)", "#3A1708", 5))
+    b.append(rrect(300, 300, 40, 286, 10, "url(#body)", "#3A1708", 5))
     # bent pegbox
-    b.append(path("M302 330 L302 238 L282 188 L250 198 L274 252 L284 330 Z", "url(#head)", "#2A1006", 5))
-    b.append(rrect(294, 220, 12, 120, 5, "#2A1006", None, 0, 0.7))
+    b.append(path("M300 306 L300 222 L278 178 L246 190 L272 248 L282 306 Z", "url(#head)", "#2A1006", 5))
+    b.append(rrect(292, 216, 12, 108, 5, "#2A1006", None, 0, 0.7))
     for i in range(4):
-        b.append(circle(266 if i % 2 == 0 else 352, 206 + i * 30, 13, "#5E3017", INK, 3))
+        b.append(circle(262 if i % 2 == 0 else 354, 198 + i * 30, 13, "#5E3017", INK, 3))
     # frets
-    for y in range(356, 600, 30):
-        b.append(line(304, y, 336, y, "#6B4A2A", 3, 0.85))
+    for y in range(336, 570, 28):
+        b.append(line(302, y, 338, y, "#6B4A2A", 3, 0.85))
+    # bridge
+    b.append(rrect(282, 846, 76, 16, 5, "#3A2414"))
+    b.append(line(288, 850, 352, 850, CREAM, 2, 0.6))
     # strings
     for i in range(4):
-        x = 308 + i * 8
-        b.append(line(x, 910, x, 250, CREAM, 3, 0.92))
-    # decorative ring
-    b.append(circle(320, 860, 22, "none", "#8A4A26", 4, 0.5))
+        x = 306 + i * 9.4
+        b.append(line(x, 882, x, 240, CREAM, 3, 0.92))
     return defs, "".join(b)
 
 
@@ -781,41 +830,54 @@ def balalaika():
 def sitar():
     defs = (
         linear_grad("gourd", "#D97A38", "#8E3A18")
+        + radial_grad("body", "#E08A46", "#8A3616", cx=0.5, cy=0.35, r=0.8)
         + linear_grad("neck", "#4A3428", "#241812")
         + linear_grad("gold", "#E8C87C", "#B4852F")
     )
+    body_d = (
+        "M320 586 C286 586 260 608 256 642 "
+        "C252 674 268 700 292 718 "
+        "C246 742 216 786 220 836 "
+        "C225 892 270 940 320 946 "
+        "C370 940 415 892 420 836 "
+        "C424 786 394 742 348 718 "
+        "C372 700 388 674 384 642 "
+        "C380 608 354 586 320 586 Z"
+    )
     b = []
+    # small gourd behind the pegbox
+    b.append(circle(320, 62, 34, "url(#gourd)", "#3A1406", 5))
     # neck
-    b.append(rrect(306, 150, 30, 590, 8, "url(#neck)", "#1A1008", 5))
+    b.append(rrect(304, 140, 32, 600, 8, "url(#neck)", "#1A1008", 5))
     # gourd body
-    b.append(ellipse(320, 816, 158, 148, "url(#gourd)", "#3A1406", 7))
-    b.append(ellipse(320, 664, 94, 82, "url(#gourd)", "#3A1406", 6))
-    b.append(ellipse(320, 816, 142, 132, "none", "#F2B07A", 3, 0.35))
-    # decorative gourd pattern
-    for r in (52, 88, 120):
-        b.append(circle(320, 816, r, "none", "#7E2E10", 3, 0.35))
+    b.append(path(body_d, "url(#body)", "#3A1406", 7))
+    b.append(path(body_d, "none", "#F2B07A", 3, 0.3))
+    # decorative inlay on the lower lobe
+    for rx, ry in ((74, 66), (112, 100)):
+        b.append(ellipse(320, 836, rx, ry, "none", "#7E2E10", 3, 0.35))
+    b.append(ellipse(320, 836, 30, 26, "none", "#F2B07A", 3, 0.5))
     # pegbox
-    b.append(rrect(288, 68, 64, 150, 16, "#3A2418", "#1A1008", 5))
-    for i in range(7):
-        b.append(circle(276 if i % 2 == 0 else 364, 92 + i * 18, 9, "url(#gold)", INK, 2))
-    # sympathetic pegs
-    for i in range(12):
-        b.append(circle(294 if i % 2 == 0 else 346, 236 + i * 32, 7, "url(#gold)", INK, 2))
+    b.append(rrect(290, 62, 60, 128, 15, "#3A2418", "#1A1008", 5))
+    for i in range(6):
+        b.append(circle(278 if i % 2 == 0 else 362, 88 + i * 18, 8, "url(#gold)", INK, 2))
+    # sympathetic pegs along the neck
+    for i in range(11):
+        b.append(circle(294 if i % 2 == 0 else 346, 226 + i * 34, 6, "url(#gold)", INK, 2))
     # curved frets
     for i in range(10):
-        y = 260 + i * 42
-        b.append(path(f"M306 {y} C316 {y - 8} 324 {y - 8} 334 {y}", "none", "#C9D2DE", 5))
+        y = 256 + i * 40
+        b.append(path(f"M306 {y} C315 {y - 9} 325 {y - 9} 334 {y}", "none", "#C9D2DE", 6))
     # bridge
-    b.append(rrect(270, 838, 100, 20, 6, "#3A2418", "#1A1008", 3))
-    b.append(path("M280 838 C300 828 340 828 360 838", "none", CREAM, 4))
+    b.append(rrect(276, 840, 88, 18, 6, "#3A2418", "#1A1008", 3))
+    b.append(path("M285 840 C305 830 335 830 355 840", "none", CREAM, 4))
     # strings
     for i in range(7):
         x = 308 + i * 4
-        b.append(line(x, 846, x, 160, CREAM, 2.2, 0.9))
+        b.append(line(x, 848, x, 150, CREAM, 2.2, 0.9))
     # sympathetic strings
     for i in range(3):
-        x = 316 + i * 4
-        b.append(line(x, 690, x, 200, CREAM, 1.2, 0.55))
+        x = 318 + i * 3
+        b.append(line(x, 700, x, 190, CREAM, 1.2, 0.55))
     return defs, "".join(b)
 
 
@@ -836,12 +898,14 @@ def shamisen():
     b.append(rrect(292, 104, 56, 130, 14, "url(#wood)", "#2A1206", 5))
     for cx, cy in ((276, 142), (364, 142), (364, 194)):
         b.append(ellipse(cx, cy, 12, 19, "#5E3018", INK, 3, rotate=90))
+    # skin seam and bottom rim
+    b.append(line(212, 806, 428, 806, "#C9AE82", 3, 0.45))
+    b.append(rrect(194, 928, 252, 12, 6, "#3A2418", None, 0, 0.9))
     # bridge + strings
     b.append(rrect(288, 852, 64, 14, 5, "#3A2414"))
     for i in range(3):
         x = 312 + i * 8
         b.append(line(x, 856, x, 130, CREAM, 3, 0.92))
-    b.append(rrect(196, 940, 248, 14, 6, "#B23A2E", None, 0, 0.9))
     return defs, "".join(b)
 
 
@@ -935,6 +999,280 @@ def kora():
 
 
 # ---------------------------------------------------------------------------
+# Remaining catalog instruments
+# ---------------------------------------------------------------------------
+
+def nyckelharpa():
+    defs = (
+        linear_grad("body", "#D08A48", "#8A441C")
+        + linear_grad("neck", "#5A3A24", "#2E1A0E")
+        + linear_grad("key", "#E9D3A8", "#B99A66")
+    )
+    b = []
+    # violin-like body
+    b.append(path(VIOLIN_BODY, "url(#body)", "#4A2210", 7))
+    b.append(path(VIOLIN_BODY, "none", "#F2D9B0", 3, 0.42))
+    # neck
+    b.append(rrect(304, 200, 32, 420, 10, "url(#neck)", "#2A1408", 5))
+    # keybox with keys sticking out to the left
+    b.append(rrect(268, 286, 46, 300, 8, "url(#neck)", "#2A1408", 5))
+    for i in range(8):
+        y = 300 + i * 35
+        b.append(rrect(236, y, 40, 14, 5, "url(#key)", "#6E4A20", 2))
+        b.append(circle(240, y + 7, 3, "#5A3A18"))
+    # pegbox
+    b.append(rrect(296, 96, 48, 118, 14, "url(#neck)", "#2A1408", 5))
+    for y in (120, 152, 184):
+        b.append(circle(286, y, 9, GOLD, INK, 2))
+        b.append(circle(354, y, 9, GOLD, INK, 2))
+    # bridge and tailpiece
+    b.append(path("M292 780 L348 780 L342 806 L298 806 Z", "#E9D3A8", "#7A5A34", 3))
+    b.append(path("M306 816 L334 816 L327 890 L313 890 Z", "#241B17", "#0E0A08", 3))
+    # 4 melody strings and 3 sympathetic strings
+    for i in range(4):
+        x = 310 + i * 6.6
+        b.append(line(x, 818, x, 110, CREAM, 2.2, 0.9))
+    for i in range(3):
+        x = 304 + i * 12
+        b.append(line(x, 790, x, 130, CREAM, 1.2, 0.45))
+    return defs, "".join(b)
+
+
+def ektara():
+    defs = (
+        radial_grad("gourd", "#E8A455", "#98501E", cx=0.4, cy=0.35, r=0.8)
+        + linear_grad("bamboo", "#E2C084", "#A8793C")
+    )
+    b = []
+    # split bamboo neck
+    b.append(path("M306 214 L300 128 L314 126 L323 202 L326 202 L335 126 L349 128 L334 214 Z",
+                  "url(#bamboo)", "#6E4A1E", 5))
+    b.append(rrect(304, 200, 32, 580, 10, "url(#bamboo)", "#6E4A1E", 5))
+    # tuning bar
+    b.append(line(286, 126, 356, 126, "#5A3A18", 7))
+    b.append(circle(282, 126, 10, GOLD, INK, 2))
+    b.append(circle(360, 126, 10, GOLD, INK, 2))
+    # gourd resonator
+    b.append(circle(320, 820, 118, "url(#gourd)", "#4A2208", 7))
+    for rx in (30, 62, 94):
+        b.append(ellipse(320, 820, rx, 114, "none", "#7E3A12", 3, 0.4))
+    b.append(circle(320, 820, 112, "none", "#F2C184", 3, 0.35))
+    # single string
+    b.append(line(320, 134, 320, 820, CREAM, 3, 0.9))
+    b.append(circle(320, 820, 8, "#3A2210"))
+    # tassel
+    b.append(line(320, 936, 320, 962, "#B23A2E", 4))
+    b.append(circle(320, 970, 7, "#C4493A"))
+    return defs, "".join(b)
+
+
+def dotara():
+    defs = (
+        linear_grad("body", "#C8783A", "#7E3A14")
+        + linear_grad("face", "#F0D6A2", "#CFA466")
+        + linear_grad("neck", "#8A5224", "#4E2A10")
+    )
+    body_d = (
+        "M320 616 C280 616 250 646 244 692 "
+        "C238 744 226 798 226 838 "
+        "C226 890 268 926 320 926 "
+        "C372 926 414 890 414 838 "
+        "C414 798 402 744 396 692 "
+        "C390 646 360 616 320 616 Z"
+    )
+    face_d = (
+        "M320 638 C290 638 268 662 263 700 "
+        "C258 748 246 798 246 836 "
+        "C246 878 278 906 320 906 "
+        "C362 906 394 878 394 836 "
+        "C394 798 382 748 377 700 "
+        "C372 662 350 638 320 638 Z"
+    )
+    b = [path(body_d, "url(#body)", "#3A1708", 7)]
+    b.append(path(face_d, "url(#face)", "#9A6A3A", 3, 0.97))
+    # neck and pegbox
+    b.append(rrect(302, 330, 36, 310, 9, "url(#neck)", "#2A1206", 5))
+    b.append(rrect(290, 222, 60, 116, 14, "url(#neck)", "#2A1206", 5))
+    b.append(tuners([(280, 252), (280, 294), (360, 252), (360, 294)], CREAM_DARK, 8))
+    # frets
+    for y in range(362, 606, 28):
+        b.append(line(303, y, 337, y, "#8A7868", 2, 0.75))
+    # rosette
+    b.append(circle(320, 780, 30, "#2A1A0E", CREAM_DARK, 4))
+    b.append(circle(320, 780, 38, "none", "#B98B52", 3, 0.7))
+    # bridge
+    b.append(rrect(288, 842, 64, 14, 5, "#3A2414"))
+    # 4 strings
+    for i in range(4):
+        x = 308 + i * 8
+        b.append(line(x, 846, x, 250, CREAM, 2.6, 0.9))
+    return defs, "".join(b)
+
+
+def sarangi():
+    defs = (
+        linear_grad("body", "#B8642E", "#6E2A10")
+        + linear_grad("face", "#EBCB96", "#C79A5E")
+        + linear_grad("neck", "#6E3A1C", "#341708")
+    )
+    body_d = (
+        "M320 604 C284 604 258 626 252 662 "
+        "C246 694 258 714 268 730 "
+        "C278 746 272 762 262 778 "
+        "C242 810 238 858 262 890 "
+        "C288 926 352 926 378 890 "
+        "C402 858 398 810 378 778 "
+        "C368 762 362 746 372 730 "
+        "C382 714 394 694 388 662 "
+        "C382 626 356 604 320 604 Z"
+    )
+    face_d = (
+        "M320 626 C292 626 272 644 267 672 "
+        "C262 698 272 716 281 730 "
+        "C290 744 286 756 278 770 "
+        "C262 796 258 840 278 868 "
+        "C298 896 342 896 362 868 "
+        "C382 840 378 796 362 770 "
+        "C354 756 350 744 359 730 "
+        "C368 716 378 698 373 672 "
+        "C368 644 348 626 320 626 Z"
+    )
+    b = [path(body_d, "url(#body)", "#3A1708", 7)]
+    b.append(path(face_d, "url(#face)", "#9A6A3A", 3, 0.95))
+    # wide neck and pegbox
+    b.append(rrect(296, 300, 48, 350, 9, "url(#neck)", "#2A1206", 5))
+    b.append(rrect(282, 176, 76, 140, 16, "url(#neck)", "#2A1206", 5))
+    b.append(tuners([(270, 208), (270, 250), (270, 292), (370, 226), (370, 268)], CREAM_DARK, 9))
+    # sympathetic pegs down the neck
+    for i in range(10):
+        y = 330 + i * 30
+        b.append(circle(292, y, 5, GOLD, INK, 2))
+        b.append(line(292, y, 300, y, GOLD, 2, 0.8))
+    # wide bridge
+    b.append(rrect(276, 846, 88, 14, 5, "#3A2414"))
+    b.append(line(282, 850, 358, 850, CREAM, 2, 0.55))
+    # 3 main strings and sympathetic strings
+    for i in range(3):
+        x = 310 + i * 10
+        b.append(line(x, 852, x, 200, CREAM, 3, 0.9))
+    for i in range(7):
+        x = 302 + i * 6
+        b.append(line(x, 848, x, 214, CREAM, 1.2, 0.45))
+    return defs, "".join(b)
+
+
+def kantele():
+    defs = (
+        linear_grad("body", "#E9C98C", "#B9823F")
+        + linear_grad("top", "#F6E3B7", "#DDBA7C")
+    )
+    body_d = (
+        "M266 146 C300 124 340 124 374 146 "
+        "L420 872 C424 898 408 916 382 916 "
+        "L258 916 C232 916 216 898 220 872 Z"
+    )
+    top_d = (
+        "M282 168 C308 152 332 152 358 168 "
+        "L398 866 C400 882 390 894 372 894 "
+        "L268 894 C250 894 240 882 242 866 Z"
+    )
+    b = [path(body_d, "url(#body)", "#6E4418", 7)]
+    b.append(path(top_d, "url(#top)", "#9A6A32", 3))
+    # pin rail
+    b.append(rrect(274, 146, 92, 26, 12, "#6E4418", "#3E2208", 4))
+    # 11 strings fanning out
+    for i in range(11):
+        t = i / 10
+        b.append(line(286 + t * 68, 172, 250 + t * 140, 870, CREAM, 2.2, 0.85))
+    # bridge and soundhole
+    b.append(rrect(236, 862, 168, 18, 8, "#6E4418", "#3E2208", 3))
+    b.append(circle(320, 720, 22, "#3A2410", "#9A6A32", 3))
+    return defs, "".join(b)
+
+
+def gusli():
+    defs = (
+        linear_grad("body", "#C98F4E", "#7E4518")
+        + linear_grad("top", "#E7C489", "#C09150")
+    )
+    body_d = (
+        "M262 140 C242 140 230 156 234 176 "
+        "L252 860 C254 890 274 912 304 912 "
+        "L376 912 C410 912 430 886 418 856 "
+        "C392 786 360 700 336 610 "
+        "C316 536 306 450 302 360 "
+        "C298 250 290 140 262 140 Z"
+    )
+    top_d = (
+        "M268 164 C254 164 246 176 248 190 "
+        "L264 854 C266 876 280 890 300 890 "
+        "L370 890 C394 890 406 872 398 850 "
+        "C374 784 344 700 322 614 "
+        "C304 542 296 460 292 370 "
+        "C288 274 282 164 268 164 Z"
+    )
+    b = [path(body_d, "url(#body)", "#4A2408", 7)]
+    b.append(path(top_d, "url(#top)", "#8A5A26", 3, 0.95))
+    # pin rail along the top wing
+    b.append(path("M250 160 C270 148 292 148 310 160", "none", "#4A2408", 14))
+    # 12 strings fanning across the wing
+    for i in range(12):
+        t = i / 11
+        b.append(line(262 + t * 44, 166 + t * 20, 288 + t * 112, 848, CREAM, 2.0, 0.82))
+    # bridge and soundhole
+    b.append(rrect(282, 844, 118, 18, 8, "#4A2408", "#2A1206", 3))
+    b.append(circle(340, 700, 24, "#3A2410", "#9A6A32", 3))
+    return defs, "".join(b)
+
+
+def bandura():
+    defs = (
+        linear_grad("body", "#D99A52", "#8A4A1C")
+        + linear_grad("face", "#F1D9AC", "#D2A96C")
+        + linear_grad("neck", "#7A3E1C", "#3A1A08")
+    )
+    body_d = (
+        "M320 548 C260 548 214 592 206 656 "
+        "C198 724 210 800 236 858 "
+        "C258 906 290 936 320 936 "
+        "C350 936 382 906 404 858 "
+        "C430 800 442 724 434 656 "
+        "C426 592 380 548 320 548 Z"
+    )
+    face_d = (
+        "M320 570 C272 570 234 606 228 660 "
+        "C222 722 232 792 254 846 "
+        "C272 888 296 914 320 914 "
+        "C344 914 368 888 386 846 "
+        "C408 792 418 722 412 660 "
+        "C406 606 368 570 320 570 Z"
+    )
+    b = [path(body_d, "url(#body)", "#3A1708", 7)]
+    b.append(path(face_d, "url(#face)", "#9A6A3A", 3, 0.95))
+    # short wide neck and pegbox
+    b.append(rrect(292, 330, 56, 260, 12, "url(#neck)", "#2A1206", 5))
+    b.append(rrect(272, 210, 96, 140, 18, "url(#neck)", "#2A1206", 5))
+    for i in range(6):
+        y = 232 + i * 20
+        b.append(circle(260, y, 8, GOLD, INK, 2))
+        b.append(circle(380, y, 8, GOLD, INK, 2))
+    # rosette
+    b.append(circle(320, 640, 30, "#2A1A0E", CREAM_DARK, 4))
+    b.append(circle(320, 640, 38, "none", "#B98B52", 3, 0.7))
+    # curved bridge
+    b.append(rrect(240, 824, 160, 18, 9, "#3A2414"))
+    # bass courses on the neck
+    for i in range(12):
+        x = 302 + i * 3.2
+        b.append(line(x, 828, x, 226, CREAM, 1.8, 0.8))
+    # treble strings fanning across the body
+    for i in range(8):
+        t = i / 7
+        b.append(line(250 + t * 140, 830, 300 + t * 40, 360, CREAM, 1.4, 0.6))
+    return defs, "".join(b)
+
+
+# ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
 
@@ -964,6 +1302,13 @@ ICONS = [
     ("koto", "koto", "日本筝", "Koto", "eastAsian", "#9AA6FF", koto),
     ("gayageum", "gayageum", "伽倻琴", "Gayageum", "eastAsian", "#9AA6FF", gayageum),
     ("kora", "kora", "科拉琴", "Kora", "folkWorld", "#45D0E8", kora),
+    ("nyckelharpa", "nyckelharpa", "尼克尔哈帕琴", "Nyckelharpa", "westAsianEuropean", "#5BD98A", nyckelharpa),
+    ("ektara", "ektara", "埃克塔拉琴", "Ektara", "southAsian", "#E879CF", ektara),
+    ("dotara", "dotara", "多塔拉琴", "Dotara", "southAsian", "#E879CF", dotara),
+    ("sarangi", "sarangi", "萨兰吉琴", "Sarangi", "southAsian", "#E879CF", sarangi),
+    ("kantele", "kantele", "坎特勒琴", "Kantele", "folkWorld", "#45D0E8", kantele),
+    ("gusli", "gusli", "古斯里琴", "Gusli", "folkWorld", "#45D0E8", gusli),
+    ("bandura", "bandura", "班杜拉琴", "Bandura", "folkWorld", "#45D0E8", bandura),
 ]
 
 

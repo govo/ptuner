@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Render the PTuner instrument icons into app-ready PNG scales and tiles.
 
-Inputs:  svg/*.svg
+Inputs:  raster/*.png (preferred) or svg/*.svg (fallback)
 Outputs: png/1x, png/2x, png/3x, tiles/*.png, manifest.json
 
-Requires: rsvg-convert, Pillow.
+Requires: rsvg-convert (SVG fallback only), Pillow, numpy.
 """
 
 from pathlib import Path
@@ -13,8 +13,11 @@ import subprocess
 
 from PIL import Image, ImageDraw, ImageFilter
 
+from image_ops import resize_premultiplied
+
 ROOT = Path(__file__).resolve().parent.parent
 SVG_DIR = ROOT / "svg"
+RASTER_DIR = ROOT / "raster"
 PNG_DIR = ROOT / "png"
 TILE_DIR = ROOT / "tiles"
 MANIFEST = ROOT / "manifest.json"
@@ -33,9 +36,15 @@ def mix(a, b, t):
     return tuple(round(a[i] * (1 - t) + b[i] * t) for i in range(3))
 
 
-def render_svg(svg_path, out_path, size):
+def render_icon(key, out_path, size):
+    """Use the imported raster master when present, otherwise render the SVG."""
+    raster = RASTER_DIR / f"{key}.png"
+    if raster.is_file():
+        resize_premultiplied(Image.open(raster), size).save(out_path)
+        return
     subprocess.run(
-        ["rsvg-convert", "-w", str(size[0]), "-h", str(size[1]), str(svg_path), "-o", str(out_path)],
+        ["rsvg-convert", "-w", str(size[0]), "-h", str(size[1]),
+         str(SVG_DIR / f"{key}.svg"), "-o", str(out_path)],
         check=True,
     )
 
@@ -78,7 +87,7 @@ def make_tile(icon_3x, tint, out_path):
     icon = Image.open(icon_3x).convert("RGBA")
     target_h = 840
     target_w = round(icon.width * target_h / icon.height)
-    icon = icon.resize((target_w, target_h), Image.LANCZOS)
+    icon = resize_premultiplied(icon, (target_w, target_h))
     x = (TILE_SIZE - target_w) // 2
     y = (TILE_SIZE - target_h) // 2
     tile.alpha_composite(icon, (x, y))
@@ -94,10 +103,9 @@ def main():
     updated = []
     for item in manifest:
         key = item["file"]
-        svg = SVG_DIR / f"{key}.svg"
         for scale, size in SCALES.items():
             out = PNG_DIR / scale / f"{key}.png"
-            render_svg(svg, out, size)
+            render_icon(key, out, size)
         icon_3x = PNG_DIR / "3x" / f"{key}.png"
         tile = TILE_DIR / f"{key}.png"
         make_tile(icon_3x, item["familyTint"], tile)

@@ -9,15 +9,7 @@ REPO = ROOT.parent.parent
 CATALOG = REPO / "PTuner" / "PTuner" / "Resources" / "Instruments.json"
 MANIFEST = ROOT / "manifest.json"
 
-NOT_COVERED = {
-    "nyckelharpa": "结构特殊（键控弓弦），暂不收录",
-    "sarangi": "演奏弦与共鸣弦结构特殊，暂不收录",
-    "ektara": "民间单弦乐器，暂不收录",
-    "dotara": "地区差异较大的民间弹拨乐器，暂不收录",
-    "kantele": "民间齐特类乐器，暂不收录",
-    "gusli": "民间齐特类乐器，暂不收录",
-    "bandura": "民间齐特类乐器，暂不收录",
-}
+NOT_COVERED = {}
 
 
 def main():
@@ -37,8 +29,9 @@ def main():
         f"覆盖 `Instruments.json` 中 {len(by_id) + len(reuse)} / {len(catalog['instruments'])} 件乐器"
         "（含复用同一图标的相近乐器）。",
         "",
-        "本轮只产出图片素材，未修改任何 Swift 代码、`Instruments.json`、"
-        "`Localizations.json` 或 `Assets.xcassets`。",
+        "图标已接入 `Assets.xcassets`（imageset 名 `instrument_<乐器 ID>`），"
+        "并在 `Instruments.json` 中填写了对应乐器的 `image` 字段。"
+        "未修改任何 Swift 代码或 `Localizations.json`。",
         "",
         "## 收录的图标",
         "",
@@ -48,7 +41,7 @@ def main():
     for item in manifest:
         reused = "、".join(item.get("reuseFor", [])) or "-"
         lines.append(
-            f"| [{item['file']}](svg/{item['file']}.svg) | {item['nameZh']} | {item['nameEn']} | "
+            f"| [{item['file']}](raster/{item['file']}.png) | {item['nameZh']} | {item['nameEn']} | "
             f"{families[item['familyID']]['shortNameKey']} | "
             f"[1x](png/1x/{item['file']}.png) / [2x](png/2x/{item['file']}.png) / "
             f"[3x](png/3x/{item['file']}.png) | {reused} |"
@@ -94,11 +87,10 @@ def main():
         "## 风格与尺寸",
         "",
         "- 画布：640 x 1024（0.625 宽高比，贴近现有 18 x 29 图标槽位），透明背景。",
-        "- 输出：1x 320 x 512、2x 640 x 1024、3x 960 x 1536，24 件乐器尺寸完全一致。",
+        f"- 输出：1x 320 x 512、2x 640 x 1024、3x 960 x 1536，{len(manifest)} 件乐器尺寸完全一致。",
         "- 附加：`tiles/` 为 1024 x 1024 圆角彩色底图标，按乐器族识别色生成，"
         "仅用于预览或对外展示，不参与 App 内显示。",
-        "- 风格：扁平矢量，暖木色 + 米色面板 + 黄铜配件的统一配色；"
-        "统一正面视角、统一线宽、无文字、无阴影。",
+        "- 风格：暖木色写实插画，统一正面视角、统一光源；已去除背景与水印，无文字、无阴影。",
         "- 细节密度按 36 x 36 显示尺寸控制；18 x 29 时古筝、日本筝、伽倻琴、古琴等"
         "长条乐器会退化为竖向轮廓，属于该尺寸的物理限制。",
         "",
@@ -106,11 +98,13 @@ def main():
         "",
         "```",
         "design/instrument-icons/",
-        "  svg/                    矢量源文件（24 个）",
+        "  raster/                 透明背景 640 x 1024 母版（App 实际使用）",
+        f"  svg/                    早期脚本绘制的矢量备份（{len(manifest)} 个）",
         "  png/1x/  png/2x/  png/3x/",
         "  tiles/                  1024 x 1024 彩色圆角底图标",
-        "  tools/generate_icons.py 生成 SVG",
-        "  tools/build_assets.py   渲染 PNG 与 tile",
+        "  tools/import_raster_icons.py 去除水印与背景，生成 raster 母版",
+        "  tools/build_assets.py   由 raster（或 SVG）生成 PNG 与 tile",
+        "  tools/install_assets.py 写入 Assets.xcassets 与 Instruments.json",
         "  tools/make_coverage.py  生成本文档",
         "  tools/preview_small.py  生成真实尺寸预览",
         "  manifest.json           乐器 ID、族色、文件与复用关系",
@@ -119,29 +113,32 @@ def main():
         "  preview-actual-size-4x.png 18 x 29 与 36 x 36 实际尺寸预览（4 倍放大）",
         "```",
         "",
-        "## 重新生成",
+        "## 重新生成与接入",
         "",
         "```bash",
-        "/opt/miniconda3/bin/python tools/generate_icons.py",
+        "/opt/miniconda3/bin/python tools/import_raster_icons.py --source /path/to/源图目录",
         "/opt/miniconda3/bin/python tools/build_assets.py",
+        "/opt/miniconda3/bin/python tools/install_assets.py",
         "/opt/miniconda3/bin/python tools/preview_small.py",
         "/opt/miniconda3/bin/python tools/make_coverage.py",
         "```",
         "",
-        "依赖：`rsvg-convert`、Pillow。",
+        "`build_assets.py` 优先读取 `raster/<文件名>.png`；该文件不存在时才回退到 "
+        "`svg/<文件名>.svg` 并用 `rsvg-convert` 渲染。",
+        "",
+        "依赖：`Pillow`、`numpy`、`scipy`；SVG 回退方案另需 `rsvg-convert`。",
         "",
         "## 版权",
         "",
-        "全部图形由本目录下的生成脚本原创绘制，未使用第三方图标库、照片或生成式模型输出，"
-        "不携带额外授权限制，可随 App 使用。",
+        "App 内当前使用的图标由用户提供的 AI 生成素材制作，已去除右下角水印并转为透明背景；"
+        "素材来源与商用授权由提供方确认。`svg/` 为早期脚本绘制的备用版本，未再参与 App 构建。",
         "",
-        "## 后续接入（本轮未执行）",
+        "## 接入状态",
         "",
-        "1. 将 `png/1x`、`png/2x`、`png/3x` 做成 `Assets.xcassets` 的 imageset；"
-        "`manifest.json` 中的 `suggestedAssetName` 已按 `instrument_<乐器 ID>` 生成，"
-        "例如 `instrument_erhu`，可直接作为 imageset 名。",
-        "2. 在 `Instruments.json` 中对目标乐器填写 `image` 字段，值使用 imageset 名称。",
-        "3. 图片缺失时现有代码会自动回退到 `glyph`，因此可以逐件灰度接入。",
+        f"1. `Assets.xcassets` 中已创建 {len(manifest)} 个 imageset，命名规则 `instrument_<乐器 ID>`，"
+        "例如 `instrument_erhu`，每个包含 1x / 2x / 3x 三档 PNG。",
+        f"2. `Instruments.json` 中已有 {len(by_id) + len(reuse)} 件乐器填写 `image` 字段并指向对应 imageset。",
+        "3. 图片缺失时现有代码会自动回退到 `glyph`，后续新增乐器仍可逐件接入。",
         "",
     ]
     (ROOT / "instrument-coverage.md").write_text("\n".join(lines), encoding="utf-8")
