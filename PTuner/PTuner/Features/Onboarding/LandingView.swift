@@ -16,8 +16,8 @@ struct LandingView: View {
                     subtitle: "实时显示音名、频率与 cents 偏差，像专业调音单块一样快速锁定音准。",
                     footnote: "支持 A4 参考音高与显示精度设置。",
                     titleColor: AppTheme.primaryText,
-                    subtitleColor: Color.white.opacity(0.84),
-                    footnoteColor: AppTheme.secondaryText
+                    subtitleColor: AppTheme.secondaryText,
+                    footnoteColor: AppTheme.tertiaryText
                 ) {
                     heroIcon("tuningfork", tint: AppTheme.accent)
                 },
@@ -27,8 +27,8 @@ struct LandingView: View {
                     subtitle: "同时检测多根弦，或直接识别当前和弦名称，适合快速校音与演奏辅助。",
                     footnote: "多音调音与和弦识别为 Pro 功能。",
                     titleColor: AppTheme.primaryText,
-                    subtitleColor: Color.white.opacity(0.84),
-                    footnoteColor: AppTheme.secondaryText
+                    subtitleColor: AppTheme.secondaryText,
+                    footnoteColor: AppTheme.tertiaryText
                 ) {
                     heroIcon("waveform", tint: AppTheme.warning)
                 },
@@ -38,8 +38,8 @@ struct LandingView: View {
                     subtitle: "内置吉他、贝斯、尤克里里等调弦，也可以创建任意弦数和音高的自定义调弦。",
                     footnote: "收藏常用调弦，打开即可调音。",
                     titleColor: AppTheme.primaryText,
-                    subtitleColor: Color.white.opacity(0.84),
-                    footnoteColor: AppTheme.secondaryText
+                    subtitleColor: AppTheme.secondaryText,
+                    footnoteColor: AppTheme.tertiaryText
                 ) {
                     heroIcon("slider.horizontal.3", tint: AppTheme.success)
                 }
@@ -86,7 +86,6 @@ struct LandingView: View {
             ),
             onComplete: completeOnboarding
         )
-        .preferredColorScheme(.dark)
     }
 
     private var onboardingTheme: OnboardingFlowTheme {
@@ -94,17 +93,17 @@ struct LandingView: View {
             backgroundColor: AppTheme.background,
             surfaceColor: AppTheme.surface,
             primaryColor: AppTheme.accent,
-            onPrimaryColor: Color(red: 0.02, green: 0.08, blue: 0.10),
+            onPrimaryColor: AppTheme.onAccent,
             titleColor: AppTheme.primaryText,
-            bodyColor: Color.white.opacity(0.86),
+            bodyColor: AppTheme.secondaryText,
             secondaryTextColor: AppTheme.secondaryText,
             indicatorActiveColor: AppTheme.accent,
-            indicatorInactiveColor: Color.white.opacity(0.16),
-            skipButtonBackgroundColor: Color.white.opacity(0.08),
+            indicatorInactiveColor: AppTheme.tertiaryText.opacity(0.3),
+            skipButtonBackgroundColor: AppTheme.controlBackground,
             skipButtonForegroundColor: AppTheme.secondaryText,
             cardBackgroundColor: AppTheme.surfaceElevated,
-            cardBorderColor: Color.white.opacity(0.10),
-            cardShadowColor: Color.black.opacity(0.45)
+            cardBorderColor: AppTheme.cardBorder,
+            cardShadowColor: AppTheme.shadow
         )
     }
 

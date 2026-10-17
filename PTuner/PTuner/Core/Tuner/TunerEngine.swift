@@ -27,6 +27,9 @@ nonisolated final class TunerEngine: @unchecked Sendable {
     var onPolyUpdate: ((TunerPolyUpdate) -> Void)?
     var onPolyError: ((Error) -> Void)?
 
+    /// macOS 下指定输入设备；在 start() 之前设置。
+    var preferredInputDeviceUID: String?
+
     private let capture = MicrophoneAudioCapture()
     private let model: CrepeModel
     private let analysisQueue = DispatchQueue(label: "ptuner.tuner.analysis", qos: .userInteractive)
@@ -131,6 +134,7 @@ nonisolated final class TunerEngine: @unchecked Sendable {
         capture.onError = { [weak self] error in
             self?.onError?(error)
         }
+        capture.preferredInputDeviceUID = preferredInputDeviceUID
 
         // 上一次会话的多音追踪器如果停在中间，重新开始前先停掉；
         // 真正的重启由上层在 start 成功后按开关状态调用 setPolyphonicEnabled 完成。

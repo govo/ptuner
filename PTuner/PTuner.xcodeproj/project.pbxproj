@@ -355,6 +355,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = PTuner/PTuner.entitlements;
 			};
 			name = Debug;
 		};
@@ -394,6 +395,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = PTuner/PTuner.entitlements;
 			};
 			name = Release;
 		};

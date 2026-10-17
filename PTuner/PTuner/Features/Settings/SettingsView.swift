@@ -2,78 +2,175 @@ import AppSupportKit
 import RevenueCatPaywallKit
 import SwiftUI
 
-/// 设置页。布局组件来自公用库 AppSupportKit，收益/评分/隐私入口在这里统一收敛。
+/// 设置页：参考音高、显示精度、指示器样式、稳定度、音频输入与 Pro 信息。
 struct SettingsView: View {
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @EnvironmentObject private var reviewController: AppReviewPromptController
+    @EnvironmentObject private var settings: TunerSettings
+    @EnvironmentObject private var tuner: TunerController
     @ObservedObject private var proAccess = ProAccessController.shared
-    @Environment(\.dismiss) private var dismiss
+    #if os(macOS)
+    @ObservedObject private var inputMonitor = AudioInputDeviceMonitor.shared
+    #endif
+
     @Environment(\.openURL) private var openURL
 
+    @State private var showsCustomPitchSheet = false
+    @State private var showsAbout = false
     @State private var isRestoring = false
     @State private var alertMessage: String?
+    @State private var activeOption: SettingsOption?
 
-    var body: some View {
-        NavigationStack {
-            AppSettingsScreen(backgroundColor: AppTheme.background) {
-                header
-            } content: {
-                proSection
-                supportSection
-                aboutSection
-                #if DEBUG
-                debugProSection
-                #endif
-            }
-            .navigationTitle("设置")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") {
-                        dismiss()
-                    }
-                    .contentShape(Rectangle())
-                }
-            }
-            .alert(
-                "提示",
-                isPresented: Binding(
-                    get: { alertMessage != nil },
-                    set: { isPresented in
-                        if !isPresented {
-                            alertMessage = nil
-                        }
-                    }
-                )
-            ) {
-                Button("好", role: .cancel) {}
-            } message: {
-                Text(alertMessage ?? "")
+    private enum SettingsOption: String, Identifiable {
+        case referencePitch
+        case precision
+        case indicatorStyle
+        case stability
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .referencePitch: return "参考音高"
+            case .precision: return "音准显示精度"
+            case .indicatorStyle: return "指示器显示方式"
+            case .stability: return "稳定度"
             }
         }
-        .preferredColorScheme(.dark)
     }
 
-    // MARK: - Header
+    var body: some View {
+        ZStack {
+            AppTheme.background.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    header
+                    basicSection
+                    audioSection
+                    proSection
+                    otherSection
+                    #if DEBUG
+                    debugProSection
+                    #endif
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 30)
+                .frame(maxWidth: 700)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .navigationTitle("设置")
+        .onChange(of: settings.stability) { _, _ in
+            settings.apply(to: tuner)
+        }
+        .sheet(isPresented: $showsCustomPitchSheet) {
+            ReferencePitchSheet(currentPitch: settings.referencePitch) { value in
+                settings.setReferencePitch(value)
+            }
+        }
+        .sheet(isPresented: $showsAbout) {
+            AboutView()
+        }
+        .alert(
+            "提示",
+            isPresented: Binding(
+                get: { alertMessage != nil },
+                set: { if !$0 { alertMessage = nil } }
+            )
+        ) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(alertMessage ?? "")
+        }
+        .confirmationDialog(
+            activeOption?.title ?? "",
+            isPresented: Binding(
+                get: { activeOption != nil },
+                set: { if !$0 { activeOption = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            optionActions
+        }
+    }
+
+    // MARK: - 选项菜单
+
+    @ViewBuilder
+    private var optionActions: some View {
+        switch activeOption {
+        case .referencePitch:
+            ForEach([432.0, 440.0, 442.0], id: \.self) { pitch in
+                Button("A4 = \(Int(pitch)) Hz") {
+                    settings.setReferencePitch(pitch)
+                }
+            }
+
+            Divider()
+
+            Button("自定义…") {
+                openCustomPitchSheet()
+            }
+
+        case .precision:
+            ForEach(CentsPrecision.allCases) { precision in
+                Button(precision.title) {
+                    settings.centsPrecision = precision
+                }
+            }
+
+        case .indicatorStyle:
+            ForEach(IndicatorStyle.allCases) { style in
+                Button(style.title) {
+                    settings.indicatorStyle = style
+                }
+            }
+
+        case .stability:
+            ForEach(DisplayStability.allCases) { stability in
+                Button(stability.title) {
+                    settings.stability = stability
+                }
+            }
+
+        case nil:
+            EmptyView()
+        }
+
+        Button("取消", role: .cancel) {}
+    }
+
+    private func openCustomPitchSheet() {
+        activeOption = nil
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
+            showsCustomPitchSheet = true
+        }
+    }
+
+    // MARK: - 头部
 
     private var header: some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .fill(AppTheme.accentSoft)
-                    .frame(width: 56, height: 56)
 
                 Image(systemName: "tuningfork")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(AppTheme.accent)
             }
+            .frame(width: 54, height: 54)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("PTuner")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 21, weight: .bold))
                     .foregroundStyle(AppTheme.primaryText)
 
                 Text(versionText)
-                    .font(.system(size: 13))
+                    .font(.system(size: 12))
                     .foregroundStyle(AppTheme.secondaryText)
             }
 
@@ -84,85 +181,153 @@ struct SettingsView: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(AppTheme.surface)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(AppTheme.cardBorder, lineWidth: 1)
+        )
+    }
+
+    // MARK: - 基础设置
+
+    private var basicSection: some View {
+        SettingsSectionCard(title: "基础设置") {
+            optionRow(icon: "tuningfork",
+                      iconTint: AppTheme.accent,
+                      title: "参考音高",
+                      value: "A4 = \(referencePitchText) Hz",
+                      option: .referencePitch)
+
+            optionRow(icon: "number",
+                      iconTint: AppTheme.accent,
+                      title: "音准显示精度",
+                      value: settings.centsPrecision.title,
+                      option: .precision)
+
+            optionRow(icon: "gauge.with.dots.needle.33percent",
+                      iconTint: AppTheme.success,
+                      title: "指示器显示方式",
+                      value: settings.indicatorStyle.title,
+                      option: .indicatorStyle)
+
+            optionRow(icon: "waveform.path",
+                      iconTint: AppTheme.warning,
+                      title: "稳定度",
+                      value: settings.stability.title,
+                      option: .stability,
+                      showsDivider: false)
+        }
+    }
+
+    private func optionRow(icon: String,
+                           iconTint: Color,
+                           title: String,
+                           value: String,
+                           option: SettingsOption,
+                           showsDivider: Bool = true) -> some View {
+        Button {
+            activeOption = option
+        } label: {
+            SettingsRow(icon: icon,
+                        iconTint: iconTint,
+                        title: title,
+                        value: value,
+                        showsChevron: false,
+                        showsDivider: showsDivider)
+        }
+        .settingsTappable()
+    }
+
+    // MARK: - 音频输入
+
+    @ViewBuilder
+    private var audioSection: some View {
+        SettingsSectionCard(title: "音频输入") {
+            #if os(macOS)
+            NavigationLink {
+                AudioInputDeviceView()
+            } label: {
+                SettingsRow(icon: "mic.fill",
+                            iconTint: AppTheme.success,
+                            title: "输入设备",
+                            value: audioInputValue,
+                            showsDivider: false)
+            }
+            .settingsTappable()
+            #else
+            SettingsRow(icon: "mic.fill",
+                        iconTint: AppTheme.success,
+                        title: "音频输入来源",
+                        value: audioInputValue,
+                        showsChevron: false,
+                        showsDivider: false)
+            #endif
+        }
+    }
+
+    private var audioInputValue: String {
+        #if os(macOS)
+        if let uid = settings.preferredInputDeviceUID {
+            if let device = inputMonitor.devices.first(where: { $0.id == uid }) {
+                return device.name
+            }
+            return "设备不可用"
+        }
+        if let uid = inputMonitor.defaultDeviceUID,
+           let device = inputMonitor.devices.first(where: { $0.id == uid }) {
+            return "系统默认 · \(device.name)"
+        }
+        return "系统默认"
+        #else
+        return AudioInputDevices.currentInputName() ?? "系统麦克风"
+        #endif
     }
 
     // MARK: - Pro
 
     private var proSection: some View {
-        AppSettingsSectionCard(
-            backgroundColor: AppTheme.surface,
-            shadowColor: Color.black.opacity(0.25)
-        ) {
-            VStack(spacing: 0) {
-                AppSettingsRow(
-                    icon: "crown.fill",
-                    iconTint: proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning,
-                    title: proAccess.isPro(paywallManager) ? "Pro 已激活" : "免费版",
-                    subtitle: proDetail,
-                    showsChevron: false,
-                    showsDivider: true,
-                    theme: rowTheme
-                )
-
-                Button {
-                    if proAccess.isPro(paywallManager) {
-                        openURL(AppConfig.manageSubscriptionsURL)
-                    } else {
-                        Task {
-                            await paywallManager.presentPaywall(
-                                featureID: "settings_upgrade",
-                                marketingMessage: "解锁全部 Pro 功能。"
-                            )
-                        }
-                    }
-                } label: {
-                    AppSettingsRow(
-                        icon: proAccess.isPro(paywallManager) ? "arrow.up.right.circle.fill" : "sparkles",
-                        iconTint: AppTheme.accent,
-                        title: proAccess.isPro(paywallManager) ? "管理订阅" : "升级 Pro",
-                        showsDivider: true,
-                        theme: rowTheme
-                    )
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-
-                Button {
-                    restorePurchases()
-                } label: {
-                    AppSettingsRow(
-                        icon: "arrow.clockwise",
-                        iconTint: AppTheme.secondaryText,
-                        title: isRestoring ? "正在恢复…" : "恢复购买",
-                        showsChevron: false,
-                        theme: rowTheme
-                    )
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                .disabled(isRestoring)
+        SettingsSectionCard(title: "Pro") {
+            NavigationLink {
+                ProInfoView()
+            } label: {
+                SettingsRow(icon: proAccess.isPro(paywallManager) ? "checkmark.seal.fill" : "crown.fill",
+                            iconTint: proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning,
+                            title: proAccess.isPro(paywallManager) ? "Pro 已激活" : "免费版",
+                            value: proDetail)
             }
+            .settingsTappable()
+
+            Button {
+                restorePurchases()
+            } label: {
+                SettingsRow(icon: "arrow.clockwise",
+                            iconTint: AppTheme.secondaryText,
+                            title: isRestoring ? "正在恢复…" : "恢复购买",
+                            showsChevron: false,
+                            showsDivider: false)
+            }
+            .settingsTappable()
+            .disabled(isRestoring)
         }
     }
 
     private var proDetail: String {
         #if DEBUG
         if proAccess.skipsEntitlementCheck {
-            return "Debug 模式已跳过权益校验"
+            return "Debug 已跳过校验"
         }
         #endif
 
         guard paywallManager.hasActiveEntitlement else {
-            return "多音调音、和弦识别与自定义调弦"
+            return "未升级"
         }
 
         switch paywallManager.entitlementStatus {
         case .lifetime:
             return "永久权益"
         case .subscription(let expirationDate):
-            return "订阅有效期至 \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
+            return "至 \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
         case .none:
-            return "Pro 权益已激活"
+            return "已激活"
         }
     }
 
@@ -180,130 +345,103 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 支持
+    // MARK: - 其他
 
-    private var supportSection: some View {
-        AppSettingsSectionCard(
-            backgroundColor: AppTheme.surface,
-            shadowColor: Color.black.opacity(0.25)
-        ) {
-            VStack(spacing: 0) {
-                Button {
-                    dismiss()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        reviewController.presentManually(contextLabel: "settings")
-                    }
-                } label: {
-                    AppSettingsRow(
-                        icon: "star.fill",
-                        iconTint: AppTheme.warning,
-                        title: "给 PTuner 评分",
-                        subtitle: "你的评价对我们很重要",
-                        showsDivider: true,
-                        theme: rowTheme
-                    )
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-
-                Button {
-                    openURL(AppConfig.privacyPolicyURL)
-                } label: {
-                    AppSettingsRow(
-                        icon: "hand.raised.fill",
-                        iconTint: AppTheme.accent,
-                        title: "隐私政策",
-                        showsDivider: true,
-                        theme: rowTheme
-                    )
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-
-                Button {
-                    openURL(AppConfig.termsOfUseURL)
-                } label: {
-                    AppSettingsRow(
-                        icon: "doc.text.fill",
+    private var otherSection: some View {
+        SettingsSectionCard(title: "其他") {
+            SettingsRow(icon: "info.circle.fill",
                         iconTint: AppTheme.secondaryText,
-                        title: "使用条款",
-                        showsChevron: false,
-                        theme: rowTheme
-                    )
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
+                        title: "App 版本",
+                        value: versionText,
+                        showsChevron: false)
+
+            Button {
+                showsAbout = true
+            } label: {
+                SettingsRow(icon: "music.note.list",
+                            iconTint: AppTheme.accent,
+                            title: "关于我们")
             }
+            .settingsTappable()
+
+            Button {
+                openURL(AppConfig.privacyPolicyURL)
+            } label: {
+                SettingsRow(icon: "hand.raised.fill",
+                            iconTint: AppTheme.success,
+                            title: "隐私政策")
+            }
+            .settingsTappable()
+
+            Button {
+                openURL(AppConfig.termsOfUseURL)
+            } label: {
+                SettingsRow(icon: "doc.text.fill",
+                            iconTint: AppTheme.warning,
+                            title: "使用条款")
+            }
+            .settingsTappable()
+
+            Button {
+                reviewController.presentManually(contextLabel: "settings")
+            } label: {
+                SettingsRow(icon: "star.fill",
+                            iconTint: AppTheme.warning,
+                            title: "给 PTuner 评分",
+                            showsChevron: false,
+                            showsDivider: false)
+            }
+            .settingsTappable()
         }
     }
 
-    // MARK: - 关于
-
-    private var aboutSection: some View {
-        AppSettingsSectionCard(
-            backgroundColor: AppTheme.surface,
-            shadowColor: Color.black.opacity(0.25)
-        ) {
-            AppSettingsRow(
-                icon: "info.circle.fill",
-                iconTint: AppTheme.secondaryText,
-                title: "版本",
-                subtitle: versionText,
-                showsChevron: false,
-                theme: rowTheme
-            )
-        }
-    }
-
-    // MARK: - 开发者（仅 Debug）
+    // MARK: - Debug
 
     #if DEBUG
     private var debugProSection: some View {
-        AppSettingsSectionCard(
-            backgroundColor: AppTheme.surface,
-            shadowColor: Color.black.opacity(0.25)
-        ) {
-            HStack(spacing: 14) {
-                Image(systemName: "ladybug.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(AppTheme.warning)
-                    .frame(width: 28, height: 28)
+        SettingsSectionCard(title: "开发者") {
+            HStack(spacing: 13) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(AppTheme.warning.opacity(0.13))
 
-                VStack(alignment: .leading, spacing: 3) {
+                    Image(systemName: "ladybug.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.warning)
+                }
+                .frame(width: 30, height: 30)
+
+                VStack(alignment: .leading, spacing: 2) {
                     Text("跳过 Pro 权益校验")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(AppTheme.primaryText)
 
-                    Text("仅 Debug 构建可用。开启后所有 Pro 功能直接可用，不再校验 RevenueCat 权益。")
-                        .font(.system(size: 12))
+                    Text("仅 Debug 构建可用，方便直接测试 Pro 功能。")
+                        .font(.system(size: 11))
                         .foregroundStyle(AppTheme.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 12)
+                Spacer()
 
                 Toggle("跳过 Pro 权益校验", isOn: $proAccess.skipsEntitlementCheck)
                     .labelsHidden()
                     .tint(AppTheme.accent)
                     .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
         }
     }
     #endif
 
     // MARK: - 辅助
 
-    private var rowTheme: AppSettingsRowTheme {
-        AppSettingsRowTheme(
-            cardBackground: .clear,
-            titleColor: AppTheme.primaryText,
-            subtitleColor: AppTheme.secondaryText,
-            chevronColor: AppTheme.secondaryText,
-            dividerColor: Color.white.opacity(0.08),
-            shadowColor: .clear
-        )
+    private var referencePitchText: String {
+        let rounded = (settings.referencePitch * 10).rounded() / 10
+        if rounded == rounded.rounded() {
+            return String(format: "%.0f", rounded)
+        }
+        return String(format: "%.1f", rounded)
     }
 
     private var versionText: String {

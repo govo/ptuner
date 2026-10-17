@@ -48,12 +48,46 @@ public final class TunerController: ObservableObject {
     @Published public private(set) var polyInferenceMs: Double = 0
     @Published public private(set) var isPreparingPoly = false
 
+    // MARK: - 输入源
+
+    /// 当前实际使用的输入设备名称。未开始监听时也会尽量给出系统默认设备。
+    @Published public private(set) var activeInputDeviceName: String?
+
     private var engine: TunerEngine?
     private var startTask: Task<Void, Never>?
     private var displayMidi: Double?
     private var lastReportedNoteCount = 0
+    /// 显示平滑系数。由设置页的「稳定度」决定。
+    private var displaySmoothing: Double = 0.35
+    private var preferredInputDeviceUID: String?
+    private var inputChangeTask: Task<Void, Never>?
+    /// 引擎启动后短时间内忽略配置变化通知，避免自触发的重启循环。
+    private var suppressInterruptRestartsUntil = Date.distantPast
+    /// 自动重启的时间戳，用于限制短时间内反复重启。
+    private var automaticRestartTimestamps: [Date] = []
 
-    public init() {}
+    #if os(macOS)
+    private let inputMonitor = AudioInputDeviceMonitor.shared
+    private var inputMonitorCancellable: AnyCancellable?
+    private var lastKnownDefaultInputUID: String?
+    #endif
+
+    public init() {
+        refreshActiveInputDeviceName()
+
+        #if os(macOS)
+        inputMonitor.start()
+        lastKnownDefaultInputUID = inputMonitor.defaultDeviceUID
+        inputMonitorCancellable = inputMonitor.$changeToken
+            .dropFirst()
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.handleInputDevicesChanged()
+                }
+            }
+        refreshActiveInputDeviceName()
+        #endif
+    }
 
     // MARK: - 派生读数
 
@@ -111,7 +145,15 @@ public final class TunerController: ObservableObject {
     }
 
     public func start() {
+        startCapture(isAutomatic: false)
+    }
+
+    private func startCapture(isAutomatic: Bool) {
         guard !isRunning, !isStarting else { return }
+
+        if !isAutomatic {
+            automaticRestartTimestamps.removeAll()
+        }
 
         errorText = nil
         permissionDenied = false
@@ -140,11 +182,14 @@ public final class TunerController: ObservableObject {
                 self.attachCallbacks(to: prepared)
                 self.statusText = "启动麦克风…"
                 self.resetRealtimeState()
+                prepared.preferredInputDeviceUID = self.preferredInputDeviceUID
 
                 try prepared.start()
 
                 self.isRunning = true
                 self.isStarting = false
+                self.suppressInterruptRestartsUntil = Date().addingTimeInterval(2.0)
+                self.refreshActiveInputDeviceName()
                 self.statusText = "正在监听…"
 
                 if self.polyphonicEnabled {
@@ -163,6 +208,8 @@ public final class TunerController: ObservableObject {
     public func stop() {
         startTask?.cancel()
         startTask = nil
+        inputChangeTask?.cancel()
+        inputChangeTask = nil
 
         engine?.stop()
         isRunning = false
@@ -197,6 +244,101 @@ public final class TunerController: ObservableObject {
         level = 0
         analyzedSeconds = 0
         lastReportedNoteCount = 0
+    }
+
+    // MARK: - 显示设置
+
+    /// 调整实时读数的平滑程度（0.05 ~ 1.0，越大越跟手）。
+    public func setDisplaySmoothing(_ value: Double) {
+        displaySmoothing = min(max(value, 0.05), 1.0)
+    }
+
+    /// 指定 macOS 输入设备；运行中切换会重启采集。
+    public func setPreferredInputDeviceUID(_ uid: String?) {
+        guard uid != preferredInputDeviceUID else { return }
+        preferredInputDeviceUID = uid
+        engine?.preferredInputDeviceUID = uid
+        refreshActiveInputDeviceName()
+
+        if isRunning || isStarting {
+            restartForInputChange(message: "正在切换音频输入设备…")
+        }
+    }
+
+    // MARK: - 输入源变化
+
+    /// 刷新当前输入源名称，供界面常驻显示。
+    private func refreshActiveInputDeviceName() {
+        #if os(macOS)
+        if let uid = preferredInputDeviceUID,
+           let device = inputMonitor.devices.first(where: { $0.id == uid }) {
+            activeInputDeviceName = device.name
+            return
+        }
+
+        if preferredInputDeviceUID != nil {
+            // 用户指定的设备已经不在了，交给错误横幅说明情况。
+            activeInputDeviceName = nil
+            return
+        }
+
+        if let uid = inputMonitor.defaultDeviceUID,
+           let device = inputMonitor.devices.first(where: { $0.id == uid }) {
+            activeInputDeviceName = device.name
+            return
+        }
+
+        activeInputDeviceName = inputMonitor.devices.first(where: \.isDefault)?.name
+            ?? AudioInputDevices.all().first(where: \.isDefault)?.name
+        #else
+        activeInputDeviceName = AudioInputDevices.currentInputName()
+        #endif
+    }
+
+    /// 系统输入设备列表或默认输入发生变化。
+    private func handleInputDevicesChanged() {
+        refreshActiveInputDeviceName()
+
+        #if os(macOS)
+        if let uid = preferredInputDeviceUID {
+            let isStillAvailable = inputMonitor.devices.contains { $0.id == uid }
+            guard !isStillAvailable, isRunning || isStarting else { return }
+
+            stop()
+            errorText = "之前选择的输入设备已断开，请在设置中重新选择输入设备。"
+            statusText = "输入设备已断开"
+            return
+        }
+
+        let defaultUID = inputMonitor.defaultDeviceUID
+        let defaultChanged = defaultUID != lastKnownDefaultInputUID
+        lastKnownDefaultInputUID = defaultUID
+
+        // 已经有一次重启在排队时，忽略同一批通知里的重复事件。
+        guard inputChangeTask == nil else { return }
+
+        if defaultChanged, isRunning || isStarting {
+            restartForInputChange(message: "系统输入设备已切换，正在重新连接…")
+        }
+        #endif
+    }
+
+    /// 音频引擎报告配置变化，或输入设备被切换时，稍等片刻再重启采集。
+    private func restartForInputChange(message: String?) {
+        suppressInterruptRestartsUntil = Date().addingTimeInterval(2.0)
+        inputChangeTask?.cancel()
+        stop()
+        errorText = nil
+        if let message {
+            statusText = message
+        }
+
+        inputChangeTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let self, !Task.isCancelled else { return }
+            self.inputChangeTask = nil
+            self.startCapture(isAutomatic: true)
+        }
     }
 
     // MARK: - 多音开关
@@ -288,6 +430,30 @@ public final class TunerController: ObservableObject {
         engine.onError = { [weak self] error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+
+                // 设备插拔、采样率变化都会触发引擎配置变化，重新绑定设备即可恢复，
+                // 不需要用户手动重新开始。刚启动后的通知可能是引擎自身产生的，
+                // 直接忽略，避免出现反复启停的抖动。
+                if let captureError = error as? MicrophoneCaptureError,
+                   case .engineInterrupted = captureError,
+                   self.isRunning || self.isStarting {
+                    guard Date() >= self.suppressInterruptRestartsUntil else { return }
+
+                    let now = Date()
+                    self.automaticRestartTimestamps.removeAll {
+                        now.timeIntervalSince($0) > 10
+                    }
+                    guard self.automaticRestartTimestamps.count < 3 else {
+                        self.stop()
+                        self.errorText = "音频输入反复中断，请重新选择输入设备或重启应用。"
+                        self.statusText = "音频输入不稳定"
+                        return
+                    }
+                    self.automaticRestartTimestamps.append(now)
+                    self.restartForInputChange(message: "音频输入已变化，正在重新连接…")
+                    return
+                }
+
                 self.errorText = error.localizedDescription
                 self.statusText = "音频采集中断: \(error.localizedDescription)"
                 if self.isRunning {
@@ -346,7 +512,7 @@ public final class TunerController: ObservableObject {
         if let latest = update.latestPitch, latest.midi.isFinite {
             let next: Double
             if let previous = displayMidi, abs(latest.midi - previous) < 1.0 {
-                next = previous + (latest.midi - previous) * 0.35
+                next = previous + (latest.midi - previous) * displaySmoothing
             } else {
                 next = latest.midi
             }

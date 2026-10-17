@@ -38,14 +38,19 @@ struct PTunerApp: App {
                     configuration: AppReviewPromptConfiguration.ptuner,
                     theme: AppReviewPromptTheme.ptuner
                 )
-                .preferredColorScheme(.dark)
+                #if os(macOS)
+                .frame(minWidth: 860, minHeight: 620)
+                #else
                 .frame(minWidth: 420, minHeight: 640)
+                #endif
                 .task {
                     await paywallManager.start()
                 }
         }
-        .defaultSize(width: 480, height: 760)
+        #if os(macOS)
+        .defaultSize(width: 1080, height: 740)
         .windowResizability(.contentMinSize)
+        #endif
     }
 
     // MARK: - Sentry
@@ -108,25 +113,25 @@ extension AppReviewPromptConfiguration {
 extension AppReviewPromptTheme {
     static var ptuner: AppReviewPromptTheme {
         AppReviewPromptTheme(
-            overlayColor: Color.black.opacity(0.55),
+            overlayColor: Color.black.opacity(0.45),
             heroBackground: AppTheme.accentSoft,
             heroForeground: AppTheme.accent,
             cardBackground: AppTheme.surfaceElevated,
-            cardBorder: Color.white.opacity(0.10),
+            cardBorder: AppTheme.cardBorder,
             titleColor: AppTheme.primaryText,
             messageColor: AppTheme.secondaryText,
             detailBackground: AppTheme.accentSoft,
             detailForeground: AppTheme.accent,
             primaryButtonBackground: AppTheme.accent,
-            primaryButtonForeground: Color(red: 0.02, green: 0.08, blue: 0.10),
-            secondaryButtonBackground: Color.white.opacity(0.06),
+            primaryButtonForeground: AppTheme.onAccent,
+            secondaryButtonBackground: AppTheme.controlBackground,
             secondaryButtonForeground: AppTheme.primaryText,
-            secondaryButtonBorder: Color.white.opacity(0.12),
+            secondaryButtonBorder: AppTheme.cardBorder,
             tertiaryButtonForeground: AppTheme.secondaryText,
-            badgeBackground: Color.white.opacity(0.06),
+            badgeBackground: AppTheme.controlBackground,
             badgeForeground: AppTheme.primaryText,
             badgeIconTint: AppTheme.accent,
-            shadowColor: Color.black.opacity(0.45)
+            shadowColor: AppTheme.shadow
         )
     }
 }

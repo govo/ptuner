@@ -12,11 +12,16 @@
 import AVFoundation
 import Foundation
 
+#if os(macOS)
+import CoreAudio
+#endif
+
 nonisolated enum MicrophoneCaptureError: LocalizedError {
     case permissionDenied
     case noInput
     case formatUnavailable
     case converterUnavailable
+    case deviceUnavailable(String)
     case engineStartFailed(Error)
     case engineInterrupted
 
@@ -30,6 +35,8 @@ nonisolated enum MicrophoneCaptureError: LocalizedError {
             return "麦克风输入格式不可用"
         case .converterUnavailable:
             return "无法创建音频重采样器"
+        case .deviceUnavailable(let name):
+            return "音频输入设备不可用: \(name)"
         case .engineStartFailed(let error):
             return "音频引擎启动失败: \(error.localizedDescription)"
         case .engineInterrupted:
@@ -52,7 +59,11 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
     var onPolySamples: (([Float], Int) -> Void)?
     var onError: ((Error) -> Void)?
 
-    private let engine = AVAudioEngine()
+    /// macOS 下指定 Core Audio 输入设备；nil 表示跟随系统默认。
+    var preferredInputDeviceUID: String?
+
+    /// 每次重新开始采集时重建，确保输入设备与采样格式按当前系统状态重新绑定。
+    private var engine = AVAudioEngine()
     private var converter: AVAudioConverter?
     private var outputFormat: AVAudioFormat?
     private var sampleCursor = 0
@@ -97,6 +108,9 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
     func start() throws {
         guard !isRunning else { return }
 
+        // 用全新的引擎重新绑定输入设备，避免复用上一台设备的格式缓存。
+        engine = AVAudioEngine()
+
         #if os(iOS) || os(visionOS)
         let session = AVAudioSession.sharedInstance()
         do {
@@ -121,6 +135,11 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
 
     private func startEngineInput() throws {
         let input = engine.inputNode
+
+        #if os(macOS)
+        try applyPreferredInputDevice(to: input)
+        #endif
+
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
             throw MicrophoneCaptureError.noInput
@@ -150,6 +169,39 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
             throw MicrophoneCaptureError.engineStartFailed(error)
         }
     }
+
+    #if os(macOS)
+    /// 在启动引擎前把输入节点绑定到用户选择的 Core Audio 设备。
+    /// 未选择时也显式绑定当前系统默认输入，避免沿用引擎缓存的旧设备。
+    private func applyPreferredInputDevice(to input: AVAudioInputNode) throws {
+        let deviceID: AudioDeviceID?
+
+        if let uid = preferredInputDeviceUID {
+            guard let selected = AudioInputDevices.deviceID(forUID: uid) else {
+                throw MicrophoneCaptureError.deviceUnavailable(
+                    AudioInputDevices.all().first(where: { $0.id == uid })?.name ?? uid
+                )
+            }
+            deviceID = selected
+        } else {
+            deviceID = AudioInputDevices.defaultInputDeviceID()
+        }
+
+        guard let deviceID else { return }
+
+        do {
+            try input.withAUAudioUnit { audioUnit in
+                try audioUnit.setDeviceID(deviceID)
+            }
+        } catch {
+            // 跟随系统默认时，绑定失败就交给 AVAudioEngine 自行选择；
+            // 用户明确选择的设备则必须绑定成功。
+            if let uid = preferredInputDeviceUID {
+                throw MicrophoneCaptureError.deviceUnavailable(uid)
+            }
+        }
+    }
+    #endif
 
     func stop() {
         guard isRunning else { return }
