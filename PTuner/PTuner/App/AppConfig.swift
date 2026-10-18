@@ -9,7 +9,7 @@ import RevenueCatPaywallKit
 /// 拿到真实值后，只需要替换本文件中的常量。
 enum AppConfig {
     enum RevenueCat {
-        static let entitlementID = "PTuner Pro"
+        static let entitlementID = "ptuner_pro"
         static let apiKeyDebug = "test_jiadKsBHZcJGCigTZcsxzGRlZaj"
         static let apiKeyRelease = "appl_nbraQyYMEVtzUcQqcYQmRAFFyhI"
         static let offeringID = "default"

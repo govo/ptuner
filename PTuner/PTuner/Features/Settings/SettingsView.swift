@@ -18,6 +18,7 @@ struct SettingsView: View {
 
     @State private var microphoneStatus = MicrophoneAudioCapture.permissionStatus
     @State private var showsCustomPitchSheet = false
+    @State private var showsProEntitlementSheet = false
     @State private var showsAbout = false
     @State private var isRestoring = false
     @State private var alertMessage: String?
@@ -386,15 +387,29 @@ struct SettingsView: View {
 
     private var proSection: some View {
         SettingsSectionCard(title: "Pro") {
-            NavigationLink {
-                ProInfoView()
-            } label: {
-                SettingsRow(icon: proAccess.isPro(paywallManager) ? "checkmark.seal.fill" : "crown.fill",
-                            iconTint: proAccess.isPro(paywallManager) ? AppTheme.success : AppTheme.warning,
-                            title: proAccess.isPro(paywallManager) ? L10n.tr("Pro 已激活") : L10n.tr("免费版"),
-                            value: proDetail)
+            if isPro {
+                Button {
+                    showsProEntitlementSheet = true
+                } label: {
+                    ProMembershipCard(isPro: true,
+                                      subtitle: proStatusSubtitle,
+                                      badgeTitle: L10n.tr("已激活"))
+                }
+                .settingsTappable()
+            } else {
+                NavigationLink {
+                    ProInfoView()
+                } label: {
+                    ProMembershipCard(isPro: false,
+                                      subtitle: proStatusSubtitle,
+                                      badgeTitle: L10n.tr("升级"))
+                }
+                .settingsTappable()
             }
-            .settingsTappable()
+
+            Divider()
+                .overlay(AppTheme.divider)
+                .padding(.leading, 73)
 
             Button {
                 restorePurchases()
@@ -408,9 +423,18 @@ struct SettingsView: View {
             .settingsTappable()
             .disabled(isRestoring)
         }
+        .sheet(isPresented: $showsProEntitlementSheet) {
+            ProEntitlementSheet()
+                .environmentObject(paywallManager)
+        }
     }
 
-    private var proDetail: String {
+    private var isPro: Bool {
+        proAccess.isPro(paywallManager)
+    }
+
+    /// 会员卡片副标题：与推送的权益状态保持一致。
+    private var proStatusSubtitle: String {
         #if DEBUG
         if proAccess.skipsEntitlementCheck {
             return L10n.tr("Debug 已跳过校验")
@@ -418,18 +442,18 @@ struct SettingsView: View {
         #endif
 
         guard paywallManager.hasActiveEntitlement else {
-            return L10n.tr("未升级")
+            return L10n.tr("解锁多音调音、和弦识别与自定义调弦。")
         }
 
         switch paywallManager.entitlementStatus {
         case .lifetime:
-            return L10n.tr("永久权益")
+            return L10n.tr("永久有效")
         case .subscription(let expirationDate):
             let style = Date.FormatStyle(date: .abbreviated, time: .omitted)
                 .locale(Locale(identifier: L10n.effectiveCode))
-            return L10n.tr("至 %@", expirationDate.formatted(style))
+            return L10n.tr("订阅到期 %@", expirationDate.formatted(style))
         case .none:
-            return L10n.tr("已激活")
+            return L10n.tr("Pro 权益已激活")
         }
     }
 
