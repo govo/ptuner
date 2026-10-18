@@ -27,11 +27,6 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
         case .settings: return "gearshape"
         }
     }
-
-    /// 当前在导航中展示的标签。和弦识别暂时下线，页面代码保留以便恢复。
-    static var visibleTabs: [MainTab] {
-        allCases.filter { $0 != .chord }
-    }
 }
 
 @MainActor

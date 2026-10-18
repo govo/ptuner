@@ -12,9 +12,9 @@ struct LandingView: View {
             pages: [
                 .standard(
                     id: "tuning",
-                    title: L10n.tr("专业级音准反馈"),
-                    subtitle: L10n.tr("实时显示音名、频率与 cents 偏差，像专业调音单块一样快速锁定音准。"),
-                    footnote: L10n.tr("支持 A4 参考音高与显示精度设置。"),
+                    title: L10n.tr("一拨弦，就知道调没调准"),
+                    subtitle: L10n.tr("音名、频率、音分偏差实时显示，不用再靠耳朵反复猜。"),
+                    footnote: L10n.tr("支持 A4 参考音高与 0.1 音分精度。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -23,9 +23,9 @@ struct LandingView: View {
                 },
                 .standard(
                     id: "multi-pitch",
-                    title: L10n.tr("多音与和弦识别"),
-                    subtitle: L10n.tr("同时检测多根弦，或直接识别当前和弦名称，适合快速校音与演奏辅助。"),
-                    footnote: L10n.tr("多音调音与和弦识别为 Pro 功能。"),
+                    title: L10n.tr("一次拨弦，整琴看清"),
+                    subtitle: L10n.tr("同时检测多根弦，哪根跑音一眼就知道，不用一根根来回试。"),
+                    footnote: L10n.tr("多音调音为 Pro 功能。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -33,10 +33,10 @@ struct LandingView: View {
                     heroIcon("waveform", tint: AppTheme.warning)
                 },
                 .standard(
-                    id: "custom",
-                    title: L10n.tr("为你的乐器而设"),
-                    subtitle: L10n.tr("内置吉他、贝斯、尤克里里等调弦，也可以创建任意弦数和音高的自定义调弦。"),
-                    footnote: L10n.tr("收藏常用调弦，打开即可调音。"),
+                    id: "sweetened",
+                    title: L10n.tr("找到你乐器的甜点调音"),
+                    subtitle: L10n.tr("每把琴的共鸣都不同。微调每根弦的音分，让和弦落在最好听的位置。"),
+                    footnote: L10n.tr("自定义弦数、音高与音分偏移，保存成你的专属调弦。"),
                     titleColor: AppTheme.primaryText,
                     subtitleColor: AppTheme.secondaryText,
                     footnoteColor: AppTheme.tertiaryText
@@ -57,7 +57,7 @@ struct LandingView: View {
                             iconSystemName: "waveform",
                             iconTint: AppTheme.accent,
                             title: L10n.tr("本机处理"),
-                            message: L10n.tr("音高检测与和弦识别都在设备上运行。")
+                            message: L10n.tr("音高检测在设备上运行。")
                         ),
                         OnboardingNetworkNoticeConfiguration.Item(
                             iconSystemName: "creditcard",
@@ -133,7 +133,7 @@ struct LandingView: View {
         Task {
             await paywallManager.presentPaywall(
                 featureID: "onboarding",
-                marketingMessage: L10n.tr("解锁多音调音、和弦识别与自定义调弦。")
+                marketingMessage: L10n.tr("解锁多音调音与自定义调弦。")
             )
         }
     }

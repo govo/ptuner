@@ -53,7 +53,7 @@ struct TunerHomeView: View {
 
     /// 免费用户的每日 / 每周额度用尽后，多音开关变成 Pro 锁。
     private var polyphonyLocked: Bool {
-        !proUnlocked && quota.exhaustion != nil
+        !proUnlocked && quota.polyphonicExhaustion != nil
     }
 
     /// 乐器模式跟随乐器弦数，半音阶模式使用用户在设置中选择的值。
@@ -148,7 +148,7 @@ struct TunerHomeView: View {
         }
         .onChange(of: proUnlocked) { _, unlocked in
             // 降级为免费用户时，如果额度已经用尽，立即停止多音。
-            if !unlocked, multiEnabled, quota.exhaustion != nil {
+            if !unlocked, multiEnabled, quota.polyphonicExhaustion != nil {
                 multiEnabled = false
             }
         }
@@ -157,14 +157,15 @@ struct TunerHomeView: View {
             guard multiEnabled,
                   tuner.isRunning,
                   tuner.polyphonicEnabled,
+                  router.selectedTab == .tuner,
                   !proUnlocked else { return }
 
             let delta = seconds - lastPolyAnalyzedSeconds
             // 重置或异常跳变不计入额度。
             guard delta > 0, delta < 5 else { return }
-            quota.recordPolyphonic(seconds: delta)
+            quota.record(.polyphonicTuning, seconds: delta)
         }
-        .onChange(of: quota.exhaustion) { _, limit in
+        .onChange(of: quota.polyphonicExhaustion) { _, limit in
             guard let limit else { return }
             if multiEnabled {
                 multiEnabled = false
@@ -221,7 +222,7 @@ struct TunerHomeView: View {
                 quotaAlert = nil
             }
         } message: {
-            Text(quotaAlert?.message ?? "")
+            Text(quotaAlert?.message(for: .polyphonicTuning) ?? "")
         }
     }
 
@@ -748,11 +749,10 @@ struct TunerHomeView: View {
 
                 Spacer(minLength: 8)
 
-                if polyphonyLocked {
-                    proLockChip
-                } else {
-                    TunerSwitch(isOn: multiBinding)
-                }
+                TunerSwitch(isOn: multiBinding)
+                    .proLocked(polyphonyLocked,
+                               placement: .topTrailing,
+                               onTap: { showMultiQuotaPrompt() })
             }
 
             Divider()
@@ -806,7 +806,7 @@ struct TunerHomeView: View {
                     return
                 }
                 quota.refreshNow()
-                if let limit = quota.exhaustion {
+                if let limit = quota.polyphonicExhaustion {
                     quotaAlert = limit
                     multiEnabled = false
                     return
@@ -816,34 +816,12 @@ struct TunerHomeView: View {
         )
     }
 
-    /// 额度用尽后替代开关的 Pro 锁。点击弹出升级提示，关闭则保持锁定。
-    private var proLockChip: some View {
-        Button {
-            quota.refreshNow()
-            if let limit = quota.exhaustion {
-                quotaAlert = limit
-            }
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 10, weight: .bold))
-
-                Text("Pro")
-                    .font(.system(size: 11, weight: .heavy, design: .rounded))
-            }
-            .foregroundStyle(AppTheme.warning)
-            .padding(.horizontal, 11)
-            .frame(height: 28)
-            .background(
-                Capsule().fill(AppTheme.warning.opacity(0.15))
-            )
-            .overlay(
-                Capsule().stroke(AppTheme.warning.opacity(0.35), lineWidth: 0.8)
-            )
-            .contentShape(Rectangle())
+    /// 额度用尽后点击 Pro 锁弹出升级提示，关闭则保持锁定。
+    private func showMultiQuotaPrompt() {
+        quota.refreshNow()
+        if let limit = quota.polyphonicExhaustion {
+            quotaAlert = limit
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(L10n.tr("多音调音"))
     }
 
     // MARK: - 启停

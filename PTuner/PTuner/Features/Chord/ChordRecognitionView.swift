@@ -9,20 +9,34 @@ struct ChordRecognitionView: View {
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @ObservedObject private var proAccess = ProAccessController.shared
+    @ObservedObject private var quota = FreeUsageQuota.shared
+
+    @Environment(\.scenePhase) private var scenePhase
+    /// 和弦识别必须由用户主动开始，进入页面不自动监听。
+    @State private var isChordListening = false
+    @State private var lastPolyAnalyzedSeconds: Double = 0
+    @State private var quotaAlert: FreeUsageQuota.Limit?
 
     private var proUnlocked: Bool {
         proAccess.isPro(paywallManager)
     }
 
+    /// 免费用户的每日 / 每周额度用尽后，整页切换为 Pro 锁。
+    private var chordLocked: Bool {
+        !proUnlocked && quota.chordExhaustion != nil
+    }
+
     private var chordRows: [PolyStringReading] {
-        PolyReadingBuilder.build(readouts: live.polyReadouts,
-                                 referencePitch: 440,
-                                 preset: nil)
+        guard isChordListening else { return [] }
+        return PolyReadingBuilder.build(readouts: live.polyReadouts,
+                                        referencePitch: 440,
+                                        preset: nil)
             .sorted { $0.midiPitch < $1.midiPitch }
     }
 
     private var chordMatch: ChordMatch? {
-        ChordRecognizer.recognize(pitchClasses: live.polyReadouts.map(\.midiPitch))
+        guard isChordListening else { return nil }
+        return ChordRecognizer.recognize(pitchClasses: live.polyReadouts.map(\.midiPitch))
     }
 
     var body: some View {
@@ -34,10 +48,10 @@ struct ChordRecognitionView: View {
                     header
                     statusBanners
 
-                    if proUnlocked {
-                        contentLayout
+                    if chordLocked {
+                        lockedCard
                     } else {
-                        proLockedCard
+                        contentLayout
                     }
                 }
                 .padding(.horizontal, 18)
@@ -48,18 +62,87 @@ struct ChordRecognitionView: View {
             }
         }
         .onAppear {
-            syncChordDemand()
+            quota.refreshNow()
+            lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
         }
         .onDisappear {
-            tuner.setChordRecognitionActive(false)
+            stopChordListening()
         }
         .onChange(of: proUnlocked) { _, _ in
             syncChordDemand()
         }
         .onChange(of: router.selectedTab) { _, tab in
-            if tab != .chord {
-                tuner.setChordRecognitionActive(false)
+            guard tab == .chord else {
+                stopChordListening()
+                return
             }
+            syncChordDemand()
+        }
+        .onChange(of: tuner.isRunning) { _, running in
+            guard running else {
+                isChordListening = false
+                return
+            }
+            syncChordDemand()
+        }
+        .onChange(of: tuner.isStarting) { _, starting in
+            // 启动失败（无权限、设备错误）时回到未开始状态。
+            if !starting, !tuner.isRunning {
+                isChordListening = false
+            }
+        }
+        .onChange(of: live.polyAnalyzedSeconds) { _, seconds in
+            defer { lastPolyAnalyzedSeconds = seconds }
+            guard isChordListening,
+                  router.selectedTab == .chord,
+                  !chordLocked,
+                  tuner.isRunning,
+                  tuner.polyphonicEnabled,
+                  !proUnlocked else { return }
+
+            let delta = seconds - lastPolyAnalyzedSeconds
+            // 重置或异常跳变不计入额度。
+            guard delta > 0, delta < 5 else { return }
+            quota.record(.chordRecognition, seconds: delta)
+        }
+        .onChange(of: quota.chordExhaustion) { _, limit in
+            guard let limit else {
+                // 跨日 / 跨周重置后恢复可用。
+                syncChordDemand()
+                return
+            }
+
+            // 到限额立即停止识别，并切换到锁定状态。
+            isChordListening = false
+            tuner.setChordRecognitionActive(false)
+            guard !proUnlocked else { return }
+            quotaAlert = limit
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            quota.refreshNow()
+            syncChordDemand()
+        }
+        .alert(
+            quotaAlert?.title ?? "",
+            isPresented: Binding(
+                get: { quotaAlert != nil },
+                set: { if !$0 { quotaAlert = nil } }
+            )
+        ) {
+            Button(L10n.tr("升级 Pro")) {
+                quotaAlert = nil
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(250))
+                    presentPaywall()
+                }
+            }
+
+            Button(L10n.tr("以后再说"), role: .cancel) {
+                quotaAlert = nil
+            }
+        } message: {
+            Text(quotaAlert?.message(for: .chordRecognition) ?? "")
         }
     }
 
@@ -136,19 +219,18 @@ struct ChordRecognitionView: View {
         }
     }
 
-    // MARK: - Pro 锁定
+    // MARK: - 额度用尽 / Pro 锁定
 
-    private var proLockedCard: some View {
+    private var lockedCard: some View {
         VStack(spacing: 14) {
-            Image(systemName: "music.note.list")
-                .font(.system(size: 34, weight: .semibold))
-                .foregroundStyle(AppTheme.accent)
+            ProLockBadge(placement: .center, hostSize: .zero)
 
-            Text(L10n.tr("和弦识别是 Pro 功能"))
+            Text(quota.chordExhaustion?.title ?? L10n.tr("今天的免费额度已用完"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(AppTheme.primaryText)
 
-            Text(L10n.tr("升级后可以实时识别当前演奏的和弦名称与组成音，不受乐器选择影响。"))
+            Text(quota.chordExhaustion?.message(for: .chordRecognition)
+                 ?? L10n.tr("免费用户每天可享 30 秒和弦识别。升级 Pro，想弹多久识别多久。"))
                 .font(.system(size: 13))
                 .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -236,7 +318,7 @@ struct ChordRecognitionView: View {
     }
 
     private var chordStatusText: String {
-        guard tuner.isRunning else { return L10n.tr("未开始检测") }
+        guard isChordListening else { return L10n.tr("未开始检测") }
         if live.polyReadouts.isEmpty { return L10n.tr("等待声音") }
         if chordMatch != nil { return L10n.tr("识别成功") }
         if live.polyReadouts.count < 3 { return L10n.tr("识别中 · 需要更多组成音") }
@@ -257,23 +339,50 @@ struct ChordRecognitionView: View {
 
     @ViewBuilder
     private var startStopButton: some View {
-        if tuner.isStarting {
+        if isChordListening, tuner.isStarting {
             PrimaryTunerButton(title: L10n.tr("正在启动…"), systemImage: "hourglass", role: .secondary) {}
-        } else if tuner.isRunning {
+        } else if isChordListening {
             PrimaryTunerButton(title: L10n.tr("停止监听"), systemImage: "stop.fill", role: .secondary) {
-                tuner.stop()
+                stopChordListening()
             }
         } else {
             PrimaryTunerButton(title: L10n.tr("开始检测"), systemImage: "mic.fill") {
-                tuner.start()
+                startChordListening()
             }
         }
     }
 
     // MARK: - 行为
 
+    /// 主动开始检测；多音通道只在用户开始后才占用。
+    private func startChordListening() {
+        quota.refreshNow()
+        guard quota.chordExhaustion == nil else {
+            quotaAlert = quota.chordExhaustion
+            return
+        }
+
+        lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
+        isChordListening = true
+
+        if tuner.isRunning {
+            syncChordDemand()
+        } else {
+            tuner.start()
+        }
+    }
+
+    private func stopChordListening() {
+        isChordListening = false
+        tuner.setChordRecognitionActive(false)
+    }
+
+    /// 只有用户主动开始、停留在和弦页且额度可用时才占用多音通道。
     private func syncChordDemand() {
-        tuner.setChordRecognitionActive(proUnlocked)
+        let shouldActivate = isChordListening
+            && router.selectedTab == .chord
+            && !chordLocked
+        tuner.setChordRecognitionActive(shouldActivate)
     }
 
     private func presentPaywall() {

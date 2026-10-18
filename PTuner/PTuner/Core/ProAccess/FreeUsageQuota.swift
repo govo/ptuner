@@ -2,8 +2,8 @@
 //  FreeUsageQuota.swift
 //  PTuner
 //
-//  免费用户的用量额度。当前只包含多音调音：每天 30 秒，每周累计 1 分钟。
-//  Pro 用户由调用方跳过记录，不进入本对象。
+//  免费用户的用量额度。多音调音与和弦识别各自独立计数：
+//  每天 30 秒，每周累计 1 分钟。Pro 用户由调用方跳过记录。
 //
 
 import Combine
@@ -14,6 +14,12 @@ final class FreeUsageQuota: ObservableObject {
 
     static let shared = FreeUsageQuota()
 
+    /// 需要独立计算额度的功能。
+    enum Feature: String, CaseIterable, Sendable {
+        case polyphonicTuning
+        case chordRecognition
+    }
+
     /// 额度用尽的原因。周额度优先于日额度。
     enum Limit: Equatable {
         case daily
@@ -21,102 +27,143 @@ final class FreeUsageQuota: ObservableObject {
     }
 
     enum Limits {
-        /// 免费用户每天可用的多音调音秒数。
-        static let polyphonicDailySeconds: TimeInterval = 30
-        /// 免费用户每周可用的多音调音秒数，跨天累计。
-        static let polyphonicWeeklySeconds: TimeInterval = 60
+        /// 免费用户每天可用的秒数。
+        static let dailySeconds: TimeInterval = 30
+        /// 免费用户每周可用的秒数，跨天累计。
+        static let weeklySeconds: TimeInterval = 60
     }
 
-    /// 当前已用尽的额度；nil 表示仍可使用。
-    @Published private(set) var exhaustion: Limit?
+    /// 各功能当前已用尽的额度；没有条目表示仍可使用。
+    @Published private(set) var exhaustions: [Feature: Limit] = [:]
 
-    private(set) var polyphonicDailyUsed: TimeInterval = 0
-    private(set) var polyphonicWeeklyUsed: TimeInterval = 0
+    private(set) var dailyUsed: [Feature: TimeInterval] = [:]
+    private(set) var weeklyUsed: [Feature: TimeInterval] = [:]
 
     private let defaults: UserDefaults
     private let calendar: Calendar
-
-    private enum Keys {
-        static let dayKey = "ptuner.quota.polyphonic.dayKey"
-        static let dayUsed = "ptuner.quota.polyphonic.dayUsed"
-        static let weekKey = "ptuner.quota.polyphonic.weekKey"
-        static let weekUsed = "ptuner.quota.polyphonic.weekUsed"
-    }
 
     init(defaults: UserDefaults = .standard,
          calendar: Calendar = .current) {
         self.defaults = defaults
         self.calendar = calendar
 
-        polyphonicDailyUsed = defaults.double(forKey: Keys.dayUsed)
-        polyphonicWeeklyUsed = defaults.double(forKey: Keys.weekUsed)
+        for feature in Feature.allCases {
+            let keys = storageKeys(for: feature)
+            dailyUsed[feature] = defaults.double(forKey: keys.dayUsed)
+            weeklyUsed[feature] = defaults.double(forKey: keys.weekUsed)
+        }
 
         rollPeriodsIfNeeded(now: Date())
-        updateExhaustion()
+        updateExhaustions()
+    }
+
+    // MARK: - 查询
+
+    func exhaustion(for feature: Feature) -> Limit? {
+        exhaustions[feature]
+    }
+
+    var polyphonicExhaustion: Limit? {
+        exhaustion(for: .polyphonicTuning)
+    }
+
+    var chordExhaustion: Limit? {
+        exhaustion(for: .chordRecognition)
     }
 
     // MARK: - 对外接口
 
-    /// 记录一次多音调音的实际使用时长。只有非 Pro 用户需要调用。
-    func recordPolyphonic(seconds: TimeInterval) {
+    /// 记录一次实际使用时长。只有非 Pro 用户需要调用。
+    func record(_ feature: Feature, seconds: TimeInterval) {
         guard seconds > 0 else { return }
 
         rollPeriodsIfNeeded(now: Date())
-        polyphonicDailyUsed = min(Limits.polyphonicDailySeconds,
-                                  polyphonicDailyUsed + seconds)
-        polyphonicWeeklyUsed = min(Limits.polyphonicWeeklySeconds,
-                                   polyphonicWeeklyUsed + seconds)
 
-        defaults.set(polyphonicDailyUsed, forKey: Keys.dayUsed)
-        defaults.set(polyphonicWeeklyUsed, forKey: Keys.weekUsed)
+        let daily = min(Limits.dailySeconds, (dailyUsed[feature] ?? 0) + seconds)
+        let weekly = min(Limits.weeklySeconds, (weeklyUsed[feature] ?? 0) + seconds)
+        dailyUsed[feature] = daily
+        weeklyUsed[feature] = weekly
 
-        updateExhaustion()
+        let keys = storageKeys(for: feature)
+        defaults.set(daily, forKey: keys.dayUsed)
+        defaults.set(weekly, forKey: keys.weekUsed)
+
+        updateExhaustions()
     }
 
     /// 检查是否跨日 / 跨周并刷新额度状态。界面回到前台时调用。
     func refreshNow() {
         rollPeriodsIfNeeded(now: Date())
-        updateExhaustion()
+        updateExhaustions()
     }
 
     // MARK: - 周期重置
 
     private func rollPeriodsIfNeeded(now: Date) {
         let currentDayKey = dayKey(for: now)
-        let storedDayKey = defaults.string(forKey: Keys.dayKey)
-
-        if storedDayKey != currentDayKey,
-           storedDayKey == nil || currentDayKey > storedDayKey! {
-            polyphonicDailyUsed = 0
-            defaults.set(currentDayKey, forKey: Keys.dayKey)
-            defaults.set(0.0, forKey: Keys.dayUsed)
-        }
-        // storedDayKey > currentDayKey 视为系统时钟回拨：保持已用额度，不恢复。
-
         let currentWeekKey = weekKey(for: now)
-        let storedWeekKey = defaults.string(forKey: Keys.weekKey)
 
-        if storedWeekKey != currentWeekKey,
-           storedWeekKey == nil || currentWeekKey > storedWeekKey! {
-            polyphonicWeeklyUsed = 0
-            defaults.set(currentWeekKey, forKey: Keys.weekKey)
-            defaults.set(0.0, forKey: Keys.weekUsed)
+        for feature in Feature.allCases {
+            let keys = storageKeys(for: feature)
+
+            let storedDayKey = defaults.string(forKey: keys.dayKey)
+            if storedDayKey != currentDayKey,
+               storedDayKey == nil || currentDayKey > storedDayKey! {
+                dailyUsed[feature] = 0
+                defaults.set(currentDayKey, forKey: keys.dayKey)
+                defaults.set(0.0, forKey: keys.dayUsed)
+            }
+            // storedDayKey > currentDayKey 视为系统时钟回拨：保持已用额度，不恢复。
+
+            let storedWeekKey = defaults.string(forKey: keys.weekKey)
+            if storedWeekKey != currentWeekKey,
+               storedWeekKey == nil || currentWeekKey > storedWeekKey! {
+                weeklyUsed[feature] = 0
+                defaults.set(currentWeekKey, forKey: keys.weekKey)
+                defaults.set(0.0, forKey: keys.weekUsed)
+            }
         }
     }
 
-    private func updateExhaustion() {
-        let next: Limit?
-        if polyphonicWeeklyUsed >= Limits.polyphonicWeeklySeconds {
-            next = .weekly
-        } else if polyphonicDailyUsed >= Limits.polyphonicDailySeconds {
-            next = .daily
-        } else {
-            next = nil
+    private func updateExhaustions() {
+        var next: [Feature: Limit] = [:]
+
+        for feature in Feature.allCases {
+            if (weeklyUsed[feature] ?? 0) >= Limits.weeklySeconds {
+                next[feature] = .weekly
+            } else if (dailyUsed[feature] ?? 0) >= Limits.dailySeconds {
+                next[feature] = .daily
+            }
         }
 
-        if exhaustion != next {
-            exhaustion = next
+        if exhaustions != next {
+            exhaustions = next
         }
+    }
+
+    // MARK: - 存储键
+
+    private struct StorageKeys {
+        let dayKey: String
+        let dayUsed: String
+        let weekKey: String
+        let weekUsed: String
+    }
+
+    private func storageKeys(for feature: Feature) -> StorageKeys {
+        let prefix: String
+        switch feature {
+        case .polyphonicTuning:
+            // 保留旧键名，升级后不会丢失已用额度。
+            prefix = "ptuner.quota.polyphonic"
+        case .chordRecognition:
+            prefix = "ptuner.quota.chord"
+        }
+
+        return StorageKeys(dayKey: "\(prefix).dayKey",
+                           dayUsed: "\(prefix).dayUsed",
+                           weekKey: "\(prefix).weekKey",
+                           weekUsed: "\(prefix).weekUsed")
     }
 
     // MARK: - 日期键
@@ -151,12 +198,16 @@ extension FreeUsageQuota.Limit {
         }
     }
 
-    var message: String {
-        switch self {
-        case .daily:
+    func message(for feature: FreeUsageQuota.Feature) -> String {
+        switch (feature, self) {
+        case (.polyphonicTuning, .daily):
             return L10n.tr("免费用户每天可享 30 秒多音调音。升级 Pro，想调多久调多久。")
-        case .weekly:
+        case (.polyphonicTuning, .weekly):
             return L10n.tr("免费用户每周可享 1 分钟多音调音。升级 Pro，多音调音不再限量。")
+        case (.chordRecognition, .daily):
+            return L10n.tr("免费用户每天可享 30 秒和弦识别。升级 Pro，想弹多久识别多久。")
+        case (.chordRecognition, .weekly):
+            return L10n.tr("免费用户每周可享 1 分钟和弦识别。升级 Pro，和弦识别不再限量。")
         }
     }
 }

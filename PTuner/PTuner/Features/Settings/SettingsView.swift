@@ -14,7 +14,9 @@ struct SettingsView: View {
     #endif
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
+    @State private var microphoneStatus = MicrophoneAudioCapture.permissionStatus
     @State private var showsCustomPitchSheet = false
     @State private var showsAbout = false
     @State private var isRestoring = false
@@ -73,6 +75,14 @@ struct SettingsView: View {
         // 隐藏系统大标题导航栏：它会在顶部留出一条大空白，并和自定义标题重复。
         .toolbar(.hidden, for: .navigationBar)
         #endif
+        .onAppear {
+            refreshMicrophoneStatus()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // 从系统设置返回后自动刷新授权状态。
+            guard phase == .active else { return }
+            refreshMicrophoneStatus()
+        }
         .sheet(isPresented: $showsCustomPitchSheet) {
             ReferencePitchSheet(currentPitch: settings.referencePitch) { value in
                 settings.setReferencePitch(value)
@@ -302,6 +312,18 @@ struct SettingsView: View {
     @ViewBuilder
     private var audioSection: some View {
         SettingsSectionCard(title: L10n.tr("音频输入")) {
+            Button {
+                handleMicrophonePermissionTap()
+            } label: {
+                SettingsRow(icon: microphoneStatus.icon,
+                            iconTint: microphoneStatus.tint,
+                            title: L10n.tr("麦克风权限"),
+                            value: microphoneStatus.title,
+                            subtitle: microphoneStatus.subtitle,
+                            showsChevron: microphoneStatus != .granted)
+            }
+            .settingsTappable()
+
             #if os(macOS)
             NavigationLink {
                 AudioInputDeviceView()
@@ -322,6 +344,24 @@ struct SettingsView: View {
                         showsDivider: false)
             #endif
         }
+    }
+
+    private func handleMicrophonePermissionTap() {
+        switch microphoneStatus {
+        case .granted:
+            break
+        case .undetermined:
+            Task {
+                _ = await MicrophoneAudioCapture.requestPermission()
+                refreshMicrophoneStatus()
+            }
+        case .denied:
+            PlatformActions.openMicrophoneSettings()
+        }
+    }
+
+    private func refreshMicrophoneStatus() {
+        microphoneStatus = MicrophoneAudioCapture.permissionStatus
     }
 
     private var audioInputValue: String {
@@ -510,5 +550,49 @@ struct SettingsView: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
+    }
+}
+
+// MARK: - 麦克风权限展示
+
+private extension MicrophonePermissionStatus {
+
+    var title: String {
+        switch self {
+        case .granted: return L10n.tr("已允许")
+        case .denied: return L10n.tr("未允许")
+        case .undetermined: return L10n.tr("未请求")
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .granted:
+            return L10n.tr("调音与和弦识别可以正常使用麦克风。")
+        case .undetermined:
+            return L10n.tr("点击请求权限，开始调音与和弦识别。")
+        case .denied:
+            #if os(macOS)
+            return L10n.tr("请前往 系统设置 > 隐私与安全性 > 麦克风，允许 PTuner 使用麦克风。")
+            #else
+            return L10n.tr("请前往 设置 > PTuner > 麦克风，开启麦克风权限。")
+            #endif
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .granted: return "mic.fill"
+        case .denied: return "mic.slash.fill"
+        case .undetermined: return "mic.badge.plus"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .granted: return AppTheme.success
+        case .denied: return AppTheme.warning
+        case .undetermined: return AppTheme.gaugeBlue
+        }
     }
 }

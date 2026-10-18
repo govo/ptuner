@@ -63,6 +63,14 @@ struct ContentView: View {
             .tag(MainTab.tuner)
 
             NavigationStack {
+                ChordRecognitionView()
+            }
+            .tabItem {
+                Label(MainTab.chord.title, systemImage: MainTab.chord.systemImage)
+            }
+            .tag(MainTab.chord)
+
+            NavigationStack {
                 InstrumentSelectionView()
             }
             .tabItem {
@@ -88,7 +96,7 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $router.selectedTab) {
                 Section("PTuner") {
-                    ForEach(MainTab.visibleTabs) { tab in
+                    ForEach(MainTab.allCases) { tab in
                         Label(tab.title, systemImage: tab.systemImage)
                             .tag(tab)
                     }

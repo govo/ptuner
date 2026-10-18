@@ -33,7 +33,7 @@ public final class TunerController: ObservableObject {
     /// 音频帧级的实时读数（电平、音高、多音读数）。
     ///
     /// 这是普通属性，不是 `@Published`：控制器对外发布的变化只包含启停、
-    /// 权限、设备与配置等低频状态。调音页 / 和弦页观察 `realtime` 本身，
+    /// 权限、设备与配置等低频状态。调音页观察 `realtime` 本身，
     /// 设置页、乐器页等观察控制器时不会被监听中的高频刷新牵连。
     public let realtime = TunerRealtimeState()
 

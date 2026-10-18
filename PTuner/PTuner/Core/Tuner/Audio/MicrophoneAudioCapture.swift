@@ -16,6 +16,13 @@ import Foundation
 import CoreAudio
 #endif
 
+/// 麦克风授权状态，供设置页展示与引导。
+nonisolated enum MicrophonePermissionStatus: Equatable {
+    case undetermined
+    case granted
+    case denied
+}
+
 nonisolated enum MicrophoneCaptureError: LocalizedError {
     case permissionDenied
     case noInput
@@ -82,6 +89,20 @@ nonisolated final class MicrophoneAudioCapture: @unchecked Sendable {
     private var observers: [NSObjectProtocol] = []
 
     // MARK: - 权限
+
+    /// 当前授权状态。不会触发系统弹窗。
+    static var permissionStatus: MicrophonePermissionStatus {
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted:
+            return .granted
+        case .denied:
+            return .denied
+        case .undetermined:
+            return .undetermined
+        @unknown default:
+            return .denied
+        }
+    }
 
     /// 请求（或读取）麦克风权限。已授权时不会弹窗。
     static func requestPermission() async -> Bool {
