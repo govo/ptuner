@@ -13,6 +13,7 @@ struct TunerHomeView: View {
     @ObservedObject private var quota = FreeUsageQuota.shared
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.usesWideLayout) private var usesWideLayout
     @AppStorage("ptuner.multiTuningEnabled") private var multiEnabled = false
     @StateObject private var verificationStore = PolyStringVerificationStore()
     @StateObject private var tonePlayer = TonePlayer()
@@ -121,6 +122,13 @@ struct TunerHomeView: View {
             }
         }
         .task {
+            #if DEBUG
+            if ScreenshotDemo.isActive {
+                // 截图演示模式：不启动真实音频，只按场景切换界面状态。
+                multiEnabled = ScreenshotDemo.scene == .multi
+                return
+            }
+            #endif
             settings.apply(to: tuner)
             applyEffectivePolyphony()
             quota.refreshNow()
@@ -137,6 +145,9 @@ struct TunerHomeView: View {
             }
         }
         .onChange(of: multiEnabled) { _, enabled in
+            #if DEBUG
+            if ScreenshotDemo.isActive { return }
+            #endif
             if enabled {
                 lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
                 applyEffectivePolyphony()
@@ -230,24 +241,24 @@ struct TunerHomeView: View {
 
     @ViewBuilder
     private var contentLayout: some View {
-        #if os(macOS)
-        HStack(alignment: .top, spacing: 18) {
-            tuningArea
-                .frame(maxWidth: .infinity, alignment: .top)
+        if usesWideLayout {
+            HStack(alignment: .top, spacing: 18) {
+                tuningArea
+                    .frame(maxWidth: .infinity, alignment: .top)
 
+                VStack(spacing: 14) {
+                    instrumentCard
+                    multiToggleCard
+                }
+                .frame(width: 310)
+            }
+        } else {
             VStack(spacing: 14) {
+                tuningArea
                 instrumentCard
                 multiToggleCard
             }
-            .frame(width: 310)
         }
-        #else
-        VStack(spacing: 14) {
-            tuningArea
-            instrumentCard
-            multiToggleCard
-        }
-        #endif
     }
 
     /// 唯一随单音/多音切换而变化的部分。
@@ -283,10 +294,12 @@ struct TunerHomeView: View {
                                    isRunning: tuner.isRunning,
                                    selectedDeviceUID: settings.preferredInputDeviceUID,
                                    onSelectDevice: selectInputDevice)
+                .layoutPriority(1)
             #else
             TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
                                    level: live.level,
                                    isRunning: tuner.isRunning)
+                .layoutPriority(1)
             #endif
         }
     }
@@ -867,6 +880,9 @@ struct TunerHomeView: View {
     }
 
     private func autoStartIfNeeded() {
+        #if DEBUG
+        guard !ScreenshotDemo.isActive else { return }
+        #endif
         guard !hasAutoStarted else { return }
         hasAutoStarted = true
         guard !tuner.isRunning, !tuner.isStarting else { return }

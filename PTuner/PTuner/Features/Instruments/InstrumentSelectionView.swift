@@ -5,6 +5,7 @@ import SwiftUI
 struct InstrumentSelectionView: View {
     @EnvironmentObject private var library: InstrumentLibrary
     @EnvironmentObject private var router: AppRouter
+    @Environment(\.usesWideLayout) private var usesWideLayout
 
     @State private var searchText = ""
     @State private var category: InstrumentCategory = .all
@@ -61,9 +62,13 @@ struct InstrumentSelectionView: View {
             }
         }
         #endif
-        .sheet(item: $editorContext) { context in
-            CustomTuningEditorView(preset: context.preset, isNew: context.isNew)
-                .environmentObject(library)
+        .modifier(EditorPresentation(context: $editorContext,
+                                     expanded: usesWideLayout,
+                                     library: library))
+        .onAppear {
+            #if DEBUG
+            presentScreenshotEditorIfNeeded()
+            #endif
         }
         .confirmationDialog(
             L10n.tr("删除自定义调弦"),
@@ -312,10 +317,53 @@ struct InstrumentSelectionView: View {
         let draft = library.makeDraft(instrument: InstrumentCatalog.instrument(id: "guitar"))
         editorContext = EditorContext(preset: draft, isNew: true)
     }
+
+    #if DEBUG
+    /// 截图演示：进入乐器页后自动打开自定义调弦编辑器。
+    private func presentScreenshotEditorIfNeeded() {
+        guard ScreenshotDemo.scene == .custom, editorContext == nil else { return }
+        Task { @MainActor in
+            #if os(macOS)
+            // macOS 需要先完成全屏动画，再弹出表单 sheet。
+            try? await Task.sleep(for: .milliseconds(1900))
+            #else
+            try? await Task.sleep(for: .milliseconds(400))
+            #endif
+            guard editorContext == nil else { return }
+            editorContext = EditorContext(preset: ScreenshotDemo.customDraft(in: library),
+                                          isNew: true)
+        }
+    }
+    #endif
 }
 
 private struct EditorContext: Identifiable {
     let id = UUID()
     let preset: TuningPreset
     let isNew: Bool
+}
+
+/// 编辑表单的呈现方式：常规尺寸用 sheet，宽屏（横屏 iPad）用全屏，
+/// 避免表单页高度不足把弦的音高设置截断。
+private struct EditorPresentation: ViewModifier {
+    @Binding var context: EditorContext?
+    let expanded: Bool
+    let library: InstrumentLibrary
+
+    func body(content: Content) -> some View {
+        #if os(macOS)
+        content.sheet(item: $context) { editor($0) }
+        #else
+        if expanded {
+            content.fullScreenCover(item: $context) { editor($0) }
+        } else {
+            content.sheet(item: $context) { editor($0) }
+        }
+        #endif
+    }
+
+    private func editor(_ context: EditorContext) -> some View {
+        CustomTuningEditorView(preset: context.preset, isNew: context.isNew)
+            .environmentObject(library)
+    }
 }

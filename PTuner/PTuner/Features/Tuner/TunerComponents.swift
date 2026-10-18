@@ -379,16 +379,38 @@ struct TunerInputStatusBar: View {
     @ObservedObject private var monitor = AudioInputDeviceMonitor.shared
     #endif
 
+    /// 截图演示：真实麦克风没有启动，但界面需要呈现稳定的运行中状态。
+    private var effectiveDeviceName: String? {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return ScreenshotDemo.inputDeviceName }
+        #endif
+        return deviceName
+    }
+
+    private var effectiveLevel: Float {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return ScreenshotDemo.inputLevel }
+        #endif
+        return level
+    }
+
+    private var effectiveIsRunning: Bool {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return true }
+        #endif
+        return isRunning
+    }
+
     private var hasSignal: Bool {
-        isRunning && level > 0.002
+        effectiveIsRunning && effectiveLevel > 0.002
     }
 
     private var levelRatio: CGFloat {
-        CGFloat(min(1, max(0, level * 16)))
+        CGFloat(min(1, max(0, effectiveLevel * 16)))
     }
 
     private var deviceLabelText: String {
-        deviceName ?? (isRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
+        effectiveDeviceName ?? (effectiveIsRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
     }
 
     private var deviceLabel: some View {
@@ -460,11 +482,11 @@ struct TunerInputStatusBar: View {
         HStack(spacing: 11) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill((isRunning ? AppTheme.success : AppTheme.tertiaryText).opacity(0.13))
+                    .fill((effectiveIsRunning ? AppTheme.success : AppTheme.tertiaryText).opacity(0.13))
 
-                Image(systemName: isRunning ? "mic.fill" : "mic.slash.fill")
+                Image(systemName: effectiveIsRunning ? "mic.fill" : "mic.slash.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(isRunning ? AppTheme.success : AppTheme.tertiaryText)
+                    .foregroundStyle(effectiveIsRunning ? AppTheme.success : AppTheme.tertiaryText)
             }
             .frame(width: 34, height: 34)
 
@@ -501,7 +523,7 @@ struct TunerInputStatusBar: View {
                 }
                 .frame(width: 76, height: 6)
 
-                Text(hasSignal ? L10n.tr("有输入") : (isRunning ? L10n.tr("无输入") : L10n.tr("已停止")))
+                Text(hasSignal ? L10n.tr("有输入") : (effectiveIsRunning ? L10n.tr("无输入") : L10n.tr("已停止")))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(hasSignal ? AppTheme.success : AppTheme.tertiaryText)
             }
@@ -536,16 +558,38 @@ struct TunerHeaderInputStatus: View {
     @State private var isHovering = false
     #endif
 
+    /// 截图演示：真实麦克风没有启动，但界面需要呈现稳定的运行中状态。
+    private var effectiveDeviceName: String? {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return ScreenshotDemo.inputDeviceName }
+        #endif
+        return deviceName
+    }
+
+    private var effectiveLevel: Float {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return ScreenshotDemo.inputLevel }
+        #endif
+        return level
+    }
+
+    private var effectiveIsRunning: Bool {
+        #if DEBUG
+        if ScreenshotDemo.isActive { return true }
+        #endif
+        return isRunning
+    }
+
     private var hasSignal: Bool {
-        isRunning && level > 0.002
+        effectiveIsRunning && effectiveLevel > 0.002
     }
 
     private var levelRatio: CGFloat {
-        CGFloat(min(1, max(0, level * 16)))
+        CGFloat(min(1, max(0, effectiveLevel * 16)))
     }
 
     private var deviceLabelText: String {
-        deviceName ?? (isRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
+        effectiveDeviceName ?? (effectiveIsRunning ? L10n.tr("输入设备不可用") : L10n.tr("未开始监听"))
     }
 
     private var isHighlighted: Bool {
@@ -587,16 +631,11 @@ struct TunerHeaderInputStatus: View {
 
     private func content(showsChevron: Bool) -> some View {
         HStack(spacing: 7) {
-            Image(systemName: isRunning ? "mic.fill" : "mic.slash.fill")
+            Image(systemName: effectiveIsRunning ? "mic.fill" : "mic.slash.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(hasSignal ? AppTheme.success : AppTheme.tertiaryText)
 
-            Text(deviceLabelText)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(AppTheme.secondaryText)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: deviceNameMaxWidth, alignment: .leading)
+            deviceLabelView
 
             levelMeter
 
@@ -650,12 +689,24 @@ struct TunerHeaderInputStatus: View {
         return hasSignal ? AppTheme.success.opacity(0.3) : AppTheme.cardBorder
     }
 
-    private var deviceNameMaxWidth: CGFloat {
+    /// 设备名按内容取自然宽度：固定上限会先占满可用空间，
+    /// 反而把两侧的标题和电平条挤到截断。macOS 窗口宽但设备名可能很长，
+    /// 仍然保留 180pt 上限。
+    @ViewBuilder
+    private var deviceLabelView: some View {
         #if os(macOS)
-        180
+        deviceLabel.frame(maxWidth: 180, alignment: .leading)
         #else
-        100
+        deviceLabel
         #endif
+    }
+
+    private var deviceLabel: some View {
+        Text(deviceLabelText)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(AppTheme.secondaryText)
+            .lineLimit(1)
+            .truncationMode(.middle)
     }
 
     private var levelMeter: some View {

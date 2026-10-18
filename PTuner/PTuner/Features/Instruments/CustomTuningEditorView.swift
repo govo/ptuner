@@ -118,7 +118,9 @@ struct CustomTuningEditorView: View {
                         Text(L10n.tr("乐器类型"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(AppTheme.primaryText)
-                            .frame(width: 64, alignment: .leading)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(minWidth: 64, alignment: .leading)
 
                         Spacer()
 
@@ -340,7 +342,9 @@ struct CustomTuningEditorView: View {
             Text(centsLabel(string.centsOffset))
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundStyle(abs(string.centsOffset) < 0.5 ? AppTheme.secondaryText : AppTheme.accent)
-                .frame(width: 56)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(width: 64)
 
             Button {
                 updateString(at: index) { $0.centsOffset = min(100, $0.centsOffset + 1) }

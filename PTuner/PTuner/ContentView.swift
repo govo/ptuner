@@ -1,6 +1,10 @@
 import RevenueCatPaywallKit
 import SwiftUI
 
+#if !os(macOS)
+import UIKit
+#endif
+
 // MARK: - 非观察型环境注入
 
 /// 只传递 TunerController 的引用，不订阅其 objectWillChange。
@@ -27,12 +31,20 @@ struct ContentView: View {
     @StateObject private var router = AppRouter()
 
     var body: some View {
-        Group {
-            #if os(macOS)
-            macLayout
-            #else
-            iosLayout
-            #endif
+        GeometryReader { proxy in
+            Group {
+                #if os(macOS)
+                splitLayout
+                #else
+                if usesWideLayout(for: proxy.size) {
+                    splitLayout
+                } else {
+                    iosLayout
+                }
+                #endif
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .environment(\.usesWideLayout, usesWideLayout(for: proxy.size))
         }
         .id(appLanguage.refreshID)
         .tint(AppTheme.accent)
@@ -46,6 +58,12 @@ struct ContentView: View {
         .environmentObject(router)
         .onChange(of: settings.stability) { _, _ in
             tuner.setDisplaySmoothing(settings.stability.smoothingFactor)
+        }
+        .task {
+            #if DEBUG
+            ScreenshotDemo.prepare(live: tuner.realtime, library: library)
+            ScreenshotDemo.enterFullScreenIfNeeded()
+            #endif
         }
     }
 
@@ -89,12 +107,11 @@ struct ContentView: View {
     }
     #endif
 
-    // MARK: - macOS
+    // MARK: - 宽屏双栏（macOS / 横屏 iPad）
 
-    #if os(macOS)
-    private var macLayout: some View {
+    private var splitLayout: some View {
         NavigationSplitView {
-            List(selection: $router.selectedTab) {
+            List(selection: tabSelection) {
                 Section("PTuner") {
                     ForEach(MainTab.allCases) { tab in
                         Label(tab.title, systemImage: tab.systemImage)
@@ -106,19 +123,40 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
         } detail: {
             NavigationStack {
-                switch router.selectedTab {
-                case .tuner:
-                    TunerHomeView()
-                case .chord:
-                    ChordRecognitionView()
-                case .instruments:
-                    InstrumentSelectionView()
-                case .settings:
-                    SettingsView()
-                }
+                detailView
             }
         }
         .navigationSplitViewStyle(.balanced)
     }
-    #endif
+
+    /// iOS 的 List(selection:) 只接受可选值；macOS 与 iPad 共用这一份绑定。
+    private var tabSelection: Binding<MainTab?> {
+        Binding(
+            get: { router.selectedTab },
+            set: { if let tab = $0 { router.selectedTab = tab } }
+        )
+    }
+
+    @ViewBuilder
+    private var detailView: some View {
+        switch router.selectedTab {
+        case .tuner:
+            TunerHomeView()
+        case .chord:
+            ChordRecognitionView()
+        case .instruments:
+            InstrumentSelectionView()
+        case .settings:
+            SettingsView()
+        }
+    }
+
+    /// 横屏 iPad 使用侧边栏 + 内容；iPhone 与竖屏 iPad 保持底部标签栏。
+    private func usesWideLayout(for size: CGSize) -> Bool {
+        #if os(macOS)
+        return true
+        #else
+        return UIDevice.current.userInterfaceIdiom == .pad && size.width > size.height
+        #endif
+    }
 }

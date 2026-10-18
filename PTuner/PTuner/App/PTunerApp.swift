@@ -48,7 +48,13 @@ struct PTunerApp: App {
                 }
         }
         #if os(macOS)
+        // 截图模式固定 1280×800（Retina 下即 2560×1600，对应 App Store macOS 截图尺寸）。
+        #if DEBUG
+        .defaultSize(width: ScreenshotDemo.isActive ? 1280 : 1080,
+                     height: ScreenshotDemo.isActive ? 800 : 740)
+        #else
         .defaultSize(width: 1080, height: 740)
+        #endif
         .windowResizability(.contentMinSize)
         #endif
     }

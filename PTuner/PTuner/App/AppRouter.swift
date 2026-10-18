@@ -31,7 +31,15 @@ enum MainTab: String, CaseIterable, Identifiable, Hashable {
 
 @MainActor
 final class AppRouter: ObservableObject {
-    @Published var selectedTab: MainTab = .tuner
+    @Published var selectedTab: MainTab
+
+    init() {
+        #if DEBUG
+        selectedTab = ScreenshotDemo.initialTab ?? .tuner
+        #else
+        selectedTab = .tuner
+        #endif
+    }
 
     func showTuner() {
         selectedTab = .tuner

@@ -102,6 +102,12 @@ AuthKey_*.p8
 **/fastlane/Preview.html
 .staging-screenshots/
 
+# ---------- 营销截图物料 ----------
+# 原始截图与合成预览体积大（约 340MB），且可由模拟器截图 + 合成脚本重新生成，
+# 不入库；只提交 doc/marketing/compose_screenshots.py。
+doc/screenshots-raw/
+doc/marketing/preview/
+
 # ---------- 日志与诊断 ----------
 *.log
 *.crash

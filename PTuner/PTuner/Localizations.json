@@ -520,7 +520,10 @@
     "麦克风输入格式不可用": "Microphone input format unavailable",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "Microphone audio is used only for real-time pitch detection and is never uploaded.",
     "鼓AI": "Drum AI",
-    "齐特琴": "Zither"
+    "齐特琴": "Zither",
+    "按乐器弦数自动检测": "Auto-detect from instrument strings",
+    "最大同时检测音数": "Max simultaneous notes",
+    "这个调弦包含的弦数，最多 %d 根。": "Number of strings in this tuning, up to %d."
   },
   "zh-Hant": {
     "%+.0f cents": "%+.0f 音分",
@@ -1043,7 +1046,10 @@
     "麦克风输入格式不可用": "麥克風輸入格式無法使用",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "麥克風音訊只用於即時音高偵測，不會上傳伺服器。",
     "鼓AI": "鼓機AI",
-    "齐特琴": "齊特琴"
+    "齐特琴": "齊特琴",
+    "按乐器弦数自动检测": "按樂器弦數自動偵測",
+    "最大同时检测音数": "最大同時偵測音數",
+    "这个调弦包含的弦数，最多 %d 根。": "這個調弦包含的弦數，最多 %d 根。"
   },
   "ja": {
     "%+.0f cents": "%+.0f セント",
@@ -1566,7 +1572,10 @@
     "麦克风输入格式不可用": "マイク入力フォーマットを利用できません",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "マイク音声はリアルタイムの音高検出にのみ使用され、アップロードされることはありません。",
     "鼓AI": "ドラムAI",
-    "齐特琴": "ツィター"
+    "齐特琴": "ツィター",
+    "按乐器弦数自动检测": "楽器の弦数から自動検出",
+    "最大同时检测音数": "同時検出できる最大音数",
+    "这个调弦包含的弦数，最多 %d 根。": "このチューニングに含まれる弦数（最大 %d 本）。"
   },
   "ko": {
     "%+.0f cents": "%+.0f 센트",
@@ -2089,7 +2098,10 @@
     "麦克风输入格式不可用": "마이크 입력 형식을 사용할 수 없음",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "마이크 오디오는 실시간 음높이 감지에만 사용되며 업로드되지 않습니다.",
     "鼓AI": "Drum AI",
-    "齐特琴": "치터"
+    "齐特琴": "치터",
+    "按乐器弦数自动检测": "악기 줄 수에 따라 자동 감지",
+    "最大同时检测音数": "동시에 감지할 최대 음 수",
+    "这个调弦包含的弦数，最多 %d 根。": "이 튜닝에 포함되는 줄 수(최대 %d개)."
   },
   "es": {
     "%+.0f cents": "%+.0f cents",
@@ -2295,7 +2307,7 @@
     "启动失败: %@": "Error al iniciar: %@",
     "启动麦克风…": "Iniciando micrófono…",
     "和弦": "Acordes",
-    "和弦识别": "Reconocimiento de acordes",
+    "和弦识别": "Acordes",
     "和弦识别是 Pro 功能": "El reconocimiento de acordes es una función Pro",
     "哈当厄尔小提琴": "Violín de Hardanger",
     "喜欢 PTuner 吗？": "¿Te gusta PTuner?",
@@ -2612,7 +2624,10 @@
     "麦克风输入格式不可用": "Formato de entrada del micrófono no disponible",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "El audio del micrófono solo se usa para la detección de tono en tiempo real y nunca se sube.",
     "鼓AI": "Drum AI",
-    "齐特琴": "Cítara"
+    "齐特琴": "Cítara",
+    "按乐器弦数自动检测": "Detectar según las cuerdas del instrumento",
+    "最大同时检测音数": "Máximo de notas simultáneas",
+    "这个调弦包含的弦数，最多 %d 根。": "Número de cuerdas de esta afinación, hasta %d."
   },
   "de": {
     "%+.0f cents": "%+.0f Cent",
@@ -2818,7 +2833,7 @@
     "启动失败: %@": "Start fehlgeschlagen: %@",
     "启动麦克风…": "Mikrofon wird gestartet…",
     "和弦": "Akkorde",
-    "和弦识别": "Akkorderkennung",
+    "和弦识别": "Akkorde",
     "和弦识别是 Pro 功能": "Akkorderkennung ist eine Pro-Funktion",
     "哈当厄尔小提琴": "Hardangerfiedel",
     "喜欢 PTuner 吗？": "Gefällt dir PTuner?",
@@ -3135,7 +3150,10 @@
     "麦克风输入格式不可用": "Mikrofoneingangsformat nicht verfügbar",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "Mikrofon-Audio wird nur zur Echtzeit-Tonhöhenerkennung verwendet und nie hochgeladen.",
     "鼓AI": "Drum AI",
-    "齐特琴": "Zither"
+    "齐特琴": "Zither",
+    "按乐器弦数自动检测": "Automatisch je nach Saitenzahl des Instruments",
+    "最大同时检测音数": "Maximale Anzahl gleichzeitiger Töne",
+    "这个调弦包含的弦数，最多 %d 根。": "Anzahl der Saiten dieser Stimmung, maximal %d."
   },
   "fr": {
     "%+.0f cents": "%+.0f cents",
@@ -3341,7 +3359,7 @@
     "启动失败: %@": "Échec du démarrage : %@",
     "启动麦克风…": "Démarrage du micro…",
     "和弦": "Accords",
-    "和弦识别": "Reconnaissance d'accords",
+    "和弦识别": "Accords",
     "和弦识别是 Pro 功能": "La reconnaissance d'accords est une fonction Pro",
     "哈当厄尔小提琴": "Violon de Hardanger",
     "喜欢 PTuner 吗？": "PTuner vous plaît ?",
@@ -3658,7 +3676,10 @@
     "麦克风输入格式不可用": "Format d'entrée du micro indisponible",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "L'audio du micro sert uniquement à la détection de hauteur en temps réel et n'est jamais envoyé.",
     "鼓AI": "Drum AI",
-    "齐特琴": "Cithare"
+    "齐特琴": "Cithare",
+    "按乐器弦数自动检测": "Détection selon les cordes de l'instrument",
+    "最大同时检测音数": "Nombre maximal de notes simultanées",
+    "这个调弦包含的弦数，最多 %d 根。": "Nombre de cordes de cet accordage, jusqu'à %d."
   },
   "it": {
     "%+.0f cents": "%+.0f cent",
@@ -3864,7 +3885,7 @@
     "启动失败: %@": "Avvio non riuscito: %@",
     "启动麦克风…": "Avvio del microfono…",
     "和弦": "Accordi",
-    "和弦识别": "Riconoscimento accordi",
+    "和弦识别": "Accordi",
     "和弦识别是 Pro 功能": "Il riconoscimento degli accordi è una funzione Pro",
     "哈当厄尔小提琴": "Violino di Hardanger",
     "喜欢 PTuner 吗？": "Ti piace PTuner?",
@@ -4181,6 +4202,9 @@
     "麦克风输入格式不可用": "Formato di ingresso del microfono non disponibile",
     "麦克风音频只用于实时音高检测，不会上传服务器。": "L'audio del microfono viene usato solo per il rilevamento dell'intonazione in tempo reale e non viene mai caricato.",
     "鼓AI": "Drum AI",
-    "齐特琴": "Cetra"
+    "齐特琴": "Cetra",
+    "按乐器弦数自动检测": "Rilevamento in base alle corde dello strumento",
+    "最大同时检测音数": "Numero massimo di note simultanee",
+    "这个调弦包含的弦数，最多 %d 根。": "Numero di corde di questa accordatura, fino a %d."
   }
 }

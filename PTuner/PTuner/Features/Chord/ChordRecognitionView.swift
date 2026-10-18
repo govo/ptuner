@@ -12,6 +12,7 @@ struct ChordRecognitionView: View {
     @ObservedObject private var quota = FreeUsageQuota.shared
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.usesWideLayout) private var usesWideLayout
     /// 和弦识别必须由用户主动开始，进入页面不自动监听。
     @State private var isChordListening = false
     @State private var lastPolyAnalyzedSeconds: Double = 0
@@ -62,6 +63,14 @@ struct ChordRecognitionView: View {
             }
         }
         .onAppear {
+            #if DEBUG
+            if ScreenshotDemo.scene == .chord {
+                // 截图演示：直接进入监听状态，读数由启动参数注入。
+                isChordListening = true
+                lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
+                return
+            }
+            #endif
             quota.refreshNow()
             lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
         }
@@ -166,10 +175,12 @@ struct ChordRecognitionView: View {
                                    isRunning: isChordListening,
                                    selectedDeviceUID: settings.preferredInputDeviceUID,
                                    onSelectDevice: selectInputDevice)
+                .layoutPriority(1)
             #else
             TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
                                    level: isChordListening ? live.level : 0,
                                    isRunning: isChordListening)
+                .layoutPriority(1)
             #endif
         }
     }
@@ -185,19 +196,19 @@ struct ChordRecognitionView: View {
 
     @ViewBuilder
     private var contentLayout: some View {
-        #if os(macOS)
-        HStack(alignment: .top, spacing: 18) {
-            chordPanel
-                .frame(maxWidth: .infinity)
-            chordControlCard
-                .frame(width: 310)
+        if usesWideLayout {
+            HStack(alignment: .top, spacing: 18) {
+                chordPanel
+                    .frame(maxWidth: .infinity)
+                chordControlCard
+                    .frame(width: 310)
+            }
+        } else {
+            VStack(spacing: 14) {
+                chordPanel
+                chordControlCard
+            }
         }
-        #else
-        VStack(spacing: 14) {
-            chordPanel
-            chordControlCard
-        }
-        #endif
     }
 
     @ViewBuilder

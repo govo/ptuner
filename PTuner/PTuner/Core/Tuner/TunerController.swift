@@ -251,6 +251,13 @@ public final class TunerController: ObservableObject {
         activeInputDeviceName = inputMonitor.devices.first(where: \.isDefault)?.name
             ?? AudioInputDevices.all().first(where: \.isDefault)?.name
         #else
+        #if DEBUG
+        // 截图演示模式不查询系统输入设备：访问 availableInputs 会弹出麦克风权限框。
+        if ScreenshotDemo.isActive {
+            activeInputDeviceName = ScreenshotDemo.inputDeviceName
+            return
+        }
+        #endif
         activeInputDeviceName = AudioInputDevices.currentInputName()
         #endif
     }
@@ -329,10 +336,8 @@ public final class TunerController: ObservableObject {
         guard enabled != polyphonicEnabled else { return }
 
         polyphonicEnabled = enabled
-        realtime.polyNotes = []
-        realtime.polyReadouts = []
-        realtime.polyAnalyzedSeconds = 0
-        realtime.polyInferenceMs = 0
+        // 截图演示注入的读数不能被通道开关清掉。
+        clearPolyRealtimeIfNeeded()
         errorText = nil
 
         guard enabled else {
@@ -354,9 +359,7 @@ public final class TunerController: ObservableObject {
         guard clamped != maxPolyphony else { return }
 
         maxPolyphony = clamped
-        realtime.polyNotes = []
-        realtime.polyReadouts = []
-        realtime.polyAnalyzedSeconds = 0
+        clearPolyRealtimeIfNeeded()
         engine?.setPolyphonyLimit(clamped)
 
         if isRunning, polyphonicEnabled, !isPreparingPoly {
@@ -455,6 +458,17 @@ public final class TunerController: ObservableObject {
                 self.errorText = L10n.tr("多音识别: %@", error.localizedDescription)
             }
         }
+    }
+
+    /// 清空多音实时读数；截图演示注入的数据需要保留。
+    private func clearPolyRealtimeIfNeeded() {
+        #if DEBUG
+        guard !ScreenshotDemo.isActive else { return }
+        #endif
+        realtime.polyNotes = []
+        realtime.polyReadouts = []
+        realtime.polyAnalyzedSeconds = 0
+        realtime.polyInferenceMs = 0
     }
 
     private func resetRealtimeState() {
