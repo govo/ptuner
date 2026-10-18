@@ -10,12 +10,15 @@ struct TunerHomeView: View {
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var paywallManager: RevenueCatPaywallManager
     @ObservedObject private var proAccess = ProAccessController.shared
+    @ObservedObject private var quota = FreeUsageQuota.shared
 
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("ptuner.multiTuningEnabled") private var multiEnabled = false
     @StateObject private var verificationStore = PolyStringVerificationStore()
     @StateObject private var tonePlayer = TonePlayer()
     @State private var hasAutoStarted = false
+    @State private var lastPolyAnalyzedSeconds: Double = 0
+    @State private var quotaAlert: FreeUsageQuota.Limit?
 
     // MARK: - 派生数据
 
@@ -46,6 +49,11 @@ struct TunerHomeView: View {
 
     private var proUnlocked: Bool {
         proAccess.isPro(paywallManager)
+    }
+
+    /// 免费用户的每日 / 每周额度用尽后，多音开关变成 Pro 锁。
+    private var polyphonyLocked: Bool {
+        !proUnlocked && quota.exhaustion != nil
     }
 
     /// 乐器模式跟随乐器弦数，半音阶模式使用用户在设置中选择的值。
@@ -115,7 +123,9 @@ struct TunerHomeView: View {
         .task {
             settings.apply(to: tuner)
             applyEffectivePolyphony()
-            if multiEnabled && !proUnlocked {
+            quota.refreshNow()
+            lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
+            if multiEnabled && polyphonyLocked {
                 multiEnabled = false
             }
             tuner.setMultiStringTuningEnabled(multiEnabled)
@@ -128,6 +138,7 @@ struct TunerHomeView: View {
         }
         .onChange(of: multiEnabled) { _, enabled in
             if enabled {
+                lastPolyAnalyzedSeconds = live.polyAnalyzedSeconds
                 applyEffectivePolyphony()
             } else {
                 verificationStore.reset()
@@ -136,8 +147,30 @@ struct TunerHomeView: View {
             AppDiagnostics.breadcrumb(.tuner, enabled ? "multi_on" : "multi_off")
         }
         .onChange(of: proUnlocked) { _, unlocked in
-            if !unlocked && multiEnabled {
+            // 降级为免费用户时，如果额度已经用尽，立即停止多音。
+            if !unlocked, multiEnabled, quota.exhaustion != nil {
                 multiEnabled = false
+            }
+        }
+        .onChange(of: live.polyAnalyzedSeconds) { _, seconds in
+            defer { lastPolyAnalyzedSeconds = seconds }
+            guard multiEnabled,
+                  tuner.isRunning,
+                  tuner.polyphonicEnabled,
+                  !proUnlocked else { return }
+
+            let delta = seconds - lastPolyAnalyzedSeconds
+            // 重置或异常跳变不计入额度。
+            guard delta > 0, delta < 5 else { return }
+            quota.recordPolyphonic(seconds: delta)
+        }
+        .onChange(of: quota.exhaustion) { _, limit in
+            guard let limit else { return }
+            if multiEnabled {
+                multiEnabled = false
+            }
+            if !proUnlocked {
+                quotaAlert = limit
             }
         }
         .onChange(of: tuner.polyphonyDemands) { _, demands in
@@ -164,8 +197,31 @@ struct TunerHomeView: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .active, tuner.permissionDenied, !tuner.isRunning else { return }
+            guard phase == .active else { return }
+            quota.refreshNow()
+            guard tuner.permissionDenied, !tuner.isRunning else { return }
             tuner.start()
+        }
+        .alert(
+            quotaAlert?.title ?? "",
+            isPresented: Binding(
+                get: { quotaAlert != nil },
+                set: { if !$0 { quotaAlert = nil } }
+            )
+        ) {
+            Button(L10n.tr("升级 Pro")) {
+                quotaAlert = nil
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(250))
+                    presentMultiPaywall()
+                }
+            }
+
+            Button(L10n.tr("以后再说"), role: .cancel) {
+                quotaAlert = nil
+            }
+        } message: {
+            Text(quotaAlert?.message ?? "")
         }
     }
 
@@ -415,7 +471,7 @@ struct TunerHomeView: View {
 
     /// 点击弦位时播放该弦的目标音高（已计入音分偏移与 A4 参考音高）。
     private func playReferenceTone(frequency: Double) {
-        tonePlayer.play(frequency: frequency)
+        tonePlayer.play(frequency: frequency, waveform: settings.referenceToneWaveform)
     }
 
     /// 参考图里的音准胶囊：显示音分读数，颜色与光晕跟随音准状态。
@@ -692,7 +748,11 @@ struct TunerHomeView: View {
 
                 Spacer(minLength: 8)
 
-                TunerSwitch(isOn: multiBinding)
+                if polyphonyLocked {
+                    proLockChip
+                } else {
+                    TunerSwitch(isOn: multiBinding)
+                }
             }
 
             Divider()
@@ -741,13 +801,49 @@ struct TunerHomeView: View {
                     multiEnabled = false
                     return
                 }
-                guard proUnlocked else {
-                    presentMultiPaywall()
+                guard !proUnlocked else {
+                    multiEnabled = true
+                    return
+                }
+                quota.refreshNow()
+                if let limit = quota.exhaustion {
+                    quotaAlert = limit
+                    multiEnabled = false
                     return
                 }
                 multiEnabled = true
             }
         )
+    }
+
+    /// 额度用尽后替代开关的 Pro 锁。点击弹出升级提示，关闭则保持锁定。
+    private var proLockChip: some View {
+        Button {
+            quota.refreshNow()
+            if let limit = quota.exhaustion {
+                quotaAlert = limit
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 10, weight: .bold))
+
+                Text("Pro")
+                    .font(.system(size: 11, weight: .heavy, design: .rounded))
+            }
+            .foregroundStyle(AppTheme.warning)
+            .padding(.horizontal, 11)
+            .frame(height: 28)
+            .background(
+                Capsule().fill(AppTheme.warning.opacity(0.15))
+            )
+            .overlay(
+                Capsule().stroke(AppTheme.warning.opacity(0.35), lineWidth: 0.8)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L10n.tr("多音调音"))
     }
 
     // MARK: - 启停

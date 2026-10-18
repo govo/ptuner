@@ -85,6 +85,11 @@ final class TunerSettings: ObservableObject {
         didSet { defaults.set(stability.rawValue, forKey: Keys.stability) }
     }
 
+    /// 点击音名试听时使用的参考音波形。
+    @Published var referenceToneWaveform: ReferenceToneWaveform {
+        didSet { defaults.set(referenceToneWaveform.rawValue, forKey: Keys.referenceToneWaveform) }
+    }
+
     @Published var maxPolyphony: Int {
         didSet { defaults.set(maxPolyphony, forKey: Keys.maxPolyphony) }
     }
@@ -101,6 +106,7 @@ final class TunerSettings: ObservableObject {
         static let centsPrecision = "ptuner.settings.centsPrecision"
         static let indicatorStyle = "ptuner.settings.indicatorStyle"
         static let stability = "ptuner.settings.stability"
+        static let referenceToneWaveform = "ptuner.settings.referenceToneWaveform"
         static let maxPolyphony = "ptuner.settings.maxPolyphony"
         static let preferredInputDeviceUID = "ptuner.settings.preferredInputDeviceUID"
     }
@@ -114,6 +120,7 @@ final class TunerSettings: ObservableObject {
         centsPrecision = CentsPrecision(rawValue: defaults.string(forKey: Keys.centsPrecision) ?? "") ?? .tenth
         indicatorStyle = IndicatorStyle(rawValue: defaults.string(forKey: Keys.indicatorStyle) ?? "") ?? .needle
         stability = DisplayStability(rawValue: defaults.string(forKey: Keys.stability) ?? "") ?? .balanced
+        referenceToneWaveform = ReferenceToneWaveform(rawValue: defaults.string(forKey: Keys.referenceToneWaveform) ?? "") ?? .square
 
         let storedPolyphony = defaults.integer(forKey: Keys.maxPolyphony)
         maxPolyphony = (2...12).contains(storedPolyphony) ? storedPolyphony : 6

@@ -2,7 +2,22 @@ import AVFoundation
 import Combine
 import Foundation
 
-/// 参考音播放器：用正弦波播放指定频率，供点击弦位时试听目标音高。
+/// 参考音波形。方波谐波更丰富，听感更明显，作为默认值。
+nonisolated enum ReferenceToneWaveform: String, CaseIterable, Identifiable, Sendable {
+    case square
+    case sine
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .square: return L10n.tr("方波")
+        case .sine: return L10n.tr("正弦波")
+        }
+    }
+}
+
+/// 参考音播放器：用指定波形播放音高，供点击弦位时试听目标音高。
 /// 每次播放都会打断上一段，播放固定时长后自然结束。
 @MainActor
 final class TonePlayer: ObservableObject {
@@ -14,9 +29,11 @@ final class TonePlayer: ObservableObject {
 
     private var player: AVAudioPlayer?
 
-    func play(frequency: Double) {
+    func play(frequency: Double, waveform: ReferenceToneWaveform = .square) {
         guard frequency.isFinite, frequency > 0,
-              let data = Self.makeSineWave(frequency: frequency, duration: duration) else { return }
+              let data = Self.makeWave(frequency: frequency,
+                                       duration: duration,
+                                       waveform: waveform) else { return }
 
         player?.stop()
 
@@ -40,14 +57,17 @@ final class TonePlayer: ObservableObject {
 
     /// 生成一段 16-bit 单声道 WAV 数据。
     /// 首尾加入淡入淡出，避免起止时的爆音。
-    private static func makeSineWave(frequency: Double, duration: TimeInterval) -> Data? {
+    private static func makeWave(frequency: Double,
+                                 duration: TimeInterval,
+                                 waveform: ReferenceToneWaveform) -> Data? {
         let sampleRate = 44_100.0
         let frameCount = Int(sampleRate * duration)
         guard frameCount > 0 else { return nil }
 
         let attackFrames = max(1, Int(sampleRate * 0.015))
         let releaseFrames = max(1, min(frameCount / 2, Int(sampleRate * 0.15)))
-        let amplitude = 0.95
+        // 方波的感知响度明显高于正弦波，用更低振幅避免刺耳与削波。
+        let amplitude = waveform == .square ? 0.55 : 0.95
 
         var samples = [Int16](repeating: 0, count: frameCount)
         for index in 0..<frameCount {
@@ -60,7 +80,16 @@ final class TonePlayer: ObservableObject {
             if remaining < releaseFrames {
                 gain = min(gain, Double(remaining) / Double(releaseFrames))
             }
-            let value = sin(phase) * amplitude * gain * Double(Int16.max)
+
+            let sample: Double
+            switch waveform {
+            case .sine:
+                sample = sin(phase)
+            case .square:
+                sample = sin(phase) >= 0 ? 1.0 : -1.0
+            }
+
+            let value = sample * amplitude * gain * Double(Int16.max)
             samples[index] = Int16(clamping: Int(value.rounded()))
         }
 

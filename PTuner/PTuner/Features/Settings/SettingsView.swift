@@ -26,6 +26,7 @@ struct SettingsView: View {
         case precision
         case indicatorStyle
         case stability
+        case referenceToneWaveform
 
         var id: String { rawValue }
 
@@ -35,6 +36,7 @@ struct SettingsView: View {
             case .precision: return L10n.tr("音准显示精度")
             case .indicatorStyle: return L10n.tr("指示器显示方式")
             case .stability: return L10n.tr("稳定度")
+            case .referenceToneWaveform: return L10n.tr("参考音波形")
             }
         }
     }
@@ -141,6 +143,13 @@ struct SettingsView: View {
                 }
             }
 
+        case .referenceToneWaveform:
+            ForEach(ReferenceToneWaveform.allCases) { waveform in
+                Button(waveform.title) {
+                    settings.referenceToneWaveform = waveform
+                }
+            }
+
         case nil:
             EmptyView()
         }
@@ -229,7 +238,13 @@ struct SettingsView: View {
                       iconTint: AppTheme.warning,
                       title: L10n.tr("稳定度"),
                       value: settings.stability.title,
-                      option: .stability,
+                      option: .stability)
+
+            optionRow(icon: "waveform",
+                      iconTint: AppTheme.gaugeBlue,
+                      title: L10n.tr("参考音波形"),
+                      value: settings.referenceToneWaveform.title,
+                      option: .referenceToneWaveform,
                       showsDivider: false)
         }
     }
