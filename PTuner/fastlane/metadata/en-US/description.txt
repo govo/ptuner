@@ -1,0 +1,28 @@
+PTuner — tune every instrument with one app.
+
+Whether you just picked up a guitar or play every day, tuning comes first. PTuner turns every pluck, bow and strum into clear, steady, trustworthy visual feedback.
+
+[Single-note tuning — one note, dead on]
+Play a string and see the note name, frequency and cents deviation in real time. A needle-style meter with a green in-tune zone shows sharp or flat at a glance, so you no longer have to guess by ear.
+
+[Polyphonic tuning — the whole instrument at once]
+PTuner detects several strings at the same time and shows each string's deviation independently. Sweep all six strings and check the entire instrument in one pass.
+
+[54 instruments, East and West]
+Guitar, bass, ukulele, violin, cello, erhu, guzheng, pipa, ruan, guqin, dombra, sitar and more — from Western strings to Chinese traditional instruments and world instruments. 54 instruments and 134 tunings built in.
+
+[Custom tunings — find your sweet spot]
+Every instrument resonates differently. Set any number of strings, any pitch and any cents offset, then fine-tune each string until chords ring at their best. Create, edit and save your own tuning, ready the next time you open the app.
+
+[Chord recognition — hear what you play]
+Recognize the chord you are playing in real time, with its name and component notes. An extra ear for practice, writing and learning songs by ear.
+
+[Built for the stage and the practice room]
+- Dark, professional interface that stays readable in low light
+- Adjustable reference pitch from 400 to 480 Hz
+- Needle and bar indicators
+- Fast, balanced and stable response modes
+- Available on iPhone, iPad and Mac
+- English, 简体中文, 繁體中文, 日本語, 한국어, Español, Deutsch, Français, Italiano
+
+Get in tune, and hear music the way it was meant to sound.

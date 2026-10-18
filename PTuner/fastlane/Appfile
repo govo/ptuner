@@ -1,0 +1,10 @@
+# Fastlane Appfile — shared identifiers for this app
+# PTuner App Store Connect identifiers
+
+app_identifier("online.c1c1.ptuner")
+apple_id("6824013425")
+team_id("9RRNVTE2RE")
+
+# App Store Connect API key (can also be read from ENV in Fastfile)
+# Uncomment and fill if you prefer credentials in Appfile:
+# json_key_file("__KEY_FILEPATH__")

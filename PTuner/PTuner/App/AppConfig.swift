@@ -10,8 +10,8 @@ import RevenueCatPaywallKit
 enum AppConfig {
     enum RevenueCat {
         static let entitlementID = "PTuner Pro"
-        static let apiKeyDebug = "test_PLACEHOLDER"
-        static let apiKeyRelease = "appl_PLACEHOLDER"
+        static let apiKeyDebug = "test_jiadKsBHZcJGCigTZcsxzGRlZaj"
+        static let apiKeyRelease = "appl_nbraQyYMEVtzUcQqcYQmRAFFyhI"
         static let offeringID = "default"
     }
 

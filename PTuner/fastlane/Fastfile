@@ -1,0 +1,591 @@
+# Fastlane Fastfile — PTuner App Store Connect automation lanes
+#
+# 发版约束（与项目 CLAUDE.md 一致）：
+# - 默认只上传二进制；商店元数据与截图必须显式开启才会改动。
+# - 截图/预览的上传默认不删除 ASC 上已有内容，只有显式传 overwrite: true 才整集覆盖。
+
+require "json"
+require "tempfile"
+require "spaceship"
+
+default_platform(:ios)
+
+APP_IDENTIFIER = "online.c1c1.ptuner"
+APPLE_ID = "6824013425"
+
+APP_STORE_CONNECT_ISSUER_ID = ENV["APP_STORE_CONNECT_ISSUER_ID"]
+APP_STORE_CONNECT_KEY_ID = ENV["APP_STORE_CONNECT_KEY_ID"]
+APP_STORE_CONNECT_KEY_FILEPATH = ENV["APP_STORE_CONNECT_KEY_FILEPATH"]
+
+def api_key
+  app_store_connect_api_key(
+    key_id: APP_STORE_CONNECT_KEY_ID,
+    issuer_id: APP_STORE_CONNECT_ISSUER_ID,
+    key_filepath: APP_STORE_CONNECT_KEY_FILEPATH,
+    duration: 1200,
+    in_house: false
+  )
+end
+
+def connect_api_token
+  Spaceship::ConnectAPI::Token.create(
+    key_id: APP_STORE_CONNECT_KEY_ID,
+    issuer_id: APP_STORE_CONNECT_ISSUER_ID,
+    key: File.read(APP_STORE_CONNECT_KEY_FILEPATH)
+  )
+end
+
+def api_key_path
+  key = api_key
+  file = Tempfile.new(["asc_api_key_", ".json"])
+  file.write(key.to_json)
+  file.close
+  file.path
+end
+
+def project_root
+  File.expand_path("..", __dir__)
+end
+
+# Python 解释器解析。
+# 本机 fastlane 跑在 Rosetta(x86_64) 的 ruby 下，拉起的 python 子进程会继承 x86_64；
+# 而 site-packages 里的 cryptography / charset_normalizer 只有 arm64 wheel，import 会以
+# "incompatible architecture" 崩溃 —— 脚本捕获 ImportError 后报的却是"缺少 PyJWT"，
+# 极易误判成依赖没装（实测装了两遍都没用）。所以这里：必要时用 arch -arm64 脱离
+# Rosetta，再挑第一个能 import requests + jwt 的解释器。PYTHON_BIN 可显式覆盖。
+def python_bin
+  @python_bin ||= begin
+    override = ENV["PYTHON_BIN"].to_s
+    candidates = override.empty? ? ["/usr/local/bin/python3", "/opt/homebrew/bin/python3", "python3"] : [override]
+    prefix = if RUBY_PLATFORM.include?("x86_64") && `sysctl -n hw.optional.arm64 2>/dev/null`.strip == "1"
+               ["arch", "-arm64"]
+             else
+               []
+             end
+    found = candidates.find { |bin|
+      system(*prefix, bin, "-c", "import requests, jwt", out: File::NULL, err: File::NULL)
+    }
+    (prefix + [found || "python3"]).join(" ")
+  end
+end
+
+# iOS 与 macOS 的截图分开存放：deliver 只认一个 screenshots_path，混在一起会把
+# iPhone 截图传给 MAC_OS 版本（或反之）导致 display type 校验失败。
+SCREENSHOTS_DIR = File.expand_path("screenshots", __dir__).freeze
+SCREENSHOTS_MACOS_DIR = File.expand_path("screenshots_macos", __dir__).freeze
+
+# 商店文案本地目录：metadata/<locale>/{release_notes,description,promotional_text}.txt
+METADATA_DIR = File.expand_path("metadata", __dir__).freeze
+
+# App 预览视频（商店截图区的视频）本地目录，布局为 app_previews/<locale>/<file>.mp4。
+# 与截图分开存放：预览视频只有 iOS 侧，且 deliver 要求文件名带设备标记。
+APP_PREVIEWS_DIR = File.expand_path("app_previews", __dir__).freeze
+
+# 海报帧时间码。Apple 默认取第 5 秒，与 ASC 上已上传的预览保持一致。
+APP_PREVIEW_FRAME_TIME_CODE = "00:00:05:01"
+
+# 截图上传统一走 deliver，两个关键点：
+# - platform 必须显式指定：iOS 与 macOS 同时存在 PREPARE_FOR_SUBMISSION 版本时，
+#   不指定会让 deliver 取错平台的版本（早期 MAC_OS 元数据不可靠就是这个原因）。
+# - PTuner 默认不删除 App Store Connect 上已有的截图。只有显式传 overwrite: true
+#   才会让 deliver 按本地目录整集覆盖；默认 false 只新增/更新，绝不删除已有截图。
+def deliver_screenshots(platform_name, screenshots_path, overwrite: false)
+  deliver(
+    api_key: api_key,
+    platform: platform_name,
+    screenshots_path: screenshots_path,
+    skip_binary_upload: true,
+    skip_metadata: true,
+    overwrite_screenshots: overwrite,
+    force: true
+  )
+end
+
+# ---- App Store Connect 直连（Spaceship ConnectAPI，fastlane 自带）----
+# 版本创建、版本级文案、构建挂载、截图与预览清空全部走 Spaceship，
+# 不再维护等价的 Python 脚本。
+# 每个平台都必须显式带 platform 查询：iOS 与 macOS 可能同时存在同一版本号，
+# 不带平台筛选会取错那一份。
+
+def asc_connect!
+  return if Spaceship::ConnectAPI.token?
+  Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+    key_id: APP_STORE_CONNECT_KEY_ID,
+    issuer_id: APP_STORE_CONNECT_ISSUER_ID,
+    key: File.binread(APP_STORE_CONNECT_KEY_FILEPATH)
+  )
+end
+
+def asc_app
+  asc_connect!
+  app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+  UI.user_error!("找不到 app #{APP_IDENTIFIER}") if app.nil?
+  app
+end
+
+# "IOS,MAC_OS" / "ios" / "osx" / "both" 都接受
+def asc_platform_list(spec)
+  (spec || "IOS,MAC_OS").split(",").map(&:strip).reject(&:empty?).map do |name|
+    case name.upcase
+    when "IOS" then "IOS"
+    when "MAC_OS", "MACOS", "OSX" then "MAC_OS"
+    else UI.user_error!("未知平台 #{name}（只支持 IOS / MAC_OS）")
+    end
+  end
+end
+
+def asc_version(app, platform, version_string)
+  app.get_app_store_versions(
+    filter: { platform: platform, versionString: version_string }
+  ).first
+end
+
+def asc_version!(app, platform, version_string)
+  version = asc_version(app, platform, version_string)
+  if version.nil?
+    UI.user_error!("[#{platform}] 未找到版本 #{version_string}，请先执行 create_app_store_versions")
+  end
+  version
+end
+
+# 版本级商店文案：本地文件名 -> Spaceship 属性名（snake_case）
+VERSION_METADATA_FILES = {
+  "release_notes" => :whats_new,
+  "description" => :description,
+  "promotional_text" => :promotional_text
+}.freeze
+
+# ASC 字段长度上限（按字符计）
+VERSION_METADATA_LIMITS = {
+  whats_new: 4000,
+  description: 4000,
+  promotional_text: 170
+}.freeze
+
+# 扫描 fastlane/metadata/{locale}/{release_notes,description,promotional_text}.txt
+def load_version_metadata(dir)
+  result = {}
+  Dir.glob(File.join(dir, "*")).sort.each do |locale_dir|
+    next unless File.directory?(locale_dir)
+    fields = {}
+    VERSION_METADATA_FILES.each do |filename, attr|
+      path = File.join(locale_dir, "#{filename}.txt")
+      next unless File.file?(path)
+      text = File.read(path, encoding: "UTF-8").strip
+      fields[attr] = text unless text.empty?
+    end
+    result[File.basename(locale_dir)] = fields unless fields.empty?
+  end
+  result
+end
+
+def validate_version_metadata(metadata)
+  errors = []
+  metadata.each do |locale, fields|
+    fields.each do |attr, text|
+      limit = VERSION_METADATA_LIMITS[attr]
+      errors << "#{locale}/#{attr}: #{text.length} 字符，超过上限 #{limit}" if limit && text.length > limit
+    end
+  end
+  errors
+end
+
+platform :ios do
+  desc "Validate metadata without uploading anything"
+  lane :precheck_metadata do
+    precheck
+  end
+
+  desc "Upload iOS metadata only (no build, no screenshots)"
+  lane :upload_metadata do
+    # 按 PTuner 发版规范，元数据与截图分开上传；此 lane 不碰截图。
+    deliver(
+      api_key: api_key,
+      platform: "ios",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true
+    )
+  end
+
+  desc "Upload macOS metadata only (no build, no screenshots)"
+  lane :upload_metadata_macos do
+    # 版本级文案在两个平台各存一份；App 名称与副标题为 App 级，两平台共用。
+    deliver(
+      api_key: api_key,
+      platform: "osx",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true
+    )
+  end
+
+  # 只做文件布局整理（拷贝），不碰 App Store Connect；上传一律交给下面的 deliver lane。
+  # exclude_prefixes: 逗号分隔的设备目录前缀，整条设备类型跳过（如 iphone-6.5-）。
+  # macos_subdir: 源目录里 macOS 截图的子目录名，设计导出包通常叫 custom。
+  desc "Stage screenshots from a source directory into the fastlane/screenshots layout"
+  lane :stage_screenshots do |options|
+    source = options[:source]
+    UI.user_error!("Missing source: path") unless source
+    cmd = "#{python_bin} '#{File.expand_path('scripts/stage_screenshots.py', __dir__)}' " \
+          "--source '#{source}'"
+    cmd += " --locales '#{options[:locales]}'" if options[:locales]
+    cmd += " --dest '#{options[:dest]}'" if options[:dest]
+    cmd += " --exclude-prefixes '#{options[:exclude_prefixes]}'" if options[:exclude_prefixes]
+    cmd += " --macos-subdir '#{options[:macos_subdir]}'" if options[:macos_subdir]
+    sh(cmd)
+  end
+
+  desc "Stage App Preview videos into the fastlane/app_previews layout"
+  lane :stage_app_previews do |options|
+    zh_video = options[:zh_video]
+    en_video = options[:en_video]
+    UI.user_error!("Missing zh_video: path") unless zh_video
+    UI.user_error!("Missing en_video: path") unless en_video
+    cmd = "#{python_bin} '#{File.expand_path('scripts/stage_app_previews.py', __dir__)}' " \
+          "--zh-video '#{zh_video}' --en-video '#{en_video}'"
+    cmd += " --locales '#{options[:locales]}'" if options[:locales]
+    cmd += " --zh-locales '#{options[:zh_locales]}'" if options[:zh_locales]
+    cmd += " --dest '#{options[:dest]}'" if options[:dest]
+    cmd += " --dry-run" if options[:dry_run]
+    sh(cmd)
+  end
+
+  desc "Upload iOS App Preview videos (overwrite: true replaces existing preview sets)"
+  lane :upload_app_previews do |options|
+    # 默认只新增/更新，不删除 ASC 上已有的预览视频。
+    # 需要整集替换时显式传 overwrite: true。
+    deliver(
+      api_key: api_key,
+      platform: "ios",
+      app_previews_path: options[:app_previews_path] || APP_PREVIEWS_DIR,
+      preview_frame_time_code: options[:frame_time_code] || APP_PREVIEW_FRAME_TIME_CODE,
+      overwrite_preview_videos: options[:overwrite] == true,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true
+    )
+  end
+
+  desc "Upload iOS screenshots only (overwrite: true replaces existing screenshot sets)"
+  lane :upload_screenshots_ios do |options|
+    # 默认不删除已有截图；screenshots_path 可指向只含部分语言的临时目录。
+    deliver_screenshots("ios",
+                        options[:screenshots_path] || SCREENSHOTS_DIR,
+                        overwrite: options[:overwrite] == true)
+  end
+
+  desc "Upload macOS screenshots only (overwrite: true replaces existing screenshot sets)"
+  lane :upload_screenshots_macos do |options|
+    deliver_screenshots("osx",
+                        options[:screenshots_path] || SCREENSHOTS_MACOS_DIR,
+                        overwrite: options[:overwrite] == true)
+  end
+
+  desc "Upload iOS + macOS screenshots (overwrite: true replaces existing screenshot sets)"
+  lane :upload_screenshots do |options|
+    upload_screenshots_ios(options)
+    upload_screenshots_macos(options)
+  end
+
+  desc "Download current metadata from App Store Connect"
+  lane :download_metadata do
+    key_path = api_key_path
+    sh("cd '#{project_root}' && fastlane deliver download_metadata --api_key_path #{key_path}")
+  end
+
+  desc "Download current screenshots from App Store Connect"
+  lane :download_screenshots do
+    key_path = api_key_path
+    sh("cd '#{project_root}' && fastlane deliver download_screenshots --api_key_path #{key_path}")
+  end
+
+  desc "Initialize project by downloading existing metadata and screenshots"
+  lane :init_from_app_store do
+    key_path = api_key_path
+    sh("cd '#{project_root}' && fastlane deliver download_metadata --api_key_path #{key_path}")
+    sh("cd '#{project_root}' && fastlane deliver download_screenshots --api_key_path #{key_path}")
+  end
+
+  desc "Upload a new IPA build"
+  lane :upload_build do |options|
+    ipa_path = options[:ipa]
+    UI.user_error!("Missing ipa: path") unless ipa_path
+    deliver(
+      api_key: api_key,
+      ipa: ipa_path,
+      app_version: options[:app_version],
+      skip_binary_upload: false,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true
+    )
+
+    # Sentry 的 org/project 尚未在 PTuner 中固定；配置环境变量后才上传 dSYM。
+    if ENV["SENTRY_ORG"] && ENV["SENTRY_PROJECT"]
+      sentry_debug_files_upload(
+        org_slug: ENV["SENTRY_ORG"],
+        project_slug: ENV["SENTRY_PROJECT"],
+        include_sources: true
+      )
+    end
+  end
+
+  desc "Upload IPA and optionally submit for review (metadata/screenshots are opt-in)"
+  lane :release do |options|
+    ipa_path = options[:ipa]
+    submit = options[:submit_for_review] || false
+    UI.user_error!("Missing ipa: path") unless ipa_path
+    # 按 PTuner 发版规范，默认只上传二进制；
+    # 只有显式传 with_metadata: true / with_screenshots: true 才动商店元数据。
+    deliver(
+      api_key: api_key,
+      ipa: ipa_path,
+      app_version: options[:app_version],
+      skip_binary_upload: false,
+      skip_metadata: options[:with_metadata] != true,
+      skip_screenshots: options[:with_screenshots] != true,
+      submit_for_review: submit,
+      automatic_release: false,
+      force: true
+    )
+  end
+
+  desc "Submit the current version for review (platform: ios | osx | both, automatic_release: true|false)"
+  lane :submit_review do |options|
+    # platform 必须显式指定：iOS 与 macOS 同时存在 PREPARE_FOR_SUBMISSION 版本时，
+    # 不指定会让 deliver 取错平台的版本。默认按平台各提交一次。
+    # automatic_release 为 true 时版本置为「审核通过后自动发布」(AFTER_APPROVAL)，
+    # 默认 false 表示审核通过后停在手动发布。
+    automatic = options[:automatic_release] == true || options[:automatic_release] == "true"
+    platforms = case options[:platform]
+                when "ios" then ["ios"]
+                when "osx", "macos" then ["osx"]
+                when "both", nil then ["ios", "osx"]
+                else UI.user_error!("platform 只能是 ios / osx / both")
+                end
+    platforms.each do |platform_name|
+      deliver(
+        api_key: api_key,
+        platform: platform_name,
+        skip_binary_upload: true,
+        skip_metadata: true,
+        skip_screenshots: true,
+        submit_for_review: true,
+        automatic_release: automatic,
+        force: true
+      )
+    end
+  end
+
+  desc "Upload build to TestFlight"
+  lane :upload_testflight do |options|
+    ipa_path = options[:ipa]
+    UI.user_error!("Missing ipa: path") unless ipa_path
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: false
+    )
+  end
+
+  desc "Create the three PTuner Pro products (lifetime, yearly, weekly) if missing"
+  lane :create_pro_products do |options|
+    script = File.expand_path("scripts/pro_products.rb", __dir__)
+    args = options[:dry_run] ? " --dry-run" : ""
+    sh("#{RbConfig.ruby} '#{script}'#{args}")
+  end
+
+  desc "List all subscription groups and subscriptions with their localizations"
+  lane :list_subscriptions do
+    sh(
+      "#{python_bin} '#{File.expand_path('scripts/subscription_localizations.py', __dir__)}' " \
+      "--issuer-id '#{APP_STORE_CONNECT_ISSUER_ID}' " \
+      "--key-id '#{APP_STORE_CONNECT_KEY_ID}' " \
+      "--key-path '#{APP_STORE_CONNECT_KEY_FILEPATH}' " \
+      "--app-id '#{APPLE_ID}' " \
+      "list"
+    )
+  end
+
+  desc "Update Pro weekly and yearly subscription localizations for supported languages"
+  lane :update_pro_subscription_localizations do |options|
+    weekly_product_id = options[:weekly_product_id]
+    yearly_product_id = options[:yearly_product_id]
+    UI.user_error!("Missing weekly_product_id") unless weekly_product_id
+    UI.user_error!("Missing yearly_product_id") unless yearly_product_id
+
+    weekly_name = options[:weekly_name] || "Pro Weekly"
+    yearly_name = options[:yearly_name] || "Pro Yearly"
+    locales = options[:locales] || "de-DE,en-US,es-ES,fr-FR,it,ja,ko,zh-Hans,zh-Hant"
+
+    sh(
+      "#{python_bin} '#{File.expand_path('scripts/subscription_localizations.py', __dir__)}' " \
+      "--issuer-id '#{APP_STORE_CONNECT_ISSUER_ID}' " \
+      "--key-id '#{APP_STORE_CONNECT_KEY_ID}' " \
+      "--key-path '#{APP_STORE_CONNECT_KEY_FILEPATH}' " \
+      "--app-id '#{APPLE_ID}' " \
+      "update " \
+      "--weekly-product-id '#{weekly_product_id}' " \
+      "--yearly-product-id '#{yearly_product_id}' " \
+      "--weekly-name '#{weekly_name}' " \
+      "--yearly-name '#{yearly_name}' " \
+      "--locales '#{locales}' " \
+      "--skip-existing"
+    )
+  end
+
+  desc "Update Pro subscription group localization for supported languages"
+  lane :update_pro_subscription_group_localizations do
+    script = File.expand_path("scripts/pro_products.rb", __dir__)
+    sh("#{RbConfig.ruby} '#{script}' --group-only")
+  end
+
+  desc "Create App Store versions on iOS and macOS (existing versions are kept)"
+  lane :create_app_store_versions do |options|
+    version_string = options[:version] || "1.0.0"
+    # release_type: MANUAL(默认，审核通过后手动发布) / AFTER_APPROVAL(自动发布) / SCHEDULED
+    release_type = options[:release_type] || "MANUAL"
+    app = asc_app
+
+    asc_platform_list(options[:platforms]).each do |platform|
+      existing = asc_version(app, platform, version_string)
+      if existing
+        UI.message("[#{platform}] 版本 #{version_string} 已存在 " \
+                   "(id=#{existing.id}, state=#{existing.app_store_state})，跳过创建")
+        next
+      end
+
+      created = Spaceship::ConnectAPI.post_app_store_version(
+        app_id: app.id,
+        attributes: {
+          versionString: version_string,
+          platform: platform,
+          releaseType: release_type
+        }
+      ).first
+      UI.success("[#{platform}] 已创建版本 #{version_string} " \
+                 "(id=#{created.id}, state=#{created.app_store_state}, " \
+                 "releaseType=#{created.release_type})")
+    end
+  end
+
+  desc "Sync release notes, description and promotional text to both platforms"
+  lane :sync_app_store_metadata do |options|
+    version_string = options[:version] || "1.0.0"
+    metadata = load_version_metadata(METADATA_DIR)
+    errors = validate_version_metadata(metadata)
+    UI.user_error!("元数据校验失败：\n  - #{errors.join("\n  - ")}") unless errors.empty?
+
+    locales = options[:locales]&.split(",")&.map(&:strip)&.reject(&:empty?)
+    app = asc_app
+
+    asc_platform_list(options[:platforms]).each do |platform|
+      version = asc_version!(app, platform, version_string)
+      UI.message("[#{platform}] 版本 #{version_string} " \
+                 "(id=#{version.id}, state=#{version.app_store_state})")
+      existing = version.get_app_store_version_localizations.each_with_object({}) do |loc, hash|
+        hash[loc.locale] = loc
+      end
+
+      (locales || metadata.keys.sort).each do |locale|
+        fields = metadata[locale]
+        if fields.nil?
+          UI.message("  - #{locale}: 本地无元数据，跳过")
+          next
+        end
+
+        loc = existing[locale]
+        if loc
+          loc.update(attributes: fields)
+          UI.message("  - #{locale}: 已更新 (#{fields.keys.join(', ')})")
+        else
+          # create_app_store_version_localization 不做属性名转换，需先转成 ASC 的 camelCase
+          attributes = Spaceship::ConnectAPI::AppStoreVersionLocalization
+                       .reverse_attr_mapping(fields)
+          version.create_app_store_version_localization(
+            attributes: attributes.merge(locale: locale)
+          )
+          UI.message("  - #{locale}: 已创建 (#{fields.keys.join(', ')})")
+        end
+      end
+    end
+  end
+
+  desc "Attach an uploaded build to the iOS and macOS App Store versions"
+  lane :attach_app_store_build do |options|
+    version_string = options[:version] || "1.0.0"
+    build_number = options[:build]
+    list_only = options[:list] == true || options[:list] == "true"
+    app = asc_app
+
+    # 先把每个平台要挂的构建都解析出来，全部就绪后再统一动手，避免挂了一半失败。
+    targets = {}
+    asc_platform_list(options[:platforms]).each do |platform|
+      version = asc_version!(app, platform, version_string)
+
+      build =
+        if build_number
+          candidates = Spaceship::ConnectAPI::Build.all(
+            app_id: app.id, build_number: build_number, platform: platform
+          )
+          if candidates.empty?
+            UI.user_error!("[#{platform}] 未找到构建 #{build_number}" \
+                           "（该构建可能属于另一平台，或 ASC 尚未完成注册）")
+          end
+          candidates.first
+        else
+          builds = Spaceship::ConnectAPI::Build.all(
+            app_id: app.id, version: version_string, platform: platform
+          )
+          found = builds.find { |b| b.processing_state == "VALID" && !b.expired }
+          UI.user_error!("[#{platform}] 没有可用的有效构建（未处理完或已过期）") if found.nil?
+          found
+        end
+
+      if build.processing_state != "VALID" || build.expired
+        UI.user_error!("[#{platform}] 构建 #{build.version} 状态 #{build.processing_state}" \
+                       "#{build.expired ? '（已过期）' : ''}，暂不可挂")
+      end
+      targets[platform] = [version, build]
+    end
+
+    targets.each do |platform, (version, build)|
+      if list_only
+        current = version.get_build
+        attached = current ? "#{current.version} (#{current.processing_state})" : "(none)"
+        UI.message("[#{platform}] #{version_string} state=#{version.app_store_state}  " \
+                   "已挂构建=#{attached}  候选构建=#{build.version} uploaded=#{build.uploaded_date}")
+      else
+        version.select_build(build_id: build.id)
+        UI.success("[#{platform}] 已将构建 #{build.version} 挂到版本 #{version_string} " \
+                   "(version_id=#{version.id}, build_id=#{build.id})")
+      end
+    end
+  end
+
+  desc "List version-level metadata state on both platforms"
+  lane :list_app_store_metadata do |options|
+    version_string = options[:version] || "1.0.0"
+    app = asc_app
+
+    asc_platform_list(options[:platforms]).each do |platform|
+      version = asc_version(app, platform, version_string)
+      if version.nil?
+        UI.message("[#{platform}] 版本 #{version_string} 不存在")
+        next
+      end
+
+      UI.message("[#{platform}] 版本 #{version_string} " \
+                 "(id=#{version.id}, state=#{version.app_store_state})")
+      version.get_app_store_version_localizations.sort_by(&:locale).each do |loc|
+        UI.message("    #{loc.locale.ljust(10)} " \
+                   "whatsNew=#{(loc.whats_new || '').length} " \
+                   "desc=#{(loc.description || '').length} " \
+                   "promo=#{(loc.promotional_text || '').length}")
+      end
+    end
+  end
+
+end

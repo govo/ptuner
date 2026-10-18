@@ -1,0 +1,33 @@
+# Fastlane Deliverfile — PTuner default metadata/screenshot upload settings
+#
+# 注意：按项目发版规范，默认不删除 ASC 上已有的截图。
+# 需要整集覆盖时必须显式传 overwrite_screenshots: true。
+
+app_identifier "online.c1c1.ptuner"
+username ENV["DELIVER_USERNAME"] || ""
+
+# Use App Store Connect API key when available
+api_key_path ENV["APP_STORE_CONNECT_API_KEY_PATH"] if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+
+# Automatically resolve screenshots and metadata from fastlane/metadata and fastlane/screenshots
+screenshots_path "./fastlane/screenshots"
+metadata_path "./fastlane/metadata"
+
+# 不删除已有截图；deliver 只会新增/更新。
+overwrite_screenshots false
+
+# Do not auto-submit for review by default
+submit_for_review false
+automatic_release false
+
+# Disable precheck for in-app purchases when using API key
+run_precheck_before_submit false
+
+# Skip binary upload unless explicitly requested
+skip_binary_upload true
+
+# Verify with Apple before uploading
+force true
+
+# Pricing tier (1 = $0.99 USD; override per project)
+# price_tier 0
