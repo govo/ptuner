@@ -81,6 +81,7 @@ struct ChordRecognitionView: View {
         .onChange(of: tuner.isRunning) { _, running in
             guard running else {
                 isChordListening = false
+                tuner.setChordRecognitionActive(false)
                 return
             }
             syncChordDemand()
@@ -89,6 +90,7 @@ struct ChordRecognitionView: View {
             // 启动失败（无权限、设备错误）时回到未开始状态。
             if !starting, !tuner.isRunning {
                 isChordListening = false
+                tuner.setChordRecognitionActive(false)
             }
         }
         .onChange(of: live.polyAnalyzedSeconds) { _, seconds in
@@ -160,14 +162,14 @@ struct ChordRecognitionView: View {
 
             #if os(macOS)
             TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
-                                   level: live.level,
-                                   isRunning: tuner.isRunning,
+                                   level: isChordListening ? live.level : 0,
+                                   isRunning: isChordListening,
                                    selectedDeviceUID: settings.preferredInputDeviceUID,
                                    onSelectDevice: selectInputDevice)
             #else
             TunerHeaderInputStatus(deviceName: tuner.activeInputDeviceName,
-                                   level: live.level,
-                                   isRunning: tuner.isRunning)
+                                   level: isChordListening ? live.level : 0,
+                                   isRunning: isChordListening)
             #endif
         }
     }
@@ -318,7 +320,7 @@ struct ChordRecognitionView: View {
     }
 
     private var chordStatusText: String {
-        guard isChordListening else { return L10n.tr("未开始检测") }
+        guard isChordListening else { return L10n.tr("未开始监听") }
         if live.polyReadouts.isEmpty { return L10n.tr("等待声音") }
         if chordMatch != nil { return L10n.tr("识别成功") }
         if live.polyReadouts.count < 3 { return L10n.tr("识别中 · 需要更多组成音") }
@@ -326,6 +328,7 @@ struct ChordRecognitionView: View {
     }
 
     private var chordStatusColor: Color {
+        guard isChordListening else { return AppTheme.tertiaryText }
         if chordMatch != nil { return AppTheme.success }
         if live.polyReadouts.isEmpty { return AppTheme.tertiaryText }
         return AppTheme.warning
@@ -346,7 +349,7 @@ struct ChordRecognitionView: View {
                 stopChordListening()
             }
         } else {
-            PrimaryTunerButton(title: L10n.tr("开始检测"), systemImage: "mic.fill") {
+            PrimaryTunerButton(title: L10n.tr("开始监听"), systemImage: "mic.fill") {
                 startChordListening()
             }
         }
@@ -354,7 +357,7 @@ struct ChordRecognitionView: View {
 
     // MARK: - 行为
 
-    /// 主动开始检测；多音通道只在用户开始后才占用。
+    /// 主动开始监听；多音通道只在用户点击后才占用。
     private func startChordListening() {
         quota.refreshNow()
         guard quota.chordExhaustion == nil else {

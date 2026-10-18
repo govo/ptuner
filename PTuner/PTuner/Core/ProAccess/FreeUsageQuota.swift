@@ -3,7 +3,8 @@
 //  PTuner
 //
 //  免费用户的用量额度。多音调音与和弦识别各自独立计数：
-//  每天 30 秒，每周累计 1 分钟。Pro 用户由调用方跳过记录。
+//  每天 30 秒；多音调音每周累计 1 分钟，和弦识别每周累计 2 分钟。
+//  Pro 用户由调用方跳过记录。
 //
 
 import Combine
@@ -30,7 +31,15 @@ final class FreeUsageQuota: ObservableObject {
         /// 免费用户每天可用的秒数。
         static let dailySeconds: TimeInterval = 30
         /// 免费用户每周可用的秒数，跨天累计。
-        static let weeklySeconds: TimeInterval = 60
+        static let polyphonicWeeklySeconds: TimeInterval = 60
+        static let chordWeeklySeconds: TimeInterval = 120
+
+        static func weeklySeconds(for feature: Feature) -> TimeInterval {
+            switch feature {
+            case .polyphonicTuning: return polyphonicWeeklySeconds
+            case .chordRecognition: return chordWeeklySeconds
+            }
+        }
     }
 
     /// 各功能当前已用尽的额度；没有条目表示仍可使用。
@@ -80,7 +89,7 @@ final class FreeUsageQuota: ObservableObject {
         rollPeriodsIfNeeded(now: Date())
 
         let daily = min(Limits.dailySeconds, (dailyUsed[feature] ?? 0) + seconds)
-        let weekly = min(Limits.weeklySeconds, (weeklyUsed[feature] ?? 0) + seconds)
+        let weekly = min(Limits.weeklySeconds(for: feature), (weeklyUsed[feature] ?? 0) + seconds)
         dailyUsed[feature] = daily
         weeklyUsed[feature] = weekly
 
@@ -129,7 +138,7 @@ final class FreeUsageQuota: ObservableObject {
         var next: [Feature: Limit] = [:]
 
         for feature in Feature.allCases {
-            if (weeklyUsed[feature] ?? 0) >= Limits.weeklySeconds {
+            if (weeklyUsed[feature] ?? 0) >= Limits.weeklySeconds(for: feature) {
                 next[feature] = .weekly
             } else if (dailyUsed[feature] ?? 0) >= Limits.dailySeconds {
                 next[feature] = .daily
@@ -207,7 +216,7 @@ extension FreeUsageQuota.Limit {
         case (.chordRecognition, .daily):
             return L10n.tr("免费用户每天可享 30 秒和弦识别。升级 Pro，想弹多久识别多久。")
         case (.chordRecognition, .weekly):
-            return L10n.tr("免费用户每周可享 1 分钟和弦识别。升级 Pro，和弦识别不再限量。")
+            return L10n.tr("免费用户每周可享 2 分钟和弦识别。升级 Pro，和弦识别不再限量。")
         }
     }
 }
