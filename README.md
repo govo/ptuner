@@ -217,7 +217,7 @@ xcodebuild -project PTuner/PTuner.xcodeproj \
 
 ## 配置
 
-RevenueCat、Sentry 与法律链接当前使用占位值，统一放在：
+RevenueCat 与法律链接当前使用占位值；Sentry 已接入 `govomusic/ptuner` 项目。统一放在：
 
 `PTuner/PTuner/App/AppConfig.swift`
 
@@ -226,8 +226,10 @@ RevenueCat、Sentry 与法律链接当前使用占位值，统一放在：
 - `RevenueCat.entitlementID`
 - `RevenueCat.apiKeyDebug` / `RevenueCat.apiKeyRelease`
 - `RevenueCat.offeringID`
-- `Sentry.dsn`（留空则跳过 Sentry 初始化）
+- `Sentry.dsn`（已填入；留空则跳过 Sentry 初始化）
 - `privacyPolicyURL` / `termsOfUseURL`
+
+Sentry 的 dSYM 上传由 Xcode 的 `Upload Debug Symbols to Sentry` 阶段完成，发布机器需要配置有效的 `SENTRY_AUTH_TOKEN` 或 `~/.sentryclirc`。
 
 ## 开发原则
 

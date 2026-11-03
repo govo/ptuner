@@ -58,6 +58,10 @@
 
 调准音，才能听见音乐本来的样子。
 
+服务条款（EULA）
+本应用依据 Apple 标准最终用户许可协议（EULA）授权使用：
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 ---
 
 ## 二、英文（en-US）
@@ -117,12 +121,27 @@ Recognize the chord you are playing in real time, with its name and component no
 
 Get in tune, and hear music the way it was meant to sound.
 
+Terms of Use (EULA)
+This application is licensed under the Apple Standard End User License Agreement (EULA):
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 ---
 
-## 三、覆盖范围与说明
+## 三、覆盖范围与说明（上一轮提交）
 
 - 本次提交的商店文案只有简体中文与英文两个版本，对应 ASC 的 zh-Hans 与 en-US。
 - 其余七种语言（zh-Hant、ja、ko、es-ES、de-DE、fr-FR、it）只提交截图，不改动其名称、副标题、关键词、推广文本与描述。
 - 定价、分级、隐私、截图顺序之外的其它 ASC 元数据均不改动。
 - 截图共 9 种语言 × 3 种设备 × 5 张 = 135 张，不含截图删除操作。
 - 不提交二进制包，不提交审核。
+
+## 四、服务协议（EULA）说明 — App Review 3.1.2
+
+含自动续期订阅的 App，商店描述里必须能直接看到服务协议链接。被拒后已按此修正：
+
+- 全部 9 种语言的 `description.txt` 底部都追加了 EULA 段落，URL 统一为
+  https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+- iOS 与 macOS 共用同一份 `fastlane/metadata`，两个平台同时生效。
+- 文案本地化，段落标题统一为「服务条款 / 利用規約 / 이용약관 / Nutzungsbedingungen /
+  Conditions d'utilisation / Condiciones de uso / Termini di utilizzo / Terms of Use」，
+  正文保留 Apple 官方协议英文名与 (EULA) 缩写，链接为 Apple 官方原文（英文）。

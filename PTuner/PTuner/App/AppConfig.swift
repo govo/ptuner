@@ -17,7 +17,7 @@ enum AppConfig {
 
     enum Sentry {
         /// 留空表示不初始化 Sentry。
-        static let dsn = ""
+        static let dsn = "https://08a52ed7e96c7c1d007053c79be9c18e@o4512167348994048.ingest.us.sentry.io/4512276317536256"
     }
 
     static var revenueCatConfiguration: RevenueCatPaywallConfiguration {

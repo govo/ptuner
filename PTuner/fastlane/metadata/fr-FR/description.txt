@@ -1,0 +1,32 @@
+PTuner — accordez tous vos instruments avec une seule app.
+
+Que vous preniez la guitare pour la première fois ou que vous jouiez chaque jour, l'accord vient toujours en premier. PTuner transforme chaque corde pincée, frottée ou grattée en un retour visuel clair, stable et fiable.
+
+[Accord note par note — une note, juste]
+Jouez une corde et voyez en temps réel le nom de la note, la fréquence et l'écart en cents. Un accordeur à aiguille avec une zone verte indique d'un coup d'œil si vous êtes trop haut ou trop bas, sans avoir à deviner à l'oreille.
+
+[Accord polyphonique — tout l'instrument d'un coup]
+PTuner détecte plusieurs cordes en même temps et affiche l'écart de chacune indépendamment. Passez sur les six cordes et vérifiez tout l'instrument en une seule fois.
+
+[54 instruments, d'Orient et d'Occident]
+Guitare, basse, ukulélé, violon, violoncelle, erhu, guzheng, pipa, ruan, guqin, dombra, sitar et bien d'autres — des cordes occidentales aux instruments traditionnels chinois et du monde. 54 instruments et 134 accordages inclus.
+
+[Accordages personnalisés — trouvez votre son]
+Chaque instrument résonne différemment. Définissez le nombre de cordes, la hauteur et l'écart en cents de votre choix, puis ajustez chaque corde jusqu'à ce que les accords sonnent au mieux. Créez, modifiez et enregistrez votre propre accordage, prêt à l'emploi à la prochaine ouverture.
+
+[Reconnaissance d'accords — entendez ce que vous jouez]
+Reconnaissez en temps réel l'accord que vous jouez, avec son nom et ses notes. Une oreille supplémentaire pour répéter, composer et apprendre des morceaux à l'oreille.
+
+[Conçu pour la scène et le studio]
+- Interface sombre et professionnelle, lisible en faible luminosité
+- Hauteur de référence réglable de 400 à 480 Hz
+- Indicateurs à aiguille et à barre
+- Trois modes de réponse : rapide, équilibré et stable
+- Disponible sur iPhone, iPad et Mac
+- Anglais, chinois simplifié, chinois traditionnel, japonais, coréen, espagnol, allemand, français, italien
+
+Accordez-vous et écoutez la musique telle qu'elle doit sonner.
+
+Conditions d'utilisation (EULA)
+Cette application est concédée sous licence selon le contrat de licence utilisateur final standard d'Apple (EULA) :
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/

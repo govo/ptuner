@@ -191,6 +191,14 @@ Create App Store versions on iOS and macOS (existing versions are kept)
 
 Sync release notes, description and promotional text to both platforms
 
+### ios sync_app_info_metadata
+
+```sh
+[bundle exec] fastlane ios sync_app_info_metadata
+```
+
+Sync app-level name and subtitle localizations (shared by both platforms)
+
 ### ios attach_app_store_build
 
 ```sh

@@ -385,6 +385,49 @@ else
     log "Local 模式：跳过 App Store Connect 认证检查"
 fi
 
+# ---- BUILD 号安全护栏 ----
+# 正常 build 号不会超过 6 位。日志解析一旦算出超长数字，说明抓到的是
+# altool 会话号 / ASC 对象 ID 之类的无关数字，必须停手，不能继续 +1 写回工程。
+BUILD_NUMBER_MAX=999999
+# 比上一个 build 大超过 100 就直接停手报严重错误（真实冲突只会大几条）
+BUILD_JUMP_MAX=100
+# 连续自动递增的次数上限：同一轮折腾里超过就停手，交给人判断
+BUILD_BUMP_LIMIT=2
+BUILD_BUMP_WINDOW=1800
+BUILD_BUMP_STATE="$PROJECT_DIR/build/AppStore/logs/.build_bump_state"
+
+# build 号可信吗：纯数字、>0、<= 上限；给了基准值时还要求跳跃幅度合理
+build_number_sane() {
+    local n="$1" base="${2:-}"
+    case "$n" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$n" -gt 0 ] 2>/dev/null || return 1
+    [ "$n" -le "$BUILD_NUMBER_MAX" ] 2>/dev/null || return 1
+    if [ -n "$base" ] && [ "$base" -gt 0 ] 2>/dev/null; then
+        [ $((n - base)) -le "$BUILD_JUMP_MAX" ] || return 1
+    fi
+    return 0
+}
+
+# 连续自动递增限流：同一轮折腾里最多 BUILD_BUMP_LIMIT 次，超了返回 1
+build_bump_take_slot() {
+    local now ts=0 count=0
+    now=$(date +%s)
+    if [ -f "$BUILD_BUMP_STATE" ]; then
+        ts=$(awk 'NR==1{print $1}' "$BUILD_BUMP_STATE" 2>/dev/null || echo 0)
+        count=$(awk 'NR==1{print $2}' "$BUILD_BUMP_STATE" 2>/dev/null || echo 0)
+    fi
+    case "$ts" in ''|*[!0-9]*) ts=0 ;; esac
+    case "$count" in ''|*[!0-9]*) count=0 ;; esac
+    if [ $((now - ts)) -ge "$BUILD_BUMP_WINDOW" ]; then
+        count=0
+    elif [ "$count" -ge "$BUILD_BUMP_LIMIT" ]; then
+        return 1
+    fi
+    mkdir -p "$(dirname "$BUILD_BUMP_STATE")" 2>/dev/null || true
+    printf '%s %s\n' "$now" "$((count + 1))" > "$BUILD_BUMP_STATE" 2>/dev/null || true
+    return 0
+}
+
 # ---- 版本 ----
 # 使用 POSITIONAL 数组中的位置参数 (已被 set -- 重置)
 XCODE_VERSION=$(xcodebuild -showBuildSettings -project "$PROJECT" -scheme "$SCHEME" 2>/dev/null | grep MARKETING_VERSION | head -1 | awk '{print $3}' || echo "")
@@ -395,8 +438,19 @@ BUILD_NUMBER="${2:-$XCODE_BUILD}"
 if $UPLOAD_ONLY; then
     log "upload-only 模式：跳过版本号/BUILD 自动更新（使用 Xcode 项目当前值）"
 else
+    if ! build_number_sane "$BUILD_NUMBER"; then
+        fail "工程里读到的 CURRENT_PROJECT_VERSION=${BUILD_NUMBER:-空} 不可信（只接受 1..${BUILD_NUMBER_MAX} 的整数）"
+        warn "  这种超长数字通常是脚本把 altool 会话号当成了 build 号写回工程的结果。"
+        warn "  请在 Xcode 里把 Build 改成 App Store Connect 上「上一个 build + 1」后重跑。"
+        exit 1
+    fi
     if [ -z "${2:-}" ]; then
         NEW_BUILD=$((BUILD_NUMBER + 1))
+        if ! build_number_sane "$NEW_BUILD"; then
+            fail "自动递增后的 BUILD=$NEW_BUILD 超出可信范围（上限 ${BUILD_NUMBER_MAX}）"
+            warn "  请人工确认 build 号后重跑，脚本不会再往上加。"
+            exit 1
+        fi
         log "自动递增 Build: $BUILD_NUMBER → $NEW_BUILD"
         cd "$PROJECT_DIR"
         agvtool new-version -all "$NEW_BUILD" > /dev/null 2>&1 || log "(agvtool 跳过，手动改也可)"
@@ -515,50 +569,34 @@ is_build_conflict() {
 # 成功：打印数字到 stdout, return 0；失败：return 1
 parse_build_conflict() {
     local logfile="$1"
-    local v=""
+    local cleaned v="" pat
     if [ ! -f "$logfile" ]; then return 1; fi
 
-    # 1) "minimum required build version/number is X"  -- version 后可夹 "is"
-    v=$(grep -ioE "minimum required build[[:space:]]+(version|number)[^0-9]*[0-9]+" "$logfile" 2>/dev/null \
-        | grep -oE "[0-9]+$" | tail -1) || true
+    # 第一步：抹掉工具会话标记 [altool.7987079040] / [ContentDelivery.Uploader.7987079040]。
+    # 这些是 altool 的内部会话号，和 build 号同处一行，是历史上把 build 抬到
+    # 7987079042 的元凶，先物理清掉，后面任何正则都不可能再命中它。
+    cleaned="$(mktemp -t ptuner-buildnum)" || return 1
+    sed -E 's/\[[A-Za-z_.]+\.[0-9]+\]//g' "$logfile" > "$cleaned" 2>/dev/null || true
 
-    # 2) "(build|bundle) version 'X' must be greater/higher/larger than ... version 'Y'"  → Y 是必须 ≥ 的值
-    if [ -z "$v" ]; then
-        v=$(grep -ioE "(build|bundle)[[:space:]]+version[[:space:]]+'?[0-9]+'?[[:space:]]+must be[[:space:]]+(greater|higher|larger) than.{0,100}(version|number)[[:space:]]+'?[0-9]+" "$logfile" 2>/dev/null \
-            | grep -oE "[0-9]+$" | tail -1) || true
-    fi
-
-    # 2b) "1.0.0 (X)" / "1.0.0 (Y)" semver 形式 — 在含 build/version 上下文中取最大括号内的数字
-    if [ -z "$v" ]; then
-        v=$(grep -iE "(build|bundle|version|upload)" "$logfile" 2>/dev/null \
-            | grep -oE "\([0-9]+\)" | grep -oE "[0-9]+" | sort -rn | head -1) || true
-    fi
-
-    # 3) "version 'X' / version (X) / version X  already exists/submitted/uploaded"
-    if [ -z "$v" ]; then
-        v=$(grep -ioE "version[[:space:]]*['(]?[0-9]+[')]?[[:space:]]+already[[:space:]]+(exists|submitted|uploaded)" "$logfile" 2>/dev/null \
-            | grep -oE "[0-9]+" | sort -rn | head -1) || true
-    fi
-
-    # 4) "must be at least X"
-    if [ -z "$v" ]; then
-        v=$(grep -ioE "must be at least[[:space:]]+[0-9]+" "$logfile" 2>/dev/null \
-            | grep -oE "[0-9]+" | tail -1) || true
-    fi
-
-    # 5) 兜底：在含 build/version/CFBundle 关键字的行（排除 ITMS-XXXX 错误码本身）中找最大数字
-    if [ -z "$v" ]; then
-        v=$(grep -iE "(build|version|CFBundleVersion)" "$logfile" 2>/dev/null \
-            | grep -ivE "ITMS[- ]?[0-9]{4}" \
-            | grep -oE "[0-9]+" | sort -rn | head -1) || true
-    fi
-
-    if [ -n "$v" ]; then
-        if [ "$v" -gt 0 ] 2>/dev/null; then
-            echo "$v"
+    # 第二步：只认 ASC 明确给出的「上一个 build」字段，绝不按「整行最大数字」猜测。
+    # 数字一律用 [^0-9]* 过渡：ASC 偶尔返回中文弯引号 ‘31’，硬写 '?[0-9]+ 会失配。
+    while IFS= read -r pat; do
+        [ -z "$pat" ] && continue
+        v=$(grep -ioE "$pat" "$cleaned" 2>/dev/null | grep -oE '[0-9]+$' | tail -1 || true)
+        if build_number_sane "$v"; then
+            rm -f "$cleaned"
+            printf '%s\n' "$v"
             return 0
         fi
-    fi
+    done <<'PATTERNS'
+previousBundleVersion[^0-9]*[0-9]+
+previously uploaded version[^0-9]*[0-9]+
+minimum required build (version|number)[^0-9]*[0-9]+
+bundle version must be (greater|higher|larger) than[^0-9]*[0-9]+
+must be at least[^0-9]*[0-9]+
+PATTERNS
+
+    rm -f "$cleaned"
     return 1
 }
 
@@ -718,10 +756,20 @@ upload_pkg() {
         # 注意：BUILD 冲突不计入自动重试 —— 同一份 .pkg 重新上传必然再次冲突，
         # 必须重新构建才能换 BUILD。直接返回特殊退出码，让上层提示用户重跑脚本。
         if [ "$ERROR_KIND" = "build_conflict" ] && is_build_conflict "$upload_log"; then
-            local highest_build
-            if highest_build=$(parse_build_conflict "$upload_log"); then
-                local new_build=$((highest_build + 1))
-                warn "检测到 BUILD 冲突：App Store Connect 当前最高 BUILD ≥ $highest_build"
+            local highest_build="" new_build="" bump_reason=""
+
+            # 三道闸：解析不出可信数字 / 跳跃过大 / 连续递增达上限 → 一律不动工程
+            if ! highest_build=$(parse_build_conflict "$upload_log"); then
+                bump_reason="日志里没有可确认的 build 号（拒绝猜测数字）"
+            elif ! build_number_sane "$((highest_build + 1))" "$BUILD_NUMBER"; then
+                bump_reason="新 BUILD=$((highest_build + 1)) 比当前 $BUILD_NUMBER 大超过 ${BUILD_JUMP_MAX}，疑似解析异常"
+            elif ! build_bump_take_slot; then
+                bump_reason="连续自动递增已达 ${BUILD_BUMP_LIMIT} 次仍未成功"
+            fi
+
+            if [ -z "$bump_reason" ]; then
+                new_build=$((highest_build + 1))
+                warn "检测到 BUILD 冲突：App Store Connect 上一个 BUILD = $highest_build"
                 warn "  自动更新 Xcode 项目 BUILD: $BUILD_NUMBER → $new_build"
                 log "运行 agvtool new-version -all $new_build ..."
                 (
@@ -746,14 +794,16 @@ upload_pkg() {
                 fi
                 return 2  # 特殊退出码：BUILD 冲突已处理，需重新运行脚本完成上传
             else
-                warn "检测到 BUILD 冲突但无法解析最高 BUILD 数值，请手动调整"
+                fail "严重错误：已停止自动修改 BUILD —— $bump_reason"
+                warn "  日志: $upload_log"
+                warn "  请人工把 CURRENT_PROJECT_VERSION 设为 App Store Connect 上「上一个 build + 1」。"
                 local phase_dur=$(( $(date +%s) - phase_start ))
                 if [ "$type" = "ios" ]; then
-                    IOS_RESULT="BUILD冲突解析失败"
+                    IOS_RESULT="BUILD冲突未自动修复（$bump_reason）"
                     IOS_ATTEMPTS=$attempt
                     IOS_DURATION=$phase_dur
                 else
-                    MAC_RESULT="BUILD冲突解析失败"
+                    MAC_RESULT="BUILD冲突未自动修复（$bump_reason）"
                     MAC_ATTEMPTS=$attempt
                     MAC_DURATION=$phase_dur
                 fi

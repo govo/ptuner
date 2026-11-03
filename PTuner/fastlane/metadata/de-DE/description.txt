@@ -1,0 +1,32 @@
+PTuner — stimme jedes Instrument mit einer App.
+
+Ob du gerade erst zur Gitarre greifst oder jeden Tag spielst: Das Stimmen kommt zuerst. PTuner verwandelt jeden Anschlag, jeden Bogenstrich und jeden Akkord in klares, stabiles und verlässliches visuelles Feedback.
+
+[Einzelton-Stimmung — ein Ton, exakt]
+Spiele eine Saite und sieh in Echtzeit den Notennamen, die Frequenz und die Abweichung in Cent. Ein Zeiger-Stimmgerät mit grünem Zielbereich zeigt sofort, ob du zu hoch oder zu tief bist — kein Rätselraten nach Gehör mehr.
+
+[Polyphone Stimmung — das ganze Instrument auf einmal]
+PTuner erkennt mehrere Saiten gleichzeitig und zeigt die Abweichung jeder Saite einzeln. Spiele alle sechs Saiten nacheinander und prüfe das ganze Instrument in einem Durchgang.
+
+[54 Instrumente, Ost und West]
+Gitarre, Bass, Ukulele, Violine, Cello, Erhu, Guzheng, Pipa, Ruan, Guqin, Dombra, Sitar und mehr — von westlichen Saiteninstrumenten bis zu chinesischen traditionellen und weltweiten Instrumenten. 54 Instrumente und 134 Stimmungen integriert.
+
+[Eigene Stimmungen — finde deinen Klang]
+Jedes Instrument klingt anders. Lege beliebig viele Saiten, jede Tonhöhe und jeden Cent-Versatz fest und stimme jede Saite fein ab, bis Akkorde bestmöglich klingen. Erstelle, bearbeite und speichere deine eigene Stimmung — beim nächsten Öffnen sofort verfügbar.
+
+[Akkorderkennung — höre, was du spielst]
+Erkenne den Akkord, den du spielst, in Echtzeit — mit Namen und enthaltenen Tönen. Ein zusätzliches Ohr zum Üben, Schreiben und Heraushören von Songs.
+
+[Für Bühne und Übungsraum]
+- Dunkle, professionelle Oberfläche, auch bei wenig Licht gut lesbar
+- Referenztonhöhe von 400 bis 480 Hz einstellbar
+- Zeiger- und Balkenanzeige
+- Drei Reaktionsmodi: schnell, ausgewogen und stabil
+- Verfügbar für iPhone, iPad und Mac
+- Englisch, 简体中文, 繁體中文, 日本語, 한국어, Español, Deutsch, Français, Italiano
+
+Stimm dein Instrument und höre Musik so, wie sie klingen soll.
+
+Nutzungsbedingungen (EULA)
+Diese App wird unter der Apple Standard-Endbenutzer-Lizenzvereinbarung (EULA) lizenziert:
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/

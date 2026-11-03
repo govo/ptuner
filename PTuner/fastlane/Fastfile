@@ -152,6 +152,7 @@ end
 VERSION_METADATA_FILES = {
   "release_notes" => :whats_new,
   "description" => :description,
+  "keywords" => :keywords,
   "promotional_text" => :promotional_text
 }.freeze
 
@@ -159,6 +160,7 @@ VERSION_METADATA_FILES = {
 VERSION_METADATA_LIMITS = {
   whats_new: 4000,
   description: 4000,
+  keywords: 100,
   promotional_text: 170
 }.freeze
 
@@ -179,11 +181,63 @@ def load_version_metadata(dir)
   result
 end
 
+# App Review 3.1.2：含自动续期订阅的 App，商店描述里必须能直接看到服务协议（EULA）链接。
+# iOS 与 macOS 共用同一份 description.txt，所以这里做统一校验：
+# 任一语言缺少该链接就拒绝上传，避免改文案时把这段说明漏掉又被拒审。
+EULA_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/".freeze
+
+def eula_footer_errors(metadata)
+  metadata.each_with_object([]) do |(locale, fields), errors|
+    description = fields[:description]
+    next if description.nil? || description.include?(EULA_URL)
+    errors << "#{locale}/description: 缺少 EULA 链接 #{EULA_URL}（App Review 3.1.2 要求）"
+  end
+end
+
 def validate_version_metadata(metadata)
   errors = []
   metadata.each do |locale, fields|
     fields.each do |attr, text|
       limit = VERSION_METADATA_LIMITS[attr]
+      errors << "#{locale}/#{attr}: #{text.length} 字符，超过上限 #{limit}" if limit && text.length > limit
+    end
+  end
+  errors.concat(eula_footer_errors(metadata))
+  errors
+end
+
+# App 级本地化（名称、副标题）属于 appInfoLocalizations，与版本级文案分开存放与上传。
+APP_INFO_METADATA_FILES = {
+  "name" => :name,
+  "subtitle" => :subtitle
+}.freeze
+
+APP_INFO_METADATA_LIMITS = {
+  name: 30,
+  subtitle: 30
+}.freeze
+
+def load_app_info_metadata(dir)
+  result = {}
+  Dir.glob(File.join(dir, "*")).sort.each do |locale_dir|
+    next unless File.directory?(locale_dir)
+    fields = {}
+    APP_INFO_METADATA_FILES.each do |filename, attr|
+      path = File.join(locale_dir, "#{filename}.txt")
+      next unless File.file?(path)
+      text = File.read(path, encoding: "UTF-8").strip
+      fields[attr] = text unless text.empty?
+    end
+    result[File.basename(locale_dir)] = fields unless fields.empty?
+  end
+  result
+end
+
+def validate_app_info_metadata(metadata)
+  errors = []
+  metadata.each do |locale, fields|
+    fields.each do |attr, text|
+      limit = APP_INFO_METADATA_LIMITS[attr]
       errors << "#{locale}/#{attr}: #{text.length} 字符，超过上限 #{limit}" if limit && text.length > limit
     end
   end
@@ -199,6 +253,10 @@ platform :ios do
   desc "Upload iOS metadata only (no build, no screenshots)"
   lane :upload_metadata do
     # 按 PTuner 发版规范，元数据与截图分开上传；此 lane 不碰截图。
+    # 上传前先过一遍校验，确认每个语言的描述都带 EULA 说明（App Review 3.1.2）。
+    errors = validate_version_metadata(load_version_metadata(METADATA_DIR))
+    UI.user_error!("元数据校验失败：\n  - #{errors.join("\n  - ")}") unless errors.empty?
+
     deliver(
       api_key: api_key,
       platform: "ios",
@@ -211,6 +269,10 @@ platform :ios do
   desc "Upload macOS metadata only (no build, no screenshots)"
   lane :upload_metadata_macos do
     # 版本级文案在两个平台各存一份；App 名称与副标题为 App 级，两平台共用。
+    # macOS 与 iOS 读同一份 metadata，同样要求描述底部带 EULA 说明。
+    errors = validate_version_metadata(load_version_metadata(METADATA_DIR))
+    UI.user_error!("元数据校验失败：\n  - #{errors.join("\n  - ")}") unless errors.empty?
+
     deliver(
       api_key: api_key,
       platform: "osx",
@@ -509,6 +571,42 @@ platform :ios do
           )
           UI.message("  - #{locale}: 已创建 (#{fields.keys.join(', ')})")
         end
+      end
+    end
+  end
+
+  desc "Sync app-level name and subtitle localizations (shared by both platforms)"
+  lane :sync_app_info_metadata do |options|
+    metadata = load_app_info_metadata(METADATA_DIR)
+    errors = validate_app_info_metadata(metadata)
+    UI.user_error!("App Info 元数据校验失败：\n  - #{errors.join("\n  - ")}") unless errors.empty?
+
+    locales = options[:locales]&.split(",")&.map(&:strip)&.reject(&:empty?)
+    app = asc_app
+    app_info = Spaceship::ConnectAPI.get_app_infos(app_id: app.id).first
+    UI.user_error!("找不到 App Info") if app_info.nil?
+
+    existing = app_info.get_app_info_localizations.each_with_object({}) do |loc, hash|
+      hash[loc.locale] = loc
+    end
+
+    (locales || metadata.keys.sort).each do |locale|
+      fields = metadata[locale]
+      if fields.nil?
+        UI.message("  - #{locale}: 本地无 App Info 元数据，跳过")
+        next
+      end
+
+      loc = existing[locale]
+      if loc
+        loc.update(attributes: fields)
+        UI.message("  - #{locale}: 已更新 (#{fields.keys.join(', ')})")
+      else
+        attributes = Spaceship::ConnectAPI::AppInfoLocalization.reverse_attr_mapping(fields)
+        app_info.create_app_info_localization(
+          attributes: attributes.merge(locale: locale)
+        )
+        UI.message("  - #{locale}: 已创建 (#{fields.keys.join(', ')})")
       end
     end
   end

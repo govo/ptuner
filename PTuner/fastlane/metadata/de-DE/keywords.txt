@@ -1,0 +1,1 @@
+Stimmgerät,Gitarre,Geige,Ukulele,Erhu,Guzheng,Cello,Bass,Banjo,Mandoline,Sitar,Koto,Akkord,Tonhöhe

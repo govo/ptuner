@@ -33,9 +33,10 @@
 
 ### 3. 服务配置仍是占位值
 - [ ] `PTuner/PTuner/App/AppConfig.swift` 中 `RevenueCat.apiKeyDebug` / `apiKeyRelease` 仍是 `test_PLACEHOLDER` / `appl_PLACEHOLDER`。
-- [ ] `AppConfig.Sentry.dsn` 为空，当前线上不会上报崩溃。
-- [ ] 如使用 Sentry，需要创建正式项目并填入 DSN。
-- [ ] 确认 Sentry 的 dSYM 上传流程；当前工程没有 Run Script 上传阶段，崩溃堆栈将无法符号化。
+- [x] 已创建 Sentry 项目 `govomusic/ptuner`，并将 DSN 填入 `AppConfig.Sentry.dsn`。
+- [x] 工程已加入 `Upload Debug Symbols to Sentry` Run Script 阶段。
+- [x] 发布机器上的 `~/.sentryclirc` 已换成有效令牌，iOS/macOS 的 dSYM 均已上传（debug ID `45c0a02d-7c77-30bd-9776-656e7b6f46c1`、`f0ddbdf7-1185-3c33-82c7-0bab107edecd`、`6125eee6-0ce5-3f76-9995-1c24f1e873c8`）。
+- [ ] 待出现真实崩溃后，确认 Sentry 中堆栈已符号化（可行时补一次验证）。
 - [ ] 确认 Sentry 关闭 PII、设置合理的采样与告警，避免收集不必要信息。
 
 ### 4. 法律链接仍是占位值
@@ -288,8 +289,8 @@
 - [ ] 确认订阅状态展示与 `ProInfoView` 的文案匹配。
 
 ### 5. 诊断与运营配置
-- [ ] 创建 Sentry 项目，填入 DSN。
-- [ ] 配置 dSYM 上传，验证崩溃堆栈可符号化。
+- [x] 创建 Sentry 项目，填入 DSN。
+- [ ] 确认 dSYM 上传成功，验证崩溃堆栈可符号化。
 - [ ] 配置崩溃率、卡顿、启动失败告警与通知渠道。
 - [ ] 确认 Sentry 事件中不包含麦克风音频、完整个人信息或自定义调弦内容。
 - [ ] 如需运营数据，确认 AppAnalytics 的事件命名与看板可用。
