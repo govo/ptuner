@@ -142,21 +142,42 @@
 		000000000000000150000000 /* Upload Debug Symbols to Sentry */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
 			name = "Upload Debug Symbols to Sentry";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Sentry dSYM upload - keeps crash stack traces symbolicated.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  echo \"Sentry: skipping dSYM upload for ${CONFIGURATION} build.\"\n  exit 0\nfi\n\nexport PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\"\n\nif ! command -v sentry-cli >/dev/null 2>&1; then\n  echo \"warning: sentry-cli not found. Install it with: brew install getsentry/tools/sentry-cli\" >&2\n  exit 0\nfi\n\nexport SENTRY_ORG=\"${SENTRY_ORG:-govomusic}\"\nexport SENTRY_PROJECT=\"${SENTRY_PROJECT:-ptuner}\"\n\nif [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$HOME/.sentryclirc\" ]; then\n  echo \"warning: SENTRY_AUTH_TOKEN is not set; skipping dSYM upload.\" >&2\n  exit 0\nfi\n\nif ! sentry-cli info >/dev/null 2>&1; then\n  echo \"Sentry: no valid auth token; skipping dSYM upload.\"\n  exit 0\nfi\n\nif sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" >/dev/null 2>&1; then\n  echo \"Sentry: uploaded dSYMs.\"\nelse\n  echo \"warning: Sentry dSYM upload failed; crash traces may be unsymbolicated.\"\nfi\n";
+			shellScript = (
+				"# Sentry dSYM upload - keeps crash stack traces symbolicated.",
+				"if [ \"$CONFIGURATION\" != \"Release\" ]; then",
+				"  echo \"Sentry: skipping dSYM upload for ${CONFIGURATION} build.\"",
+				"  exit 0",
+				"fi",
+				"",
+				"export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\"",
+				"",
+				"if ! command -v sentry-cli >/dev/null 2>&1; then",
+				"  echo \"warning: sentry-cli not found. Install it with: brew install getsentry/tools/sentry-cli\" >&2",
+				"  exit 0",
+				"fi",
+				"",
+				"export SENTRY_ORG=\"${SENTRY_ORG:-govomusic}\"",
+				"export SENTRY_PROJECT=\"${SENTRY_PROJECT:-ptuner}\"",
+				"",
+				"if [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$HOME/.sentryclirc\" ]; then",
+				"  echo \"warning: SENTRY_AUTH_TOKEN is not set; skipping dSYM upload.\" >&2",
+				"  exit 0",
+				"fi",
+				"",
+				"if ! sentry-cli info >/dev/null 2>&1; then",
+				"  echo \"Sentry: no valid auth token; skipping dSYM upload.\"",
+				"  exit 0",
+				"fi",
+				"",
+				"if sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" >/dev/null 2>&1; then",
+				"  echo \"Sentry: uploaded dSYMs.\"",
+				"else",
+				"  echo \"warning: Sentry dSYM upload failed; crash traces may be unsymbolicated.\"",
+				"fi",
+				"",
+			);
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -307,7 +328,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = PTuner/PTuner.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 9RRNVTE2RE;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -332,7 +353,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = online.c1c1.ptuner;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -354,7 +375,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = PTuner/PTuner.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 9RRNVTE2RE;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -379,7 +400,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = online.c1c1.ptuner;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

@@ -1,0 +1,1 @@
+Aggiunto il metodo di accordatura compensata per chitarra, per accordare ogni corda con maggiore precisione.

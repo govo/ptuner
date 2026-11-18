@@ -1,0 +1,1 @@
+Added compensated tuning for guitar, making every string more accurately in tune.

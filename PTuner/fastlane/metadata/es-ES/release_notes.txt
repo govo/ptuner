@@ -1,0 +1,1 @@
+Se añadió el método de afinación compensada para guitarra, para afinar cada cuerda con mayor precisión.
