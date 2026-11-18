@@ -1,0 +1,32 @@
+PolyTuner: accorda ogni strumento con una sola app.
+
+Che tu abbia appena preso in mano una chitarra o suoni ogni giorno, l'accordatura viene prima di tutto. PolyTuner trasforma ogni plettrata, ogni arcata e ogni accordo in un feedback visivo chiaro, stabile e affidabile.
+
+[Accordatura a una nota: una nota, precisa]
+Suona una corda e vedi in tempo reale il nome della nota, la frequenza e lo scostamento in cent. Un accordatore ad ago con una zona verde mostra a colpo d'occhio se sei alto o basso, senza dover indovinare a orecchio.
+
+[Accordatura polifonica: tutto lo strumento in una volta]
+PolyTuner rileva più corde contemporaneamente e mostra lo scostamento di ciascuna in modo indipendente. Passa su tutte e sei le corde e controlla l'intero strumento in un solo passaggio.
+
+[54 strumenti, Oriente e Occidente]
+Chitarra, basso, ukulele, violino, violoncello, erhu, guzheng, pipa, ruan, guqin, dombra, sitar e altri ancora: dalle corde occidentali agli strumenti tradizionali cinesi e del mondo. 54 strumenti e 134 accordature integrate.
+
+[Accordature personalizzate: trova il tuo suono]
+Ogni strumento risuona in modo diverso. Imposta qualsiasi numero di corde, qualsiasi altezza e qualsiasi scostamento in cent, poi regola ogni corda finché gli accordi suonano al meglio. Crea, modifica e salva la tua accordatura, pronta la prossima volta che apri l'app.
+
+[Riconoscimento degli accordi: ascolta ciò che suoni]
+Riconosci in tempo reale l'accordo che stai suonando, con il nome e le note che lo compongono. Un orecchio in più per esercitarti, comporre e imparare i brani a orecchio.
+
+[Pensato per il palco e la sala prove]
+- Interfaccia scura e professionale, leggibile anche con poca luce
+- Altezza di riferimento regolabile da 400 a 480 Hz
+- Indicatori ad ago e a barra
+- Tre modalità di risposta: rapida, bilanciata e stabile
+- Disponibile su iPhone, iPad e Mac
+- Inglese, 简体中文, 繁體中文, 日本語, 한국어, Español, Deutsch, Français, Italiano
+
+Accordati e ascolta la musica come dovrebbe suonare.
+
+Termini di utilizzo (EULA)
+Questa app è concessa in licenza secondo il contratto di licenza con l'utente finale standard di Apple (EULA):
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/

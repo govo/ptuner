@@ -1,0 +1,1 @@
+Ajout de la méthode d’accordage compensé pour guitare, pour un accordage plus précis de chaque corde.

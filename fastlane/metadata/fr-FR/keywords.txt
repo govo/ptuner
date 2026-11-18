@@ -1,0 +1,1 @@
+accordage,chromatique,détecteur d'accords,mandoline,bouzouki,oud,balalaïka,hauteur,tonalité

@@ -1,0 +1,1 @@
+accordatura,cromatico,intonazione,mandolino,bouzouki,oud,cetra,strumento,riconoscimento accordi

@@ -1,0 +1,24 @@
+# Fastlane Deliverfile — default metadata/screenshot upload settings
+
+app_identifier "online.c1c1.ptuner"
+username ENV["DELIVER_USERNAME"] || ""
+
+# Use App Store Connect API key when available
+api_key_path ENV["APP_STORE_CONNECT_API_KEY_PATH"] if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+
+# Automatically resolve screenshots and metadata from fastlane/metadata and fastlane/screenshots
+screenshots_path "./fastlane/screenshots"
+metadata_path "./fastlane/metadata"
+
+# Do not auto-submit for review by default
+submit_for_review false
+automatic_release false
+
+# Skip binary upload unless explicitly requested
+skip_binary_upload true
+
+# Verify with Apple before uploading
+force true
+
+# Pricing tier (1 = $0.99 USD; override per project)
+# price_tier 0
