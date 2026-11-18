@@ -118,6 +118,27 @@
           ]
         },
         {
+          "id": "guitar.compensated",
+          "nameKey": "补偿调音",
+          "order": 15,
+          "strings": [
+            "E2",
+            "A2",
+            "D3",
+            "G3",
+            "B3",
+            "E4"
+          ],
+          "cents": [
+            -12,
+            -10,
+            -8,
+            -4,
+            -6,
+            -3
+          ]
+        },
+        {
           "id": "guitar.dropD",
           "nameKey": "Drop D",
           "order": 20,

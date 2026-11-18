@@ -22,6 +22,9 @@ nonisolated struct TuningDefinition: Codable, Hashable, Sendable {
     let nameKey: String
     /// 从最低音弦到最高音弦的绝对音名，例如 ["E2", "A2", "D3", "G3", "B3", "E4"]。
     let strings: [String]
+    /// 与 `strings` 一一对应的音分偏移（可正可负）。缺省或长度不足的部分按 0 处理。
+    /// 用于补偿调音这类「目标音不是平均律」的调弦，例如 James Taylor 的吉他补偿调音。
+    let cents: [Double]?
     /// 同一乐器内的展示顺序。
     let order: Int
 }

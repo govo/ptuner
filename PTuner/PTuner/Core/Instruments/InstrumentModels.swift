@@ -264,8 +264,14 @@ nonisolated struct TuningPreset: Codable, Hashable, Identifiable, Sendable {
 nonisolated enum BuiltInTunings {
     static let all: [TuningPreset] = InstrumentCatalog.instruments.flatMap { instrument in
         instrument.sortedTunings.compactMap { definition in
-            let strings = definition.strings.compactMap { TuningString(parsing: $0) }
+            var strings = definition.strings.compactMap { TuningString(parsing: $0) }
             guard !strings.isEmpty else { return nil }
+
+            // 配置里给了音分偏移就按弦序套用，没给的弦保持平均律。
+            for (index, cents) in (definition.cents ?? []).enumerated() where strings.indices.contains(index) {
+                strings[index].centsOffset = cents
+            }
+
             return TuningPreset(id: definition.id,
                                 name: definition.nameKey,
                                 kind: instrument.id,

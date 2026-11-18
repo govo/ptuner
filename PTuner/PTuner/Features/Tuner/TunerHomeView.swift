@@ -449,6 +449,16 @@ struct TunerHomeView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
 
+                    // 补偿调音这类非平均律调弦：把该弦的偏移量标在音名下方，
+                    // 否则用户按平均律拧到 0 音分时会被读成偏低。
+                    if abs(string.centsOffset) >= 0.5 {
+                        Text(centsOffsetLabel(string.centsOffset))
+                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(isActive ? status.color.opacity(0.85) : AppTheme.tertiaryText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+
                     ZStack {
                         Circle()
                             .fill(isActive
@@ -898,6 +908,11 @@ struct TunerHomeView: View {
 
     private func centsText(_ cents: Double) -> String {
         "\(settings.centsPrecision.format(cents)) cents"
+    }
+
+    /// 弦位上标注的补偿量，例如 "-12"、"+4"。
+    private func centsOffsetLabel(_ cents: Double) -> String {
+        String(format: "%+.0f", cents)
     }
 }
 
